@@ -1,0 +1,50 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Blazor WASM (Chrome/Edge)",
+            "type": "blazorwasm",
+            "request": "attach",
+            "cwd": "${workspaceFolder}",
+            "url": "http://localhost:5153",
+        },
+        {
+            "name": "Watch Blazor WASM",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "dotnet",
+            "args": [
+                "watch",
+                "--verbose"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "presentation": {
+                "group": "blazor",
+                "order": 1
+            },
+            "postDebugTask": "Kill Dotnet"
+        },
+        {
+            "name": "Attach to Blazor WASM",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}",
+            "presentation": {
+                "group": "blazor",
+                "order": 2
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Attach + Watch (Firefox)",
+            "configurations": [
+                "Watch Blazor WASM",
+                "Attach to Blazor WASM"
+            ],
+            "stopAll": true
+        }
+    ]
+}
