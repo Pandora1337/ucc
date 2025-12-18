@@ -39,12 +39,16 @@
     ],
     "compounds": [
         {
-            "name": "Attach + Watch (Firefox)",
+            "name": "Watch + Attach Blazor WASM",
             "configurations": [
                 "Watch Blazor WASM",
                 "Attach to Blazor WASM"
             ],
-            "stopAll": true
+            "stopAll": true,
+            "presentation": {
+                "group": "blazor",
+                "order": 3
+            }
         }
     ]
 }
