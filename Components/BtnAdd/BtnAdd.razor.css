@@ -3,9 +3,7 @@
     container-type: inline-size;
     border: 2px dashed var(--bs-border-color, #dee2e6);
     border-radius: 1rem;
-    /* overflow: hidden;
-    user-select: none;
-    cursor: pointer; */
+    overflow: hidden;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
