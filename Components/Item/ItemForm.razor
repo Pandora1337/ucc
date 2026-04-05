@@ -1,0 +1,84 @@
+@using ucc.Components.BtnAdd
+@using ucc.Models
+@using System.ComponentModel.DataAnnotations;
+@using System.Linq.Expressions
+
+@namespace ucc.Components.Item
+
+@inject ucc.Services.InventoryService IS;
+@inject IJSRuntime JSRuntime;
+
+<div class="additem-container" style="@AdditionalStyle width: 200px">
+    <BtnAdd style="width: 100%; aspect-ratio: 1;" OnClicked="OpenFilePicker" Text="Choose Icon" ImgSrc="icons/image.svg"
+        EnableChildContent="showPreview">
+
+        <div class="preview-area">
+            <img src="@imageData" alt="Image Preview" class="preview-image" draggable="false" />
+        </div>
+    </BtnAdd>
+
+    <InputFile id="file-input" OnChange="OnFileSelected" accept="image/*" class="d-none" />
+
+    <EditForm EditContext="editContext" OnValidSubmit="OnSubmit">
+        <DataAnnotationsValidator />
+        <div class="input-group input-group-sm pt-3">
+
+            <InputText @ref="inputText" id="text-input" class="form-control" @bind-Value="itemModel.Name"
+                placeholder="New Item" aria-required="true" style="width: clamp(30px, 70%, 70%);" />
+
+            <button type="submit" class="btn btn-primary" style="width: clamp(20px, 30%, 30%);">Add</button>
+        </div>
+
+        <ValidationMessage For="@(() => itemModel.Name)" />
+
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public string? AdditionalStyle { get; set; }
+    [Parameter] public EventCallback<string> OnItemAdded { get; set; }
+
+    private InputText inputText = null!;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await inputText.Element!.Value.FocusAsync();
+    }
+
+    Item itemModel = new("");
+    private EditContext? editContext;
+    protected override void OnInitialized()
+    {
+        editContext = new(itemModel);
+        editContext.SetFieldCssClassProvider(new BootstrapFormCssProvider());
+    }
+
+    private async Task OnSubmit()
+    {
+        itemModel = new(itemModel.Name);
+        IS.TryAddItem(itemModel);
+
+        if (OnItemAdded.HasDelegate)
+        {
+            await OnItemAdded.InvokeAsync(itemModel.Id);
+        }
+    }
+
+    private async Task OpenFilePicker()
+    {
+        await JSRuntime.InvokeVoidAsync("clickElement", "file-input");
+    }
+
+    private string imageData = "";
+    private bool showPreview = false;
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null && file.ContentType.StartsWith("image/"))
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).ReadAsync(buffer);
+            imageData = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+            showPreview = true;
+        }
+    }
+}

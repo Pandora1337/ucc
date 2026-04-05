@@ -1,0 +1,28 @@
+.icon-container {
+    align-content: center;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    border: solid;
+    background-color: whitesmoke;
+    user-select: none;
+    container-type: size;
+}
+
+.icon-item {
+    position: relative;
+    object-fit: fill;
+    width: 100%;
+    height: 100%;
+}
+
+.icon-text {
+    margin: 0;
+    height: max-content;
+    width: max-content;
+    white-space: nowrap;
+    font-size: clamp(0.4rem, 45cqw, 3rem);
+    overflow: hidden;
+    text-align: center;
+}

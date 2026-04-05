@@ -1,0 +1,53 @@
+@using System.Threading.Tasks
+
+@namespace ucc.Components.BtnAdd
+
+<button class="btn-custom btn-body d-flex flex-column align-items-center
+               justify-content-center text-center"
+        style="@style" @onclick="OnClick">
+      @* @onkeydown="HandleKeyDown" @onkeydown:stopPropagation tabindex="0"> *@
+    @if (EnableChildContent)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <div class="p-1">
+            <img src="@ImgSrc" class="upload-icon mb-2" draggable="false" alt="Upload Icon">
+            <p class="btn-text mb-0 fw-bold">@Text</p>
+        </div>
+
+        @* 
+        <div class="d-flex flex-column align-items-center justify-content-center p-2 gap-1 h-100 w-100">
+            <img src="@ImgSrc" class="upload-icon flex-shrink-0" draggable="false" alt="Upload Icon">
+            <p class="btn-text mb-0 fw-bold text-center flex-grow-1 d-flex align-items-center">@Text</p>
+        </div> 
+        *@
+    }
+</button>
+
+@code {
+    [Parameter] public bool EnableChildContent { get; set; } = false;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnClicked { get; set; }
+
+    [Parameter] public string ImgSrc { get; set; } = "icons/plus-square-fill.svg";
+    [Parameter] public string Text { get; set; } = "Add New";
+    [Parameter] public string? style { get; set; }
+
+    private async Task OnClick()
+    {
+        if (OnClicked.HasDelegate)
+        {
+            await OnClicked.InvokeAsync();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await OnClick();
+        }
+    }
+}

@@ -1,0 +1,20 @@
+.item-element {
+    /* outline: 3px solid white; */
+    background: #f8f9fa;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item-element:focus,
+.item-element:hover {
+    /* outline-color: #007bff; */
+    /* outline: 3px solid #0d6efd; */
+    background: rgba(var(--bs-primary-rgb), 0.25);
+    /* box-shadow: 0 0 12px black; */
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    transform: scale(1.03);
+}
+
+/* .item-element > p {
+    max-height: 3rem;
+    max-width: 100%;
+} */

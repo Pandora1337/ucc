@@ -1,0 +1,60 @@
+@using System.Threading.Tasks
+@using ucc.Components.Modal
+@using ucc.Components.BtnAdd
+
+@namespace ucc.Components.Item
+
+<div class="input-group input-group-sm">
+    <span class="input-group-text bg-white border-end-0">
+        <img src="icons/search.svg" class="text-muted search-icon" draggable="false" fill="currentColor">
+    </span>
+
+    <InputText @ref="searchText" id="input-search" class="form-control form-control-lg border-start-0 ps-0 shadow-none"
+               @bind-Value="searchString" placeholder="Search Item Name" />
+
+    @if (!string.IsNullOrEmpty(searchString))
+    {
+        <button class="btn btn-outline-secondary" type="button">X</button>
+    }
+</div>
+
+<div class="item-list py-3">
+     <div class="item-element">
+        <BtnAdd OnClicked="@(async () => {await modalItemAdd.OpenAsync(); })" style="height: 100%; width: 100%;" />
+    </div>
+
+    <ItemList OnItemClicked="ItemPicked" IconSize="64px" />
+</div>
+
+<Modal @ref="modalItemAdd" Title="Add New Item">
+    <div class="modal-body">
+        <ItemForm OnItemAdded="OnNewItemAdded" />
+    </div>
+</Modal>
+
+@code {
+    [Parameter] public EventCallback<string> OnItemPicked { get; set; }
+
+    private Modal modalItemAdd = null!;
+    private string searchString = "";
+
+    private InputText searchText = null!;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await searchText.Element!.Value.FocusAsync();
+    }
+
+    private async Task ItemPicked(string itemId)
+    {
+        if (OnItemPicked.HasDelegate)
+        {
+            await OnItemPicked.InvokeAsync(itemId);
+        }
+    }
+
+    private async Task OnNewItemAdded(string itemId)
+    {
+        await modalItemAdd.CloseAsync();
+        await ItemPicked(itemId);
+    }
+}

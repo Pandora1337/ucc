@@ -1,0 +1,61 @@
+.btn-body {
+    background: var(--bs-light, #f8f9fa);
+    container-type: inline-size;
+    border: 2px dashed var(--bs-border-color, #dee2e6);
+    border-radius: 1rem;
+    /* overflow: hidden;
+    user-select: none;
+    cursor: pointer; */
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-body:hover,
+.btn-body:focus {
+    border-color: var(--bs-primary, #0d6efd) !important;
+    background: var(--bs-primary-bg-subtle, #cfe2ff) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    /* transform: translateY(-1px) scale(1.02); */
+    transform: scale(1.02);
+}
+
+/*
+.upload-icon {
+    height: clamp(40px, 30%, 200px);
+    width: auto;
+    max-width: 100%;
+    color: #666;
+    margin-bottom: 4%;
+}
+
+.btn-text {
+    color: #666;
+    font-size: clamp(0.5rem, 8cqw, 4rem);
+    line-height: 1.2;
+    font-weight: bold;
+    margin: 0;
+} 
+*/
+
+.upload-icon {
+    height: clamp(2.5rem, 18cqw, 8rem);
+    width: auto;
+    max-width: 90%;
+    max-height: 25vh;
+    filter: grayscale(20%) brightness(0.9);
+}
+
+.btn-text {
+    font-size: clamp(0.875rem, 6cqw, 1.75rem) !important;
+    color: var(--bs-secondary-color, #6c757d);
+    line-height: 1.3;
+}
+
+@media (max-width: 576px) {
+    .btn-text {
+        font-size: clamp(0.75rem, 5cqw, 1.25rem) !important;
+    }
+    
+    .upload-icon {
+        height: clamp(2rem, 16cqw, 5rem) !important;
+    }
+}

@@ -1,0 +1,36 @@
+@using ucc.Models
+
+@namespace ucc.Components.Item
+
+@inject ucc.Services.InventoryService IS;
+
+<div class="position-relative d-inline-block" style="@style" title="@Item.Name">
+    <div class="d-flex flex-shrink-0 align-items-center gap-2 px-2 py-1 border-2 rounded-3"
+         style="border: solid; border-color: @(Item.ColorHex);">
+
+        <ItemIcon Item="@Item" Size="24px" />
+        
+        <span class="text-xs fw-medium text-truncate">@Item.Name</span>
+
+        @if (Amount != null)
+        {
+            <span class="text-xs fw-medium"> (@(Amount)x)</span>
+        }
+    </div>
+</div>
+            
+@code {
+    [Parameter] public string style { get; set; } = "";
+    [Parameter] public int? Amount { get; set; } = null;
+    [Parameter] public Item Item { get; set; } = null!;
+    [Parameter] public string ItemId { get; set; } = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ItemId) && (Item == null || Item.Id != ItemId))
+        {
+            Item = IS.GetItem(ItemId);
+            StateHasChanged();
+        }
+    }
+}

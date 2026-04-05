@@ -1,0 +1,207 @@
+@using System.ComponentModel.DataAnnotations;
+@using System.Threading.Tasks
+@using ucc.Models
+@using ucc.Components.BtnAdd
+@using ucc.Components.Modal
+@using ucc.Components.Item
+
+@namespace ucc.Components.Recipe
+
+@inject ucc.Services.InventoryService IS;
+
+<EditForm EditContext="editContext" OnValidSubmit="AddRecipe" class="w-100" style="max-width: 1000px;">
+    <DataAnnotationsValidator />
+
+    <div @ref="focusElement" tabindex="0">
+        <div>
+            <h3>Result:</h3>
+            @if (recipe.ResultId == "")
+            {
+                <BtnAdd OnClicked="@(() => { ModalItemPickerOpen(PickerContext.RESULT); })"
+                        style="height: 96px; width: 250px;" />
+            }
+            else
+            {
+                <RecipeIngredient ItemId="@recipe.ResultId" @bind-Quantity="recipe.Yield"
+                                  OnIconClicked="@(() => { ModalItemPickerOpen(PickerContext.RESULT); })" />
+                <ValidationMessage For="@(() => recipe.Yield)" />
+            }
+            <ValidationMessage For="@(() => recipe.ResultId)" />
+        </div>
+
+        <div class="mt-3">
+            <h3>Options:</h3>
+            <div class=" card-body border rounded bg-light">
+                <div class="row g-3">
+                    <div class="col-sm-6" title="Where the product is made in">
+                        <label class="form-label">Crafting Station:</label>
+
+                        @if (recipe.StationId == "")
+                        {
+                            <div class="d-flex justify-content-left">
+                                <button type="button" @onclick="@(() => { ModalItemPickerOpen(PickerContext.STATION); })"
+                                        class="btn btn-primary">
+                                    + Add Station
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <RecipeIngredient ItemId="@recipe.StationId" EnableInput="false" IconSize="32px"
+                                              OnIconClicked="@(() => { ModalItemPickerOpen(PickerContext.STATION); })"
+                                              OnBtnClicked="@(() => { recipe.StationId = ""; })" EnableBtn="true" />
+                        }
+                    </div>
+
+                    <div class="col-sm-6" title="Time it takes to complete this recipe, in seconds">
+                        <label class="form-label">Crafting time (seconds):</label>
+                        <InputNumber TValue="int?" class="form-control" min="0" max="2147483647"
+                                     placeholder="Crafting Time in Seconds" @bind-Value="recipe.CraftingTime" />
+                        <ValidationMessage For="@(() => recipe.CraftingTime)" />
+                    </div>
+
+                    <div class="col-sm-6" title="How many recipes can you make at the same time?">
+                        <label class="form-label">Batch size:</label>
+                        <InputNumber TValue="int?" class="form-control" placeholder="Batch Size" min="0"
+                                     max="2147483647" type="range" @bind-Value="recipe.PortionSize" />
+                        <ValidationMessage For="@(() => recipe.PortionSize)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <h3>Ingredients:</h3>
+
+            <button type="button" class="btn btn-primary mb-3"
+                    @onclick="@(() => { ModalItemPickerOpen(PickerContext.INGREDIENT, recipe.Ingredients.Count + 1); })">
+                + Add Ingredient
+            </button>
+
+            <ValidationMessage For="@(() => recipe.Ingredients)" />
+
+            <div class="container-fluid p-0">
+                <div class="row g-2">
+                    @for (int i = 0; i < recipe.Ingredients.Count; i++)
+                    {
+                        int index = i;
+                        <div class="col-12 col-md-6">
+                            <RecipeIngredient @key="@recipe.Ingredients[index].ItemId"
+                                              @bind-Quantity="recipe.Ingredients[index].Amount" ItemId="@recipe.Ingredients[index].ItemId"
+                                              OnIconClicked="@(() => { ModalItemPickerOpen(PickerContext.INGREDIENT, index); })"
+                                              OnBtnClicked="@(() => { recipe.Ingredients.RemoveAt(index); })" EnableBtn="true" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Save Recipe</button>
+    </div>
+</EditForm>
+
+<Modal @ref="modalItemPicker" OnClose="ModalItemPickerClose">
+    <div class="modal-body">
+        <ItemPicker OnItemPicked="OnItemPicked" />
+    </div>
+</Modal>
+
+@code {
+    [Parameter] public EventCallback OnRecipeAdd { get; set; }
+
+    [Parameter] public Recipe recipe { get; set; } = new("", 1, []);
+
+    private EditContext? editContext;
+    protected override void OnInitialized()
+    {
+        editContext = new(recipe);
+        editContext.SetFieldCssClassProvider(new BootstrapFormCssProvider());
+    }
+
+    private Modal modalItemPicker = null!;
+    private ElementReference focusElement;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            @* recipe.ResultId = "thing-new-a-d-l-123-321"; *@
+            @* recipe.StationId = "thing-new-a-d-l-123-321"; *@
+            await focusElement.FocusAsync();
+            ModalItemPickerOpen(PickerContext.RESULT);
+            StateHasChanged();
+        }
+    }
+
+    private enum PickerContext { RESULT, STATION, INGREDIENT }
+    private PickerContext context;
+    private int pickerIndex;
+    private void ModalItemPickerOpen(PickerContext newContext, int ingredientIndex = -1)
+    {
+        context = newContext;
+        pickerIndex = ingredientIndex;
+
+        switch (context)
+        {
+            case PickerContext.RESULT:
+                modalItemPicker.OpenAsync("Choose the Product").ConfigureAwait(false);
+                break;
+
+            case PickerContext.STATION:
+                modalItemPicker.OpenAsync("Choose the Station").ConfigureAwait(false);
+                break;
+
+            case PickerContext.INGREDIENT:
+                modalItemPicker.OpenAsync("Choose an Item").ConfigureAwait(false);
+                break;
+        }
+    }
+
+    private async Task OnItemPicked(string itemId)
+    {
+        switch (context)
+        {
+            case PickerContext.RESULT:
+                recipe.ResultId = itemId;
+                break;
+
+            case PickerContext.STATION:
+                recipe.StationId = itemId;
+                break;
+
+            case PickerContext.INGREDIENT:
+                Ingredient? ing = recipe.Ingredients.ElementAtOrDefault(pickerIndex);
+                if (ing == null)
+                {
+                    recipe.Ingredients.Add(new(itemId));
+                }
+                else
+                {
+                    recipe.Ingredients[pickerIndex].ItemId = itemId;
+                }
+                break;
+        }
+
+        await modalItemPicker.CloseAsync();
+    }
+
+    private async Task ModalItemPickerClose()
+    {
+        await focusElement.FocusAsync();
+    }
+
+    private void AddRecipe()
+    {
+        if (IS.TryAddRecipe(recipe))
+        {
+            RecipeAdded().ConfigureAwait(false);
+        }
+    }
+
+    private async Task RecipeAdded()
+    {
+        if (OnRecipeAdd.HasDelegate)
+        {
+            await OnRecipeAdd.InvokeAsync();
+        }
+    }
+}

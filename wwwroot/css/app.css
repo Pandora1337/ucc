@@ -10,6 +10,7 @@ a, .btn-link {
     color: #0071c1;
 }
 
+/*
 .btn-primary {
     color: #fff;
     background-color: #1b6ec2;
@@ -18,6 +19,25 @@ a, .btn-link {
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+*/
+
+.btn-custom {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  line-height: inherit;
+  background: inherit;
+  text-align: inherit;
+  vertical-align: inherit;
+  box-sizing: inherit;
+  display: inherit;
+  line-height: inherit;
+  align-items: inherit;
 }
 
 .content {

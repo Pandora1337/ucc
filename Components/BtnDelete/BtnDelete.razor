@@ -1,0 +1,21 @@
+@namespace ucc.Components.BtnDelete
+
+<div class="btn-container">
+    <button class="btn btn-outline-danger btn-sm rounded-3" @onclick="@OnDeleteClicked"
+            style="width: @Size; height: @Size;">
+        X
+    </button>
+</div>
+
+@code {
+    [Parameter] public string Size { get; set; } = "32px";
+    [Parameter] public EventCallback<string> OnDelete { get; set; }
+    
+    private void OnDeleteClicked()
+    {
+        if (OnDelete.HasDelegate)
+        {
+            OnDelete.InvokeAsync();
+        }
+    }
+}

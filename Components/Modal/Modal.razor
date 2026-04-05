@@ -1,0 +1,78 @@
+@using System.Threading.Tasks
+
+@namespace ucc.Components.Modal
+
+@if (isVisible)
+{
+    <div class="modal-overlay" @onclick="CloseAsync" tabindex="-1">
+        <div class="modal-container bg-white rounded-3" @onkeydown="HandleKeyDown" @onkeydown:stopPropagation @onclick:stopPropagation
+             tabindex="0" @ref="reference">
+            
+            <div class="modal-header">
+                <h4 class="modal-title">@Title</h4>
+                <button type="button" class="btn-close" aria-label="Close"
+                        @onclick="CloseAsync">
+                </button>
+            </div>
+
+            @* <div class="modal-body"> *@
+            @ChildContent
+            @* </div> *@
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnOpen { get; set; }
+
+    private bool isVisible { get; set; }
+    private ElementReference reference;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (isVisible && firstRender)
+        {
+            await reference.FocusAsync();
+        }
+    }
+
+    public async Task OpenAsync(string title = "")
+    {
+        if (isVisible)
+            return;
+
+        if (title != "")
+        {
+            Title = title;
+        }
+
+        isVisible = true;
+        if (OnOpen.HasDelegate)
+        {
+            await OnOpen.InvokeAsync();
+        }
+    }
+
+    public async Task CloseAsync()
+    {
+        if (!isVisible)
+            return;
+
+        isVisible = false;
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await CloseAsync();
+        }
+    }
+}

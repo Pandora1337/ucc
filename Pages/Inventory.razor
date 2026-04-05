@@ -1,0 +1,55 @@
+@page "/inventory"
+
+@using ucc.Models
+@using ucc.Components.Item;
+@using ucc.Components.Recipe;
+@using ucc.Components.BtnAdd;
+@using ucc.Components.Modal;
+
+@inject ucc.Services.InventoryService IS;
+
+<h2>Items:</h2>
+<div class="d-grid justify-content-sm-start justify-content-center g-3 gap-3 mb-3"
+     style="grid-template-columns: repeat(auto-fit, 128px);">
+    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => { await modalAddItem.OpenAsync(); })" />
+    <ItemList IconSize="128px" ShowItemName="true" ShowItemDate="true" ShowBtnDelete="true" />
+</div>
+
+<h2>Recipes:</h2>
+<div class="d-grid gap-3">
+    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => { await modalAddRecipe.OpenAsync(); })" />
+    
+    @foreach (Recipe recipe in IS.GetRecipes())
+    {
+        <RecipeCard recipe="@recipe" />
+    }
+</div>
+
+<Modal @ref="modalAddItem" Title="Add New Item">
+    <div class="modal-body">
+        <ItemForm OnItemAdded="@modalAddItem.CloseAsync" />
+    </div>
+</Modal>
+
+<Modal @ref="modalAddRecipe" Title="Add New Recipe">
+    <div class="modal-body">
+        <RecipeForm OnRecipeAdd="@modalAddRecipe.CloseAsync" />
+    </div>
+</Modal>
+
+@code {
+    protected override void OnInitialized() => IS.OnRecipesChange += StateHasChanged;
+    public void Dispose() => IS.OnRecipesChange -= StateHasChanged;
+
+    private Modal modalAddItem = null!;
+    private Modal modalAddRecipe = null!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            @* modalAddRecipe.OpenAsync();
+            StateHasChanged(); *@
+        }
+    }
+}

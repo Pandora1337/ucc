@@ -1,0 +1,64 @@
+using System.Text.RegularExpressions;
+using System.ComponentModel.DataAnnotations;
+using ucc.Services;
+
+namespace ucc.Models;
+
+public partial class Item(string name, string color = "") : IValidatableObject
+{
+    [GeneratedRegex(@"[^a-z0-9]", RegexOptions.None)]
+    private static partial Regex RegexSymbols();
+
+    [GeneratedRegex(@"-+", RegexOptions.None)]
+    private static partial Regex RegexDashes();
+
+    public static readonly string DefaultName = "New Item";
+
+    public string Id { get; } = NameToId(name);
+
+    [Required(ErrorMessage = "Name can't be empty!")]
+    [StringLength(100, ErrorMessage = "Name is too long!")]
+    public string Name { get; set; } = name;
+
+    private string colorHex = color;
+    public string ColorHex
+    {
+        get
+        {
+            return string.IsNullOrEmpty(colorHex) ? GetHashedColor() : colorHex;
+        }
+        set
+        {
+            colorHex = value;
+        }
+    }
+
+    public DateTime CreatedAt { get; } = DateTime.Now;
+
+    private string GetHashedColor()
+    {
+        int hash = Id.GetHashCode();
+        // Console.WriteLine(itemName + "'s hash: " + hash);
+        byte r = (byte)((hash >> 0) & 0xFF);
+        byte g = (byte)((hash >> 8) & 0xFF);
+        byte b = (byte)((hash >> 16) & 0xFF);
+        return $"#{r:X2}{g:X2}{b:X2}";
+    }
+
+    // ID-ify Name
+    public static string NameToId(string str)
+    {
+        string dashed = RegexSymbols().Replace(str.ToLower(), "-");
+        return RegexDashes().Replace(dashed.Trim('-'), "-");
+    }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        InventoryService? IS = validationContext.GetService(typeof(InventoryService)) as InventoryService;
+        if (IS?.ContainsItemId(NameToId(Name)) == true)
+        {
+            yield return new ValidationResult("Similar item already exists!",
+                new[] { nameof(Name) });
+        }
+    }
+}

@@ -1,0 +1,126 @@
+@using System.Threading.Tasks
+@using ucc.Components.BtnDelete
+@using ucc.Components.Modal
+@using ucc.Models
+
+@namespace ucc.Components.Item
+
+@inject ucc.Services.InventoryService IS;
+
+@foreach (KeyValuePair<string, Item> item in IS.GetItems())
+{
+    <button class="btn-custom item-element position-relative delete-target w-100 h-100 rounded-2"
+            @key="@item.Key" title="@item.Value.Name" @onclick="@(() => ItemClicked(item.Key))">
+
+        @if (ShowBtnDelete)
+        {
+            <BtnDelete OnDelete="@(() => OpenModal(item.Key))" />
+        }
+
+        <ItemIcon itemId="@item.Key" Size="@IconSize" />
+
+        @if (ShowItemName)
+        {
+            <span class="text-wrap text-truncate pt-1 px-2">
+                @item.Value.Name
+            </span>
+        }
+
+        @if (ShowItemDate)
+        {
+            <span class="text-wrap text-truncate text-muted fst-italic pt-1 px-2">
+                Created at: @item.Value.CreatedAt.ToString("hh:mm tt, dd/MM/yyyy")
+            </span>
+        }
+    </button>
+}
+    
+<Modal @ref="modal" Title="Delete Item">
+    <div class="modal-body">
+        <p class="text-body text-center m-0">
+            <strong>Are you sure you want to delete this item?</strong>
+        </p>
+
+        @if (recipes.Count > 0)
+        {
+            <p class="mt-2 text-danger m-0">
+                This action will also delete the following recipes:
+            </p>
+        
+            <ul class="list-group">
+                @foreach (Recipe recipe in recipes)
+                {
+                    <li class="list-group-item">
+                        <ItemBadge ItemId="@recipe.ResultId" Amount="@recipe.Yield" />
+                        =
+                        @foreach (Ingredient ingr in recipe.Ingredients)
+                        {
+                            <ItemBadge ItemId="@ingr.ItemId" Amount="@ingr.Amount" />
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="modal-footer flex-nowrap">
+        <button type="button" class="btn btn-lg btn-secondary w-50" @onclick="@CloseModal">
+            Cancel
+        </button>
+
+        <button type="button" class="btn btn-lg btn-danger w-50" @onclick="@ItemDelete">
+            Delete Item
+        </button>
+    </div>
+</Modal>
+
+
+@code {
+    [Parameter] public string? style { get; set; }
+    [Parameter] public string IconSize { get; set; } = "64px";
+    [Parameter] public bool ShowItemName { get; set; } = true;
+    [Parameter] public bool ShowItemDate { get; set; } = false;
+    [Parameter] public bool ShowBtnDelete { get; set; } = false;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback<string> OnItemClicked { get; set; }
+
+    private Modal modal = null!;
+
+    protected override void OnInitialized() => IS.OnItemsChange += StateHasChanged;
+    public void Dispose() => IS.OnItemsChange -= StateHasChanged;
+
+    private async Task ItemClicked(string itemId)
+    {
+        if (OnItemClicked.HasDelegate)
+        {
+            await OnItemClicked.InvokeAsync(itemId);
+        }
+    }
+
+    private List<Recipe> recipes = null!;
+    private string selectedItem = "";
+    private async Task OpenModal(string itemId)
+    {
+        selectedItem = itemId;
+        recipes = IS.RecipesWithItem(itemId);
+        await modal.OpenAsync();
+    }
+
+    private async Task CloseModal()
+    {
+        selectedItem = "";
+        recipes = new();
+        await modal.CloseAsync();
+    }
+
+    private async Task ItemDelete()
+    {
+        IS.TryRemoveItem(selectedItem);
+        foreach (Recipe recipe in recipes)
+        {
+            IS.RemoveRecipe(recipe);
+        }
+
+        await CloseModal();
+    }
+}

@@ -15,10 +15,12 @@
             "program": "dotnet",
             "args": [
                 "watch",
-                "--verbose"
+                "--verbose",
+                "--non-interactive",
             ],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
+            // "console": "integratedTerminal",
             "stopAtEntry": false,
             "presentation": {
                 "group": "blazor",

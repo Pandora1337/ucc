@@ -1,0 +1,16 @@
+.item-list {
+    width: 300px;
+    grid-template-columns: repeat(auto-fit, 64px);
+    display: grid;
+    justify-content: center;
+    gap: 10px;
+    overflow-y: scroll;
+}
+
+.search-icon {
+    user-select: none;
+    -webkit-user-drag: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}

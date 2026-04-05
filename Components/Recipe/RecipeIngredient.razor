@@ -1,0 +1,87 @@
+@using ucc.Components.Item
+
+@namespace ucc.Components.Recipe
+
+@inject ucc.Services.InventoryService IS;
+
+<div class="d-flex p-3 border rounded bg-light" style="@style">
+@* <div class="d-flex p-3 border rounded bg-light align-items-center" style="@style"> *@
+    <div class="flex-shrink-0 pe-2 icon" @onclick="IconClick">
+        <ItemIcon Size="@IconSize" itemId="@ItemId" />
+    </div>
+
+    <div class="d-flex flex-grow-1 flex-column justify-content-center w-50">
+        <h4 class="mb-1 text-truncate" title="@IS.GetItemNameById(ItemId)">
+            @IS.GetItemNameById(ItemId)
+        </h4>
+
+        @if (EnableInput)
+        {
+            <div class="input-group input-group-sm">
+                <input type="number" class="form-control" @bind="Quantity" min="1" max="2147483647" placeholder="Amount"
+                       title="Amount of an item" disabled="@DisableInput" />
+            
+            </div>
+        }
+    </div>
+
+    @if (EnableBtn)
+    {
+        <button type="button"
+            class="btn btn-danger btn-sm p-0 ms-2 border-0 flex-shrink-0"
+            style="width: 40px; z-index: 10;"
+            title="Remove"
+            @onclick="BtnClick">X
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<int> QuantityChanged { get; set; }
+    [Parameter] public EventCallback OnIconClicked { get; set; }
+    [Parameter] public EventCallback OnBtnClicked { get; set; }
+    [Parameter] public bool EnableInput { get; set; } = true;
+    [Parameter] public bool DisableInput { get; set; } = false;
+    [Parameter] public bool EnableBtn { get; set; } = false;
+    [Parameter] public string ItemId { get; set; } = "";
+    [Parameter] public string IconSize { get; set; } = "64px";
+    [Parameter] public string style { get; set; } = "";
+
+    private int quantity;
+    [Parameter]
+    public int Quantity
+    {
+        get => quantity;
+        set
+        {
+            if (quantity == value) return;
+            quantity = value;
+            QuantityChanged.InvokeAsync(value);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+        }
+    }
+
+    private async Task IconClick()
+    {
+        if (OnIconClicked.HasDelegate)
+        {
+            await OnIconClicked.InvokeAsync();
+        }
+    }
+
+    private async Task BtnClick()
+    {
+        if (OnBtnClicked.HasDelegate)
+        {
+            await OnBtnClicked.InvokeAsync();
+        }
+    }
+
+}
