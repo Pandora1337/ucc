@@ -1,4 +1,5 @@
 @using ucc.Components.Item
+@using ucc.Models
 
 @namespace ucc.Components.Recipe
 
@@ -7,12 +8,12 @@
 <div class="d-flex p-3 border rounded bg-light" style="@style">
 @* <div class="d-flex p-3 border rounded bg-light align-items-center" style="@style"> *@
     <div class="flex-shrink-0 pe-2 icon" @onclick="IconClick">
-        <ItemIcon Size="@IconSize" itemId="@ItemId" />
+        <ItemIcon Size="@IconSize" Item="@Item" />
     </div>
 
     <div class="d-flex flex-grow-1 flex-column justify-content-center w-50">
-        <h4 class="mb-1 text-truncate" title="@IS.GetItemNameById(ItemId)">
-            @IS.GetItemNameById(ItemId)
+        <h4 class="mb-1 text-truncate" title="@Item.Name">
+            @Item.Name
         </h4>
 
         @if (EnableInput)
@@ -43,13 +44,11 @@
     [Parameter] public bool EnableInput { get; set; } = true;
     [Parameter] public bool DisableInput { get; set; } = false;
     [Parameter] public bool EnableBtn { get; set; } = false;
-    [Parameter] public string ItemId { get; set; } = "";
     [Parameter] public string IconSize { get; set; } = "64px";
     [Parameter] public string style { get; set; } = "";
 
     private int quantity;
-    [Parameter]
-    public int Quantity
+    [Parameter] public int Quantity
     {
         get => quantity;
         set
@@ -57,6 +56,18 @@
             if (quantity == value) return;
             quantity = value;
             QuantityChanged.InvokeAsync(value);
+        }
+    }
+    
+    [Parameter] public Item Item { get; set; } = null!;
+    [Parameter] public string ItemId { get; set; } = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ItemId) && (Item == null || Item.Id != ItemId))
+        {
+            Item = IS.GetItem(ItemId);
+            StateHasChanged();
         }
     }
 
