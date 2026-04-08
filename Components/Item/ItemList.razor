@@ -14,7 +14,7 @@
 
         @if (ShowBtnDelete)
         {
-            <BtnDelete OnDelete="@(() => OpenModal(item.Key))" />
+            <BtnDelete OnDelete="@(() => OpenModal(item.Key))">X</BtnDelete>
         }
 
         <ItemIcon Item="@item.Value" Size="@IconSize" />

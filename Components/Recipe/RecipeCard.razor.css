@@ -2,6 +2,20 @@
     border: solid;
 }
 
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 16px;
+}
+
+.btn-bg {
+    top: 8px;
+    right: 6px;
+    height: 38px;
+    width: 80px;
+}
+
 .recipe-card {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }

@@ -29,6 +29,11 @@ public partial class Recipe(
 
     public DateTime CreatedAt { get; } = DateTime.Now;
 
+    static public Recipe GetNew()
+    {
+        return new("", 1, []);
+    }
+
     public bool ContainsItemId(string itemId)
     {
         if (ResultId == itemId)

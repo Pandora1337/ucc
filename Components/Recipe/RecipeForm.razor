@@ -109,7 +109,7 @@
 @code {
     [Parameter] public EventCallback OnRecipeAdd { get; set; }
 
-    [Parameter] public Recipe recipe { get; set; } = new("", 1, []);
+    [Parameter] public Recipe recipe { get; set; } = null!;
 
     private EditContext? editContext;
     protected override void OnInitialized()
@@ -127,7 +127,12 @@
             @* recipe.ResultId = "thing-new-a-d-l-123-321"; *@
             @* recipe.StationId = "thing-new-a-d-l-123-321"; *@
             await focusElement.FocusAsync();
-            ModalItemPickerOpen(PickerContext.RESULT);
+            
+            if (recipe.ResultId == "")
+            {
+                ModalItemPickerOpen(PickerContext.RESULT);
+            }
+
             StateHasChanged();
         }
     }
@@ -189,12 +194,10 @@
         await focusElement.FocusAsync();
     }
 
-    private void AddRecipe()
+    private async Task AddRecipe()
     {
-        if (IS.TryAddRecipe(recipe))
-        {
-            RecipeAdded().ConfigureAwait(false);
-        }
+        IS.AddRecipe(recipe);
+        await RecipeAdded();
     }
 
     private async Task RecipeAdded()

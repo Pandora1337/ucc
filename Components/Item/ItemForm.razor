@@ -1,7 +1,7 @@
-@using ucc.Components.BtnAdd
-@using ucc.Models
 @using System.ComponentModel.DataAnnotations;
 @using System.Linq.Expressions
+@using ucc.Components.BtnAdd
+@using ucc.Models
 
 @namespace ucc.Components.Item
 
@@ -10,7 +10,7 @@
 
 <div class="additem-container" style="@AdditionalStyle width: 200px">
     <BtnAdd style="width: 100%; aspect-ratio: 1;" OnClicked="OpenFilePicker" Text="Choose Icon" ImgSrc="icons/image.svg"
-        EnableChildContent="showPreview">
+            EnableChildContent="showPreview">
 
         <div class="preview-area">
             <img src="@imageData" alt="Image Preview" class="preview-image" draggable="false" />
@@ -23,13 +23,13 @@
         <DataAnnotationsValidator />
         <div class="input-group input-group-sm pt-3">
 
-            <InputText @ref="inputText" id="text-input" class="form-control" @bind-Value="itemModel.Name"
-                placeholder="New Item" aria-required="true" style="width: clamp(30px, 70%, 70%);" />
+            <InputText @ref="inputText" id="text-input" class="form-control" @bind-Value="Item.Name"
+                       placeholder="New Item" aria-required="true" style="width: clamp(30px, 70%, 70%);" />
 
             <button type="submit" class="btn btn-primary" style="width: clamp(20px, 30%, 30%);">Add</button>
         </div>
 
-        <ValidationMessage For="@(() => itemModel.Name)" />
+        <ValidationMessage For="@(() => Item.Name)" />
 
     </EditForm>
 </div>
@@ -37,6 +37,7 @@
 @code {
     [Parameter] public string? AdditionalStyle { get; set; }
     [Parameter] public EventCallback<string> OnItemAdded { get; set; }
+    [Parameter] public Item Item { get; set; } = new("");
 
     private InputText inputText = null!;
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -44,22 +45,27 @@
         await inputText.Element!.Value.FocusAsync();
     }
 
-    Item itemModel = new("");
     private EditContext? editContext;
     protected override void OnInitialized()
     {
-        editContext = new(itemModel);
+        editContext = new(Item);
         editContext.SetFieldCssClassProvider(new BootstrapFormCssProvider());
     }
 
     private async Task OnSubmit()
     {
-        itemModel = new(itemModel.Name);
-        IS.TryAddItem(itemModel);
+        if (Item.Id != "")
+        {
+            IS.TryUpdateItem(Item.Id, Item);
+        }
+        else
+        {
+            IS.TryAddItem(Item.Name);
+        }
 
         if (OnItemAdded.HasDelegate)
         {
-            await OnItemAdded.InvokeAsync(itemModel.Id);
+            await OnItemAdded.InvokeAsync(Item.NameToId(Item.Name));
         }
     }
 

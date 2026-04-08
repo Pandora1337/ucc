@@ -11,29 +11,34 @@
 <h2>Items:</h2>
 <div class="d-grid justify-content-sm-start justify-content-center g-3 gap-3 mb-3"
      style="grid-template-columns: repeat(auto-fit, 128px);">
-    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => { await modalAddItem.OpenAsync(); })" />
-    <ItemList IconSize="128px" ShowItemName="true" ShowItemDate="true" ShowBtnDelete="true" />
+    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenItemModal())" />
+    <ItemList IconSize="128px" ShowItemName="true" ShowItemDate="true" ShowBtnDelete="true"
+              OnItemClicked="@(async (e) => await OpenItemModal(e))" />
 </div>
 
 <h2>Recipes:</h2>
-<div class="d-grid gap-3">
-    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => { await modalAddRecipe.OpenAsync(); })" />
+<div class="mb-3">
+    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenRecipeModal())" />
+</div>
     
+<div class="row g-3 mb-3">
     @foreach (Recipe recipe in IS.GetRecipes())
     {
-        <RecipeCard recipe="@recipe" />
+        <div class="col-12 col-lg-6 col-xxl-4">
+        <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeModal(recipe))" />
+        </div>
     }
 </div>
 
 <Modal @ref="modalAddItem" Title="Add New Item">
     <div class="modal-body">
-        <ItemForm OnItemAdded="@modalAddItem.CloseAsync" />
+        <ItemForm OnItemAdded="@modalAddItem.CloseAsync" Item="@modalItem" />
     </div>
 </Modal>
 
 <Modal @ref="modalAddRecipe" Title="Add New Recipe">
     <div class="modal-body">
-        <RecipeForm OnRecipeAdd="@modalAddRecipe.CloseAsync" />
+        <RecipeForm OnRecipeAdd="@modalAddRecipe.CloseAsync" recipe="modalRecipe" />
     </div>
 </Modal>
 
@@ -42,7 +47,9 @@
     public void Dispose() => IS.OnRecipesChange -= StateHasChanged;
 
     private Modal modalAddItem = null!;
+    private Item modalItem = null!;
     private Modal modalAddRecipe = null!;
+    private Recipe modalRecipe = null!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -51,5 +58,17 @@
             @* modalAddRecipe.OpenAsync();
             StateHasChanged(); *@
         }
+    }
+
+    private async Task OpenItemModal(string itemId = "")
+    {
+        modalItem = itemId == "" ? new("") : IS.GetItem(itemId);
+        await modalAddItem.OpenAsync();
+    }
+
+    private async Task OpenRecipeModal(Recipe recipe = null!)
+    {
+        modalRecipe = recipe == null ? Recipe.GetNew() : recipe;
+        await modalAddRecipe.OpenAsync();
     }
 }

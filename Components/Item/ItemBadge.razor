@@ -8,7 +8,9 @@
     <div class="d-flex flex-shrink-0 align-items-center gap-2 px-2 py-1 border-2 rounded-3"
          style="border: solid; border-color: @(Item.ColorHex);">
 
-        <ItemIcon Item="@Item" Size="24px" />
+        <div class="flex-shrink-0">
+            <ItemIcon Item="@Item" Size="24px" />
+        </div>
         
         <span class="text-xs fw-medium text-truncate">@Item.Name</span>
 
@@ -24,6 +26,9 @@
     [Parameter] public int? Amount { get; set; } = null;
     [Parameter] public Item Item { get; set; } = null!;
     [Parameter] public string ItemId { get; set; } = "";
+
+    protected override void OnInitialized() => IS.OnItemsChange += StateHasChanged;
+    public void Dispose() => IS.OnItemsChange -= StateHasChanged;
 
     protected override async Task OnParametersSetAsync()
     {

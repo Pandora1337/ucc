@@ -8,13 +8,21 @@
 @inject ucc.Services.InventoryService IS;
 
 <div class="card p-3 delete-target recipe-card">
-    <BtnDelete OnDelete="@(async () => { await modal.OpenAsync(); })" />
-    
-    <div>
-        <RecipeIngredient ItemId="@recipe.ResultId" Quantity="@recipe.Yield" DisableInput=true />
+    <div class="bg-white">
+        <div class="btn-bg position-absolute bg-white"></div>
     </div>
 
-    <span>Ingredients:</span>
+    <BtnDelete OnDelete="@(() => OnClick())" style="right: 48px;" cClass="btn-outline-primary">
+        <img src="icons/pencil-square.svg" class="center" />
+    </BtnDelete>
+    <BtnDelete OnDelete="@(async () => { await modal.OpenAsync(); })">X</BtnDelete>
+    
+    <div>
+        <RecipeIngredient style="background-color: white !important; border: 0px !important; padding: 0px !important;"
+                          ItemId="@recipe.ResultId" Quantity="@recipe.Yield" DisableInput=true OnIconClicked="@(() => OnClick())" />
+    </div>
+
+    <span class="mt-2">Ingredients:</span>
     <div class="d-flex flex-wrap gap-1 my-2">
         @for (int i = 0; i < recipe.Ingredients.Count; i++)
         {
@@ -73,6 +81,7 @@
 
 @code {
     [Parameter] public Recipe recipe { get; set; } = null!;
+    [Parameter] public EventCallback<Recipe> OnRecipeClick { get; set; }
 
     private Modal modal = null!;
 
@@ -86,4 +95,12 @@
     {
         base.OnInitialized();
     } *@
+    
+    private void OnClick()
+    {
+        if (OnRecipeClick.HasDelegate)
+        {
+            OnRecipeClick.InvokeAsync(recipe);
+        }
+    }
 }

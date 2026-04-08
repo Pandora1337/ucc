@@ -83,6 +83,18 @@ public class InventoryService
         return resp;
     }
 
+    public bool TryUpdateItem(string id, Item newItem)
+    {
+        bool resp = items.ContainsKey(id);
+        if (resp)
+        {
+            items[id] = newItem;
+            OnItemsChange?.Invoke();
+        }
+
+        return resp;
+    }
+
     public bool TryRemoveItem(string itemId)
     {
         if (RecipesWithItem(itemId).Count > 0)
@@ -144,19 +156,21 @@ public class InventoryService
         return list;
     }
 
-    public bool TryAddRecipe(Recipe recipe)
+    public void AddRecipe(Recipe recipe)
     {
-        // string id = recipe.GetHashCode().ToString();
-        bool resp = true;
-        recipes.Add(recipe);
-        Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW Recipe for: {recipe.ResultId} ID: {2}");
-
-        if (resp)
+        int index = recipes.IndexOf(recipe);
+        if (index > -1)
         {
-            OnRecipesChange?.Invoke();
+            recipes[index] = recipe;
+        }
+        else
+        {
+            recipes.Add(recipe);
         }
 
-        return resp;
+        // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW Recipe for: {recipe.ResultId} ID: {2}");
+
+            OnRecipesChange?.Invoke();
     }
     
     public void RemoveRecipe(Recipe recipe)

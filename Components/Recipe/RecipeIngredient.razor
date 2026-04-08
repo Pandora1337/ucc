@@ -62,6 +62,9 @@
     [Parameter] public Item Item { get; set; } = null!;
     [Parameter] public string ItemId { get; set; } = "";
 
+    protected override void OnInitialized() => IS.OnItemsChange += StateHasChanged;
+    public void Dispose() => IS.OnItemsChange -= StateHasChanged;
+
     protected override async Task OnParametersSetAsync()
     {
         if (!string.IsNullOrEmpty(ItemId) && (Item == null || Item.Id != ItemId))
