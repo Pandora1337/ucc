@@ -6,7 +6,6 @@
 @inject ucc.Services.InventoryService IS;
 
 <div class="d-flex p-3 border rounded bg-light" style="@style">
-@* <div class="d-flex p-3 border rounded bg-light align-items-center" style="@style"> *@
     <div class="flex-shrink-0 pe-2 icon" @onclick="IconClick">
         <ItemIcon Size="@IconSize" Item="@Item" />
     </div>
@@ -19,26 +18,22 @@
         @if (EnableInput)
         {
             <div class="input-group input-group-sm">
-                <input type="number" class="form-control" @bind="Quantity" min="1" max="2147483647" placeholder="Amount"
-                       title="Amount of an item" disabled="@DisableInput" />
-            
+                <InputNumber TValue="float" class="form-control" @bind-Value="Quantity" min="0" max="@float.MaxValue"
+                             placeholder="Amount" title="Amount of an item" Disabled="@DisableInput" />
             </div>
         }
     </div>
 
     @if (EnableBtn)
     {
-        <button type="button"
-            class="btn btn-danger btn-sm p-0 ms-2 border-0 flex-shrink-0"
-            style="width: 40px; z-index: 10;"
-            title="Remove"
-            @onclick="BtnClick">X
+        <button type="button" class="btn btn-danger btn-sm p-0 ms-2 border-0 flex-shrink-0"
+                style="width: 40px; z-index: 10;" title="Remove" @onclick="BtnClick">X
         </button>
     }
 </div>
 
 @code {
-    [Parameter] public EventCallback<int> QuantityChanged { get; set; }
+    [Parameter] public EventCallback<float> QuantityChanged { get; set; }
     [Parameter] public EventCallback OnIconClicked { get; set; }
     [Parameter] public EventCallback OnBtnClicked { get; set; }
     [Parameter] public bool EnableInput { get; set; } = true;
@@ -47,13 +42,15 @@
     [Parameter] public string IconSize { get; set; } = "64px";
     [Parameter] public string style { get; set; } = "";
 
-    private int quantity;
-    [Parameter] public int Quantity
+    private float quantity;
+    [Parameter] public float Quantity
     {
         get => quantity;
         set
         {
-            if (quantity == value) return;
+            if (quantity == value)
+                return;
+            
             quantity = value;
             QuantityChanged.InvokeAsync(value);
         }
@@ -97,5 +94,4 @@
             await OnBtnClicked.InvokeAsync();
         }
     }
-
 }

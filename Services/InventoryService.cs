@@ -1,5 +1,7 @@
 using System.Text.Json;
 using ucc.Models;
+using ucc.Data;
+using TG.Blazor.IndexedDB;
 
 namespace ucc.Services;
 
@@ -11,15 +13,31 @@ public class InventoryService
 
     private Dictionary<string, Item> items = [];
     private List<Recipe> recipes = [];
-    readonly JsonSerializerOptions jsonSerializerOptions = new()
-    {
-        WriteIndented = true
-    };
 
-    // Runs when singleton is created
-    public InventoryService()
+    private IndexedDBManager DB;
+    public InventoryService(IndexedDBManager db)
     {
-        GenerateStuff();
+        DB = db;
+        _ = DBinit();
+    }
+
+    private async Task DBinit()
+    {
+        await DB.OpenDb();
+
+        // Get all items
+        List<Item> itemList = await DB.GetRecords<Item>(IndexedDB.Items);
+        items = itemList.ToDictionary(x => x.Id);
+        OnItemsChange?.Invoke();
+
+        // Get all recipes
+        recipes = await DB.GetRecords<Recipe>(IndexedDB.Recipes);
+        OnRecipesChange?.Invoke();
+
+        if (items.Count == 0 && recipes.Count == 0)
+        {
+            GenerateStuff();
+        }
     }
 
     void GenerateStuff()
@@ -27,35 +45,30 @@ public class InventoryService
         TryAddItem("Crafting Table");
         TryAddItem("Log");
         TryAddItem("Plank");
-        TryAddItem("ThIng/NEw           A-D+L[123](321)");
 
-        Recipe r1 = new(
-            GetItemIdByName("Plank"),
-            4,
-            [
+        AddRecipe(new Recipe
+        {
+            ResultId = "plank",
+            Yield = 4,
+            Ingredients = [
                 new("log", 1),
-            ]
-        );
-        r1.PortionSize = 66;
+            ],
+            BatchSize = 64,
+        });
 
-        Recipe r2 = new(
-            GetItemIdByName("Crafting Table"),
-            1,
-            [
+        AddRecipe(new Recipe
+        {
+            ResultId = "crafting-table",
+            Yield = 1,
+            Ingredients = [
                 new("plank", 1),
                 new("plank", 1),
                 new("plank", 1),
                 new("plank", 1),
             ],
-            "crafting-table"
-        );
-        r2.PortionSize = 123;
-        r2.CraftingTime = 33;
-
-        // recipes.Add("111", r1);
-        // recipes.Add("222", r2);
-        recipes.Add(r1);
-        recipes.Add(r2);
+            StationId = "crafting-table",
+            BatchSize = 64,
+        });
     }
 
     public bool TryAddItem(string name)
@@ -72,13 +85,18 @@ public class InventoryService
     public bool TryAddItem(Item newItem)
     {
         bool resp = items.TryAdd(newItem.Id, newItem);
-
-        // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW ITEM: {newItem.Name} ID: {newItem.Id}");
-
         if (resp)
         {
+            DB.AddRecord(new StoreRecord<Item>()
+            {
+                Storename = IndexedDB.Items,
+                Data = newItem
+            });
+
             OnItemsChange?.Invoke();
         }
+
+        // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW ITEM: {newItem.Name} ID: {newItem.Id}");
 
         return resp;
     }
@@ -89,6 +107,12 @@ public class InventoryService
         if (resp)
         {
             items[id] = newItem;
+            DB.UpdateRecord(new StoreRecord<Item>()
+            {
+                Storename = IndexedDB.Items,
+                Data = newItem
+            });
+
             OnItemsChange?.Invoke();
         }
 
@@ -105,11 +129,19 @@ public class InventoryService
         bool resp = items.Remove(itemId);
         if (resp)
         {
+            DB.DeleteRecord<string>(IndexedDB.Items, itemId);
             OnItemRemoved?.Invoke(itemId);
             OnItemsChange?.Invoke();
         }
 
         return resp;
+    }
+
+    public void ClearAllItems()
+    {
+        items.Clear();
+        DB.ClearStore(IndexedDB.Items);
+        OnItemsChange?.Invoke();
     }
 
     public bool ContainsItemId(string id)
@@ -149,7 +181,7 @@ public class InventoryService
         {
             if (!recipe.ContainsItemId(itemId))
                 continue;
-            
+
             list.Add(recipe);
         }
 
@@ -158,25 +190,52 @@ public class InventoryService
 
     public void AddRecipe(Recipe recipe)
     {
-        int index = recipes.IndexOf(recipe);
-        if (index > -1)
+        recipe.Guid = Guid.NewGuid();
+        recipes.Add(recipe);
+        DB.AddRecord(new StoreRecord<Recipe>()
         {
-            recipes[index] = recipe;
-        }
-        else
-        {
-            recipes.Add(recipe);
-        }
+            Storename = IndexedDB.Recipes,
+            Data = recipe
+        });
 
         // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW Recipe for: {recipe.ResultId} ID: {2}");
 
-            OnRecipesChange?.Invoke();
+        OnRecipesChange?.Invoke();
     }
-    
-    public void RemoveRecipe(Recipe recipe)
-    {
-        recipes.Remove(recipe);
 
+    public bool TryUpdateRecipe(Guid guid, Recipe recipe)
+    {
+        int index = recipes.IndexOf(recipe);
+        if (index < 0)
+            return false;
+
+        recipes[index] = recipe;
+        DB.UpdateRecord(new StoreRecord<Recipe>()
+        {
+            Storename = IndexedDB.Recipes,
+            Data = recipe
+        });
+
+        OnRecipesChange?.Invoke();
+        return true;
+    }
+
+    public bool TryRemoveRecipe(Recipe recipe)
+    {
+        bool resp = recipes.Remove(recipe);
+        if (resp)
+        {
+            DB.DeleteRecord(IndexedDB.Recipes, recipe.Guid);
+            OnRecipesChange?.Invoke();
+        }
+
+        return resp;
+    }
+
+    public void ClearAllRecipes()
+    {
+        recipes.Clear();
+        DB.ClearStore(IndexedDB.Recipes);
         OnRecipesChange?.Invoke();
     }
 
@@ -204,7 +263,10 @@ public class InventoryService
 
     public void SerialiseToJSON(object data)
     {
-        string json = JsonSerializer.Serialize(data, jsonSerializerOptions);
+        string json = JsonSerializer.Serialize(data, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+        });
         Console.WriteLine(json);
     }
 }

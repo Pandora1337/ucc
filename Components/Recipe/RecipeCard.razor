@@ -39,11 +39,11 @@
         </div>
     }
 
-    @if (recipe.PortionSize > 0)
+    @if (recipe.BatchSize > 0)
     {
         <div class="d-flex justify-content-between mb-2">
             <span class="text-muted">Crafts per batch:</span>
-            <span>@recipe.PortionSize</span>
+            <span>@recipe.BatchSize</span>
         </div>
     }
 
@@ -87,7 +87,7 @@
 
     private async Task RemoveRecipe()
     {
-        IS.RemoveRecipe(recipe);
+        IS.TryRemoveRecipe(recipe);
         await modal.CloseAsync();
     }
 

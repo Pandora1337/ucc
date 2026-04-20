@@ -8,7 +8,10 @@
 
 @inject ucc.Services.InventoryService IS;
 
-<h2>Items:</h2>
+<div class="d-flex justify-content-between">
+    <h2>Items:</h2>
+    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => IS.ClearAllItems())">CLEAR ITEMS</button>
+</div>
 <div class="d-grid justify-content-sm-start justify-content-center g-3 gap-3 mb-3"
      style="grid-template-columns: repeat(auto-fit, 128px);">
     <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenItemModal())" />
@@ -16,7 +19,10 @@
               OnItemClicked="@(async (e) => await OpenItemModal(e))" />
 </div>
 
-<h2>Recipes:</h2>
+<div class="d-flex justify-content-between">
+    <h2>Recipes:</h2>
+    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => IS.ClearAllRecipes())">CLEAR RECIPES</button>
+</div>
 <div class="mb-3">
     <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenRecipeModal())" />
 </div>
@@ -25,7 +31,7 @@
     @foreach (Recipe recipe in IS.GetRecipes())
     {
         <div class="col-12 col-lg-6 col-xxl-4">
-        <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeModal(recipe))" />
+            <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeModal(recipe))" />
         </div>
     }
 </div>

@@ -4,23 +4,17 @@ using ucc.Services;
 
 namespace ucc.Models;
 
-public partial class Item(string name, string color = "") : IValidatableObject
+public partial class Item(string name) : IValidatableObject
 {
-    [GeneratedRegex(@"[^a-z0-9]", RegexOptions.None)]
-    private static partial Regex RegexSymbols();
-
-    [GeneratedRegex(@"-+", RegexOptions.None)]
-    private static partial Regex RegexDashes();
-
     public static readonly string DefaultName = "New Item";
 
-    public string Id { get; } = NameToId(name);
+    public string Id { get; set; } = NameToId(name);
 
     [Required(ErrorMessage = "Name can't be empty!")]
-    [StringLength(100, ErrorMessage = "Name is too long!")]
+    [StringLength(200, ErrorMessage = "Name is too long!")]
     public string Name { get; set; } = name;
 
-    private string colorHex = color;
+    private string colorHex = "";
     public string ColorHex
     {
         get
@@ -33,7 +27,7 @@ public partial class Item(string name, string color = "") : IValidatableObject
         }
     }
 
-    public DateTime CreatedAt { get; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     private string GetHashedColor()
     {
@@ -44,6 +38,12 @@ public partial class Item(string name, string color = "") : IValidatableObject
         byte b = (byte)((hash >> 16) & 0xFF);
         return $"#{r:X2}{g:X2}{b:X2}";
     }
+
+    [GeneratedRegex(@"[^a-z0-9]", RegexOptions.None)]
+    private static partial Regex RegexSymbols();
+
+    [GeneratedRegex(@"-+", RegexOptions.None)]
+    private static partial Regex RegexDashes();
 
     // ID-ify Name
     public static string NameToId(string str)

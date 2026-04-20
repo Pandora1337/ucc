@@ -39,7 +39,8 @@
                         @if (recipe.StationId == "")
                         {
                             <div class="d-flex justify-content-left">
-                                <button type="button" @onclick="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
+                                <button type="button"
+                                        @onclick="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
                                         class="btn btn-primary">
                                     + Add Station
                                 </button>
@@ -55,16 +56,16 @@
 
                     <div class="col-sm-6" title="Time it takes to complete this recipe, in seconds">
                         <label class="form-label">Crafting time (seconds):</label>
-                        <InputNumber TValue="int?" class="form-control" min="0" max="2147483647"
+                        <InputNumber TValue="float?" class="form-control" min="0" max="@float.MaxValue"
                                      placeholder="Crafting Time in Seconds" @bind-Value="recipe.CraftingTime" />
                         <ValidationMessage For="@(() => recipe.CraftingTime)" />
                     </div>
 
                     <div class="col-sm-6" title="How many recipes can you make at the same time?">
                         <label class="form-label">Batch size:</label>
-                        <InputNumber TValue="int?" class="form-control" placeholder="Batch Size" min="0"
-                                     max="2147483647" type="range" @bind-Value="recipe.PortionSize" />
-                        <ValidationMessage For="@(() => recipe.PortionSize)" />
+                        <InputNumber TValue="int?" class="form-control" min="0" max="@int.MaxValue"
+                                     placeholder="Batch Size" type="range" @bind-Value="recipe.BatchSize" />
+                        <ValidationMessage For="@(() => recipe.BatchSize)" />
                     </div>
                 </div>
             </div>
@@ -196,7 +197,15 @@
 
     private async Task AddRecipe()
     {
+        if (recipe.Guid == Guid.Empty)
+    {
         IS.AddRecipe(recipe);
+        }
+        else
+        {
+            IS.TryUpdateRecipe(recipe.Guid, recipe);
+        }
+
         await RecipeAdded();
     }
 

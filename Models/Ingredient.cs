@@ -2,9 +2,9 @@ namespace ucc.Models;
 
 public class Ingredient(
     string itemId = "",
-    int amount = 1
+    float amount = 1
     )
 {
-    public string ItemId = itemId;
-    public int Amount = amount;
+    public string ItemId { get; set; } = itemId;
+    public float Amount { get; set; } = amount;
 }

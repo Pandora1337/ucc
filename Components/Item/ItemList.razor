@@ -118,7 +118,7 @@
         IS.TryRemoveItem(selectedItem);
         foreach (Recipe recipe in recipes)
         {
-            IS.RemoveRecipe(recipe);
+            IS.TryRemoveRecipe(recipe);
         }
 
         await CloseModal();

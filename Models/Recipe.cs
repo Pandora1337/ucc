@@ -3,35 +3,30 @@ using ucc.Services;
 
 namespace ucc.Models;
 
-public partial class Recipe(
-    string resultId,
-    int yield,
-    List<Ingredient> ingredients,
-    string stationId = "",
-    int? portionSize = 0,
-    int? craftingTime = 0
-    ) : IValidatableObject
+public partial class Recipe : IValidatableObject
 {
-    public string ResultId { get; set; } = resultId;
+    public string ResultId { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Has to be more than 1!")]
-    [Range(1, int.MaxValue)]
-    public int Yield { get; set; } = yield;
+    [Required(ErrorMessage = "Has to be more than 0!")]
+    [Range(0, float.MaxValue)]
+    public float Yield { get; set; } = 1;
 
-    public List<Ingredient> Ingredients { get; set; } = ingredients;
-    public string StationId { get; set; } = stationId;
-
-    [Range(0, int.MaxValue)]
-    public int? PortionSize { get; set; } = portionSize;
+    public List<Ingredient> Ingredients { get; set; } = [];
+    public string StationId { get; set; } = string.Empty;
 
     [Range(0, int.MaxValue)]
-    public int? CraftingTime { get; set; } = craftingTime;
+    public int? BatchSize { get; set; }
 
-    public DateTime CreatedAt { get; } = DateTime.Now;
+    [Range(0, float.MaxValue)]
+    public float? CraftingTime { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+    public Guid Guid { get; set; }
 
     static public Recipe GetNew()
     {
-        return new("", 1, []);
+        return new Recipe{ };
     }
 
     public bool ContainsItemId(string itemId)
