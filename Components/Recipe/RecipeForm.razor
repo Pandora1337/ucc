@@ -17,13 +17,13 @@
             <h3>Result:</h3>
             @if (recipe.ResultId == "")
             {
-                <BtnAdd OnClicked="@(() => { ModalItemPickerOpen(PickerContext.RESULT); })"
+                <BtnAdd OnClicked="@(async () => await ModalItemPickerOpen(PickerContext.RESULT))"
                         style="height: 96px; width: 250px;" />
             }
             else
             {
                 <RecipeIngredient ItemId="@recipe.ResultId" @bind-Quantity="recipe.Yield"
-                                  OnIconClicked="@(() => { ModalItemPickerOpen(PickerContext.RESULT); })" />
+                                  OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.RESULT))" />
                 <ValidationMessage For="@(() => recipe.Yield)" />
             }
             <ValidationMessage For="@(() => recipe.ResultId)" />
@@ -39,7 +39,7 @@
                         @if (recipe.StationId == "")
                         {
                             <div class="d-flex justify-content-left">
-                                <button type="button" @onclick="@(() => { ModalItemPickerOpen(PickerContext.STATION); })"
+                                <button type="button" @onclick="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
                                         class="btn btn-primary">
                                     + Add Station
                                 </button>
@@ -48,7 +48,7 @@
                         else
                         {
                             <RecipeIngredient ItemId="@recipe.StationId" EnableInput="false" IconSize="32px"
-                                              OnIconClicked="@(() => { ModalItemPickerOpen(PickerContext.STATION); })"
+                                              OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
                                               OnBtnClicked="@(() => { recipe.StationId = ""; })" EnableBtn="true" />
                         }
                     </div>
@@ -74,7 +74,7 @@
             <h3>Ingredients:</h3>
 
             <button type="button" class="btn btn-primary mb-3"
-                    @onclick="@(() => { ModalItemPickerOpen(PickerContext.INGREDIENT, recipe.Ingredients.Count + 1); })">
+                    @onclick="@(async () => await ModalItemPickerOpen(PickerContext.INGREDIENT, recipe.Ingredients.Count + 1))">
                 + Add Ingredient
             </button>
 
@@ -84,11 +84,11 @@
                 <div class="row g-2">
                     @for (int i = 0; i < recipe.Ingredients.Count; i++)
                     {
-                        int index = i;
-                        <div class="col-12 col-md-6">
+                        int index = i; // DOESNT WORK OTHERWISE!
+                        <div class="col-12 col-sm-6 col-lg-4">
                             <RecipeIngredient @key="@recipe.Ingredients[index].ItemId"
                                               @bind-Quantity="recipe.Ingredients[index].Amount" ItemId="@recipe.Ingredients[index].ItemId"
-                                              OnIconClicked="@(() => { ModalItemPickerOpen(PickerContext.INGREDIENT, index); })"
+                                              OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.INGREDIENT, index))"
                                               OnBtnClicked="@(() => { recipe.Ingredients.RemoveAt(index); })" EnableBtn="true" />
                         </div>
                     }
@@ -130,7 +130,7 @@
             
             if (recipe.ResultId == "")
             {
-                ModalItemPickerOpen(PickerContext.RESULT);
+                await ModalItemPickerOpen(PickerContext.RESULT);
             }
 
             StateHasChanged();
@@ -140,7 +140,7 @@
     private enum PickerContext { RESULT, STATION, INGREDIENT }
     private PickerContext context;
     private int pickerIndex;
-    private void ModalItemPickerOpen(PickerContext newContext, int ingredientIndex = -1)
+    private async Task ModalItemPickerOpen(PickerContext newContext, int ingredientIndex = -1)
     {
         context = newContext;
         pickerIndex = ingredientIndex;
@@ -148,15 +148,15 @@
         switch (context)
         {
             case PickerContext.RESULT:
-                modalItemPicker.OpenAsync("Choose the Product").ConfigureAwait(false);
+                await modalItemPicker.OpenAsync("Choose the Product");
                 break;
 
             case PickerContext.STATION:
-                modalItemPicker.OpenAsync("Choose the Station").ConfigureAwait(false);
+                await modalItemPicker.OpenAsync("Choose the Station");
                 break;
 
             case PickerContext.INGREDIENT:
-                modalItemPicker.OpenAsync("Choose an Item").ConfigureAwait(false);
+                await modalItemPicker.OpenAsync("Choose an Item");
                 break;
         }
     }
