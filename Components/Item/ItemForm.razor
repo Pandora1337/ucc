@@ -19,18 +19,25 @@
 
     <InputFile id="file-input" OnChange="OnFileSelected" accept="image/*" class="d-none" />
 
-    <EditForm EditContext="editContext" OnValidSubmit="OnSubmit">
+    <EditForm EditContext="editContext" OnSubmit="OnSubmit">
         <DataAnnotationsValidator />
+
         <div class="input-group input-group-sm pt-3">
-
             <InputText @ref="inputText" id="text-input" class="form-control" @bind-Value="Item.Name"
-                       placeholder="New Item" aria-required="true" style="width: clamp(30px, 70%, 70%);" />
+                       placeholder="New Item" title="Choose Item Name" aria-required="true"
+                       style="width: clamp(30px, 70%, 70%);" />
 
-            <button type="submit" class="btn btn-primary" style="width: clamp(20px, 30%, 30%);">Add</button>
+            <input type="color" class="form-control form-control-color" style="width: clamp(20px, 30%, 30%);"
+                   title="Choose Item Color" @bind-value="@Item.ColorHex" />
         </div>
 
-        <ValidationMessage For="@(() => Item.Name)" />
+        <div class="pt-1">
+            <ValidationMessage For="@(() => Item.Name)" />
+        </div>
 
+        <div class="pt-2 w-100">
+            <button type="submit" class="btn btn-primary w-100">@(Item.Id == string.Empty ? "Add" : "Update")</button>
+        </div>
     </EditForm>
 </div>
 
@@ -45,7 +52,7 @@
         await inputText.Element!.Value.FocusAsync();
     }
 
-    private EditContext? editContext;
+    private EditContext editContext = default!;
     protected override void OnInitialized()
     {
         editContext = new(Item);
@@ -54,18 +61,23 @@
 
     private async Task OnSubmit()
     {
-        if (Item.Id != "")
+        bool resp = false;
+        if (Item.Id == string.Empty)
         {
-            IS.TryUpdateItem(Item.Id, Item);
+            if (!editContext.Validate())
+                return;
+
+            Item.Id = Item.NameToId(Item.Name);
+            resp = IS.TryAddItem(Item);
         }
         else
         {
-            IS.TryAddItem(Item.Name);
+            resp = IS.TryUpdateItem(Item.Id, Item);
         }
 
-        if (OnItemAdded.HasDelegate)
+        if (resp && OnItemAdded.HasDelegate)
         {
-            await OnItemAdded.InvokeAsync(Item.NameToId(Item.Name));
+            await OnItemAdded.InvokeAsync(Item.Id);
         }
     }
 
