@@ -7,9 +7,11 @@ namespace ucc.Services;
 
 public class InventoryService
 {
-    public event Action? OnItemsChange;
-    public event Action<string>? OnItemRemoved;
-    public event Action? OnRecipesChange;
+    public event Action? OnItemListChange;
+    public event Action<string>? OnItemUpdate;
+
+    public event Action? OnRecipeListChange;
+    public event Action<Guid>? OnRecipeUpdate;
 
     private Dictionary<string, Item> items = [];
     private List<Recipe> recipes = [];
@@ -28,11 +30,11 @@ public class InventoryService
         // Get all items
         List<Item> itemList = await DB.GetRecords<Item>(IndexedDB.Items);
         items = itemList.ToDictionary(x => x.Id);
-        OnItemsChange?.Invoke();
+        OnItemListChange?.Invoke();
 
         // Get all recipes
         recipes = await DB.GetRecords<Recipe>(IndexedDB.Recipes);
-        OnRecipesChange?.Invoke();
+        OnRecipeListChange?.Invoke();
 
         if (items.Count == 0 && recipes.Count == 0)
         {
@@ -93,7 +95,7 @@ public class InventoryService
                 Data = newItem
             });
 
-            OnItemsChange?.Invoke();
+            OnItemListChange?.Invoke();
         }
 
         // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW ITEM: {newItem.Name} ID: {newItem.Id}");
@@ -113,7 +115,7 @@ public class InventoryService
                 Data = newItem
             });
 
-            OnItemsChange?.Invoke();
+            OnItemUpdate?.Invoke(id);
         }
 
         return resp;
@@ -130,8 +132,7 @@ public class InventoryService
         if (resp)
         {
             DB.DeleteRecord<string>(IndexedDB.Items, itemId);
-            OnItemRemoved?.Invoke(itemId);
-            OnItemsChange?.Invoke();
+            OnItemListChange?.Invoke();
         }
 
         return resp;
@@ -141,7 +142,7 @@ public class InventoryService
     {
         items.Clear();
         DB.ClearStore(IndexedDB.Items);
-        OnItemsChange?.Invoke();
+        OnItemListChange?.Invoke();
     }
 
     public bool ContainsItemId(string id)
@@ -200,7 +201,7 @@ public class InventoryService
 
         // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW Recipe for: {recipe.ResultId} ID: {2}");
 
-        OnRecipesChange?.Invoke();
+        OnRecipeListChange?.Invoke();
     }
 
     public bool TryUpdateRecipe(Guid guid, Recipe recipe)
@@ -216,7 +217,7 @@ public class InventoryService
             Data = recipe
         });
 
-        OnRecipesChange?.Invoke();
+        OnRecipeUpdate?.Invoke(guid);
         return true;
     }
 
@@ -226,7 +227,7 @@ public class InventoryService
         if (resp)
         {
             DB.DeleteRecord(IndexedDB.Recipes, recipe.Guid);
-            OnRecipesChange?.Invoke();
+            OnRecipeListChange?.Invoke();
         }
 
         return resp;
@@ -236,7 +237,7 @@ public class InventoryService
     {
         recipes.Clear();
         DB.ClearStore(IndexedDB.Recipes);
-        OnRecipesChange?.Invoke();
+        OnRecipeListChange?.Invoke();
     }
 
     // public Recipe GetRecipeById(string id)

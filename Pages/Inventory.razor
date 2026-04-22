@@ -35,7 +35,7 @@
     @foreach (Recipe recipe in IS.GetRecipes())
     {
         <div class="col-12 col-lg-6 col-xxl-4">
-            <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeModal(recipe))" />
+            <RecipeCard @key="recipe.Guid" recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeModal(recipe))" />
         </div>
     }
 </div>
@@ -53,13 +53,15 @@
 </Modal>
 
 @code {
-    protected override void OnInitialized() => IS.OnRecipesChange += StateHasChanged;
-    public void Dispose() => IS.OnRecipesChange -= StateHasChanged;
+    protected override void OnInitialized()
+    {
+        IS.OnRecipeListChange += StateHasChanged;
+    }
 
-    private Modal modalAddItem = null!;
-    private Item modalItem = null!;
-    private Modal modalAddRecipe = null!;
-    private Recipe modalRecipe = null!;
+    public void Dispose()
+    {
+        IS.OnRecipeListChange -= StateHasChanged;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -70,12 +72,16 @@
         }
     }
 
+    private Item modalItem = null!;
+    private Modal modalAddItem = null!;
     private async Task OpenItemModal(string itemId = "")
     {
         modalItem = itemId == "" ? new("") : IS.GetItem(itemId);
         await modalAddItem.OpenAsync();
     }
 
+    private Recipe modalRecipe = null!;
+    private Modal modalAddRecipe = null!;
     private async Task OpenRecipeModal(Recipe recipe = null!)
     {
         modalRecipe = recipe == null ? Recipe.GetNew() : recipe;

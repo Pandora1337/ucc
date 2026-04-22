@@ -83,8 +83,18 @@
     [Parameter] public Recipe recipe { get; set; } = null!;
     [Parameter] public EventCallback<Recipe> OnRecipeClick { get; set; }
 
-    private Modal modal = null!;
+    protected override void OnInitialized() => IS.OnRecipeUpdate += OnRecipeUpdated;
+    public void Dispose() => IS.OnRecipeUpdate -= OnRecipeUpdated;
 
+    private void OnRecipeUpdated(Guid id)
+    {
+        if (id != recipe.Guid)
+            return;
+
+        StateHasChanged();
+    }
+
+    private Modal modal = null!;
     private async Task RemoveRecipe()
     {
         IS.TryRemoveRecipe(recipe);

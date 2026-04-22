@@ -87,8 +87,8 @@
 
     private Modal modal = null!;
 
-    protected override void OnInitialized() => IS.OnItemsChange += StateHasChanged;
-    public void Dispose() => IS.OnItemsChange -= StateHasChanged;
+    protected override void OnInitialized() => IS.OnItemListChange += StateHasChanged;
+    public void Dispose() => IS.OnItemListChange -= StateHasChanged;
 
     private async Task ItemClicked(string itemId)
     {

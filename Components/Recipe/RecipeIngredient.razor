@@ -59,9 +59,6 @@
     [Parameter] public Item Item { get; set; } = null!;
     [Parameter] public string ItemId { get; set; } = "";
 
-    protected override void OnInitialized() => IS.OnItemsChange += StateHasChanged;
-    public void Dispose() => IS.OnItemsChange -= StateHasChanged;
-
     protected override async Task OnParametersSetAsync()
     {
         if (!string.IsNullOrEmpty(ItemId) && (Item == null || Item.Id != ItemId))
@@ -69,6 +66,17 @@
             Item = IS.GetItem(ItemId);
             StateHasChanged();
         }
+    }
+
+    protected override void OnInitialized() => IS.OnItemUpdate += OnItemUpdated;
+    public void Dispose() => IS.OnItemUpdate -= OnItemUpdated;
+
+    private void OnItemUpdated(string id)
+    {
+        if (id != Item.Id)
+            return;
+
+        StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
