@@ -1,14 +1,3 @@
-.solid-border {
-    border: solid;
-}
-
-.center {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: 16px;
-}
-
 .btn-bg {
     top: 8px;
     right: 6px;

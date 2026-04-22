@@ -11,11 +11,6 @@
     <div class="bg-white">
         <div class="btn-bg position-absolute bg-white"></div>
     </div>
-
-    <BtnDelete OnDelete="@(() => OnClick())" style="right: 48px;" cClass="btn-outline-primary">
-        <img src="icons/pencil-square.svg" class="center" />
-    </BtnDelete>
-    <BtnDelete OnDelete="@(async () => { await modal.OpenAsync(); })">X</BtnDelete>
     
     <div>
         <RecipeIngredient style="background-color: white !important; border: 0px !important; padding: 0px !important;"
@@ -59,28 +54,13 @@
         <span class="text-muted">Created at:</span>
         <span>@recipe.CreatedAt.ToString("hh:mm tt, dd/MM/yyyy")</span>
     </div>
+
+    @ChildContent
 </div>
-
-<Modal @ref="modal" Title="Delete Recipe">
-    <div class="modal-body">
-        <p class="text-body text-center m-0">
-            <strong>Are you sure you want to delete this recipe?</strong>
-        </p>
-    </div>
-
-    <div class="modal-footer flex-nowrap">
-        <button type="button" class="btn btn-lg btn-secondary w-50" @onclick="@modal.CloseAsync">
-            Cancel
-        </button>
-        
-        <button type="button" class="btn btn-lg btn-danger w-50" @onclick="RemoveRecipe">
-            Delete Item
-        </button>
-    </div>
-</Modal>
 
 @code {
     [Parameter] public Recipe recipe { get; set; } = null!;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback<Recipe> OnRecipeClick { get; set; }
 
     protected override void OnInitialized() => IS.OnRecipeUpdate += OnRecipeUpdated;
@@ -92,13 +72,6 @@
             return;
 
         StateHasChanged();
-    }
-
-    private Modal modal = null!;
-    private async Task RemoveRecipe()
-    {
-        IS.TryRemoveRecipe(recipe);
-        await modal.CloseAsync();
     }
 
     @* protected override void OnInitialized()

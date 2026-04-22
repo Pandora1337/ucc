@@ -28,10 +28,13 @@
 
 <div class="d-grid gap-2 py-3 px-2 overflow-scroll h-100 item-list">
     <div>
-        <BtnAdd OnClicked="@(async () => { await modalItemAdd.OpenAsync(); })" style="max-height: 150px; height: 100%; width: 100%;" />
+        <BtnAdd OnClicked="@(async () => { await modalItemAdd.OpenAsync(); })" style="max-height: 160px; height: 100%; width: 100%;" />
     </div>
 
-    <ItemList OnItemClicked="ItemPicked" IconSize="80px" Itemlist="filteredItems.ToList()" />
+    @foreach (Item item in filteredItems)
+    {
+        <ItemCard @key="item.Id" IconSize="80px" Item="item" OnItemClicked="@(async () => await ItemPicked(item.Id))" style="max-height: 160px;"/>
+    }
 </div>
 
 <Modal @ref="modalItemAdd" Title="Add New Item">

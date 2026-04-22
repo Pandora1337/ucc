@@ -1,0 +1,69 @@
+@using System.Threading.Tasks
+@using ucc.Components.BtnDelete
+@using ucc.Components.Modal
+@using ucc.Models
+
+@namespace ucc.Components.Item
+
+@inject ucc.Services.InventoryService IS
+<button class="btn-custom w-100 h-100 rounded-2 item-card @cClass" style="@style" @key="@Item.Id" title="@Item.Name"
+        @onclick="@(() => ItemClicked(Item.Id))">
+    <div class="d-flex flex-column w-100 h-100">
+    
+        <div class="flex-grow-0">
+            <ItemIcon Item="@Item" Size="@IconSize" />
+        </div>
+
+        <div class="flex-grow-1 p-sm-1 p-2 d-flex flex-column">
+            <h5 class="text-truncate text-wrap m-0 flex-grow-1 text-height">@Item.Name</h5>
+        
+            @if (ShowItemDate)
+            {
+                <span class="text-wrap text-truncate text-muted fst-italic flex-shrink-1 pt-2">
+                    Created at: @Item.CreatedAt.ToString("hh:mm tt, dd/MM/yyyy")
+                </span>
+            }
+            
+            @ChildContent
+        </div>
+    </div>
+</button>
+
+@code {
+    [Parameter] public EventCallback<string> OnItemClicked { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string IconSize { get; set; } = "64px";
+    [Parameter] public bool ShowItemDate { get; set; } = false;
+    [Parameter] public string cClass { get; set; } = "";
+    [Parameter] public string style { get; set; } = "";
+
+    [Parameter] public Item Item { get; set; } = null!;
+    [Parameter] public string ItemId { get; set; } = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ItemId) && (Item == null || Item.Id != ItemId))
+        {
+            Item = IS.GetItem(ItemId);
+        }
+    }
+
+    protected override void OnInitialized() => IS.OnItemUpdate += OnItemUpdated;
+    public void Dispose() => IS.OnItemUpdate -= OnItemUpdated;
+
+    private void OnItemUpdated(string id)
+    {
+        if (id != Item.Id)
+            return;
+
+        StateHasChanged();
+    }
+
+    private async Task ItemClicked(string itemId)
+    {
+        if (OnItemClicked.HasDelegate)
+        {
+            await OnItemClicked.InvokeAsync(itemId);
+        }
+    }
+}

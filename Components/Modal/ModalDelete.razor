@@ -1,0 +1,47 @@
+@namespace ucc.Components.Modal
+
+<Modal @ref="modal" Title="Confirm Deletion">
+    <div class="modal-body">
+        <p class="text-body text-center m-0">
+            <strong>Are you sure you want to delete this @Subject.ToLower()?</strong>
+        </p>
+
+        @ChildContent
+    </div>
+
+    <div class="modal-footer flex-nowrap">
+        <button type="button" class="btn btn-lg btn-secondary w-50" @onclick="@modal.CloseAsync">
+            Cancel
+        </button>
+
+        <button type="button" class="btn btn-lg btn-danger w-50" @onclick="@OnDeleteClick">
+            Delete
+        </button>
+    </div>
+</Modal>
+
+@code {
+    [Parameter] public string Subject { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    private Modal modal = null!;
+
+    public async Task OpenAsync()
+    {
+        await modal.OpenAsync();
+    }
+
+    public async Task CloseAsync()
+    {
+        await modal.CloseAsync();
+    }
+
+    private async Task OnDeleteClick()
+    {
+        await modal.CloseAsync();
+        if (OnDelete.HasDelegate)
+        {
+            await OnDelete.InvokeAsync();
+        }
+    }
+}

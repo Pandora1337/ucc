@@ -23,21 +23,8 @@ a, .btn-link {
 */
 
 .btn-custom {
-  appearance: none;
-  -webkit-appearance: none;
-  border: none;
-  outline: none;
-  padding: 0;
-  margin: 0;
-  font: inherit;
-  line-height: inherit;
-  background: inherit;
-  text-align: inherit;
-  vertical-align: inherit;
-  box-sizing: inherit;
-  display: inherit;
-  line-height: inherit;
-  align-items: inherit;
+    all: unset;
+    cursor: pointer;
 }
 
 .content {

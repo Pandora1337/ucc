@@ -1,0 +1,23 @@
+.item-card {
+    background: #f8f9fa;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    container-type: inline-size;
+}
+
+.item-card:focus,
+.item-card:hover {
+    background: rgba(var(--bs-primary-rgb), 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    transform: scale(1.03);
+}
+
+.text-height {
+    max-height: calc(1.25em * 3);
+    font-size: clamp(1.1rem, 13cqw, 3rem);
+    word-wrap: break-word;
+    /* word-break: keep-all; */
+
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}

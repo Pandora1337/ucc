@@ -4,41 +4,59 @@
 @using ucc.Components.Item;
 @using ucc.Components.Recipe;
 @using ucc.Components.BtnAdd;
+@using ucc.Components.BtnDelete;
 @using ucc.Components.Modal;
 
 @inject ucc.Services.InventoryService IS;
 
 <div class="w-100 text-center">
-<button class="btn btn-danger" @onclick="@(async () => await IS.ClearDB())">CLEAR DATABASE</button>
+    <button class="btn btn-danger" @onclick="@(async () => await IS.ClearDB())">CLEAR DATABASE</button>
 </div>
 
 <div class="d-flex justify-content-between">
     <h2>Items:</h2>
     <button class="btn btn-sm btn-danger h-100" @onclick="@(() => IS.ClearAllItems())">CLEAR ITEMS</button>
 </div>
+
 <div class="d-grid justify-content-sm-start justify-content-center g-3 gap-3 mb-3"
      style="grid-template-columns: repeat(auto-fit, 128px);">
-    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenItemModal())" />
-    <ItemList IconSize="128px" ShowItemName="true" ShowItemDate="true" ShowBtnDelete="true"
-              OnItemClicked="@(async (e) => await OpenItemModal(e))" Itemlist="IS.GetItems().Values.ToList()" />
+    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenItemAddModal())" />
+    
+    @foreach (Item item in IS.GetItems().Values.ToList())
+    {
+        <ItemCard @key="item.Id" Item="item" IconSize="128px" cClass="position-relative"
+                  OnItemClicked="@(async () => await OpenItemAddModal(item))" ShowItemDate="true">
+            <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(item))">X</BtnDelete>
+        </ItemCard>
+    }
 </div>
+
 
 <div class="d-flex justify-content-between">
     <h2>Recipes:</h2>
     <button class="btn btn-sm btn-danger h-100" @onclick="@(() => IS.ClearAllRecipes())">CLEAR RECIPES</button>
 </div>
+
 <div class="mb-3">
-    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenRecipeModal())" />
+    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenRecipeAddModal())" />
 </div>
     
 <div class="row g-3 mb-3">
     @foreach (Recipe recipe in IS.GetRecipes())
     {
-        <div class="col-12 col-lg-6 col-xxl-4">
-            <RecipeCard @key="recipe.Guid" recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeModal(recipe))" />
+        <div @key="recipe.Guid" class="col-12 col-lg-6 col-xxl-4">
+            <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))">
+                <BtnDelete OnDelete="@(async () => await OpenRecipeAddModal(recipe))" style="right: 48px;"
+                           cClass="btn-outline-primary">
+                    <img src="icons/pencil-square.svg" class="centered-icon" />
+                </BtnDelete>
+
+                <BtnDelete OnDelete="@(async () => await OpenRecipeDeleteModal(recipe))">X</BtnDelete>
+            </RecipeCard>
         </div>
     }
 </div>
+
 
 <Modal @ref="modalAddItem" Title="Add New Item">
     <div class="modal-body">
@@ -52,15 +70,42 @@
     </div>
 </Modal>
 
+<ModalDelete @ref="modalDeleteItem" Subject="Item" OnDelete="ItemRemove">
+    @if (deleteRecipes.Count > 0)
+    {
+        <p class="mt-2 text-danger m-0">
+            This action will also delete the following recipes:
+        </p>
+        
+        <ul class="list-group">
+            @foreach (Recipe recipe in deleteRecipes)
+            {
+                <li class="list-group-item">
+                    <ItemBadge ItemId="@recipe.ResultId" Amount="@recipe.Yield" />
+                    =
+                    @foreach (Ingredient ingr in recipe.Ingredients)
+                    {
+                        <ItemBadge ItemId="@ingr.ItemId" Amount="@ingr.Amount" />
+                    }
+                </li>
+            }
+        </ul>
+    }
+</ModalDelete>
+
+<ModalDelete @ref="modalDeleteRecipe" Subject="Recipe" OnDelete="RecipeRemove" />
+
 @code {
     protected override void OnInitialized()
     {
         IS.OnRecipeListChange += StateHasChanged;
+        IS.OnItemListChange += StateHasChanged;
     }
 
     public void Dispose()
     {
         IS.OnRecipeListChange -= StateHasChanged;
+        IS.OnItemListChange -= StateHasChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -74,17 +119,52 @@
 
     private Item modalItem = null!;
     private Modal modalAddItem = null!;
-    private async Task OpenItemModal(string itemId = "")
+    private ModalDelete modalDeleteItem = null!;
+    private List<Recipe> deleteRecipes = [];
+    private async Task OpenItemAddModal(Item item = null!)
     {
-        modalItem = itemId == "" ? new("") : IS.GetItem(itemId);
+        modalItem = item == null ? new("") : item;
         await modalAddItem.OpenAsync();
     }
 
+    private async Task OpenItemDeleteModal(Item item)
+    {
+        deleteRecipes = IS.RecipesWithItem(item.Id);
+        modalItem = item;
+        await modalDeleteItem.OpenAsync();
+    }
+
+    private async Task ItemRemove()
+    {
+        IS.TryRemoveItem(modalItem.Id);
+        foreach (Recipe recipe in deleteRecipes)
+        {
+            IS.TryRemoveRecipe(recipe);
+        }
+
+        modalItem = null!;
+        deleteRecipes = [];
+    }
+
+
     private Recipe modalRecipe = null!;
     private Modal modalAddRecipe = null!;
-    private async Task OpenRecipeModal(Recipe recipe = null!)
+    private ModalDelete modalDeleteRecipe = null!;
+    private async Task OpenRecipeAddModal(Recipe recipe = null!)
     {
         modalRecipe = recipe == null ? Recipe.GetNew() : recipe;
         await modalAddRecipe.OpenAsync();
+    }
+    
+    private async Task OpenRecipeDeleteModal(Recipe recipe)
+    {
+        modalRecipe = recipe;
+        await modalDeleteRecipe.OpenAsync();
+    }
+
+    private async Task RecipeRemove()
+    {
+        IS.TryRemoveRecipe(modalRecipe);
+        modalRecipe = null!;
     }
 }
