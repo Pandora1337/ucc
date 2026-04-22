@@ -261,6 +261,11 @@ public class InventoryService
         return recipes;
     }
 
+    public async Task ClearDB()
+    {
+        await DB.DeleteDb(DB.DbName);
+    }
+
     public void SerialiseToJSON(object data)
     {
         string json = JsonSerializer.Serialize(data, new JsonSerializerOptions
