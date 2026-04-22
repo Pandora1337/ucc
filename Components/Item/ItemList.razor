@@ -7,29 +7,29 @@
 
 @inject ucc.Services.InventoryService IS;
 
-@foreach (KeyValuePair<string, Item> item in IS.GetItems())
+@foreach (Item item in Itemlist)
 {
     <button class="btn-custom item-element position-relative delete-target w-100 h-100 rounded-2"
-            @key="@item.Key" title="@item.Value.Name" @onclick="@(() => ItemClicked(item.Key))">
+            @key="@item.Id" title="@item.Name" @onclick="@(() => ItemClicked(item.Id))">
 
         @if (ShowBtnDelete)
         {
-            <BtnDelete OnDelete="@(() => OpenModal(item.Key))">X</BtnDelete>
+            <BtnDelete OnDelete="@(() => OpenModal(item.Id))">X</BtnDelete>
         }
 
-        <ItemIcon Item="@item.Value" Size="@IconSize" />
+        <ItemIcon Item="@item" Size="@IconSize" />
 
         @if (ShowItemName)
         {
             <span class="text-wrap text-truncate pt-1 px-2">
-                @item.Value.Name
+                @item.Name
             </span>
         }
 
         @if (ShowItemDate)
         {
             <span class="text-wrap text-truncate text-muted fst-italic pt-1 px-2">
-                Created at: @item.Value.CreatedAt.ToString("hh:mm tt, dd/MM/yyyy")
+                Created at: @item.CreatedAt.ToString("hh:mm tt, dd/MM/yyyy")
             </span>
         }
     </button>
@@ -76,6 +76,7 @@
 
 
 @code {
+    [Parameter] public List<Item> Itemlist { get; set; }
     [Parameter] public string? style { get; set; }
     [Parameter] public string IconSize { get; set; } = "64px";
     [Parameter] public bool ShowItemName { get; set; } = true;

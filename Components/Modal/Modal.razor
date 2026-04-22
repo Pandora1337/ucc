@@ -5,14 +5,12 @@
 @if (isVisible)
 {
     <div class="modal-overlay" @onclick="CloseAsync" tabindex="-1">
-        <div class="modal-container bg-white rounded-3" @onkeydown="HandleKeyDown" @onkeydown:stopPropagation @onclick:stopPropagation
-             tabindex="0" @ref="reference">
+        <div class="modal-container bg-white rounded-3 @(CanScroll ? "overflow-scroll" : "")" tabindex="0"
+             @onkeydown="HandleKeyDown" @onkeydown:stopPropagation @onclick:stopPropagation @ref="reference">
             
             <div class="modal-header">
                 <h4 class="modal-title">@Title</h4>
-                <button type="button" class="btn-close" aria-label="Close"
-                        @onclick="CloseAsync">
-                </button>
+                <button type="button" class="btn-close" aria-label="Close" @onclick="CloseAsync"/>
             </div>
 
             @* <div class="modal-body"> *@
@@ -24,6 +22,7 @@
 
 @code {
     [Parameter] public string Title { get; set; } = "";
+    [Parameter] public bool CanScroll { get; set; } = true;
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnOpen { get; set; }

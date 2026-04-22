@@ -16,7 +16,7 @@
      style="grid-template-columns: repeat(auto-fit, 128px);">
     <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenItemModal())" />
     <ItemList IconSize="128px" ShowItemName="true" ShowItemDate="true" ShowBtnDelete="true"
-              OnItemClicked="@(async (e) => await OpenItemModal(e))" />
+              OnItemClicked="@(async (e) => await OpenItemModal(e))" Itemlist="IS.GetItems().Values.ToList()" />
 </div>
 
 <div class="d-flex justify-content-between">

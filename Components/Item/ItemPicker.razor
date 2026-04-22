@@ -1,29 +1,37 @@
 @using System.Threading.Tasks
 @using ucc.Components.Modal
 @using ucc.Components.BtnAdd
+@using ucc.Models
+@using System.Linq
 
 @namespace ucc.Components.Item
 
-<div class="input-group input-group-sm">
-    <span class="input-group-text bg-white border-end-0">
-        <img src="icons/search.svg" class="text-muted search-icon" draggable="false" fill="currentColor">
-    </span>
+@inject ucc.Services.InventoryService IS
+@inject IJSRuntime JS;
 
-    <InputText @ref="searchText" id="input-search" class="form-control form-control-lg border-start-0 ps-0 shadow-none"
-               @bind-Value="searchString" placeholder="Search Item Name" />
+<div class="input-group input-group-sm">
+    <input type="search" id="search-bar" value="@searchString" autofocus="true"
+           class="input-group input-group-sm form-control form-control-lg rounded-1" @oninput="OnSearchChanged"
+           placeholder="Search..." />
+
+    <label for="search-bar">
+        <img src="icons/search.svg" class="position-absolute top-50 start-0 translate-middle-y mx-2 search-icon"
+             draggable="false">
+    </label>
 
     @if (!string.IsNullOrEmpty(searchString))
     {
-        <button class="btn btn-outline-secondary" type="button">X</button>
+        <button type="button" class="position-absolute top-50 end-0 translate-middle-y btn btn-close btn-clear"
+                @onclick="@(async () => { searchString = ""; await GrabFocus(); })"/>
     }
 </div>
 
-<div class="item-list py-3">
-     <div class="item-element">
-        <BtnAdd OnClicked="@(async () => {await modalItemAdd.OpenAsync(); })" style="height: 100%; width: 100%;" />
+<div class="d-grid gap-2 py-3 px-2 overflow-scroll h-100 item-list">
+    <div>
+        <BtnAdd OnClicked="@(async () => { await modalItemAdd.OpenAsync(); })" style="max-height: 150px; height: 100%; width: 100%;" />
     </div>
 
-    <ItemList OnItemClicked="ItemPicked" IconSize="64px" />
+    <ItemList OnItemClicked="ItemPicked" IconSize="80px" Itemlist="filteredItems.ToList()" />
 </div>
 
 <Modal @ref="modalItemAdd" Title="Add New Item">
@@ -36,12 +44,31 @@
     [Parameter] public EventCallback<string> OnItemPicked { get; set; }
 
     private Modal modalItemAdd = null!;
-    private string searchString = "";
 
-    private InputText searchText = null!;
+    private string searchString { get; set; } = "";
+
+    private List<Item> items = [];
+    private IEnumerable<Item> filteredItems => items.Where(i => string.IsNullOrEmpty(searchString) ||
+            i.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await searchText.Element!.Value.FocusAsync();
+        if (firstRender)
+        {
+            items = IS.GetItems().Values.ToList();
+            await GrabFocus();
+            StateHasChanged();
+        }
+    }
+
+    private async Task GrabFocus()
+    {
+        await JS.InvokeAsync<string>("focusElement", "search-bar");
+    }
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        searchString = e.Value?.ToString() ?? string.Empty;
     }
 
     private async Task ItemPicked(string itemId)
