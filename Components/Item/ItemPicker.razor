@@ -9,13 +9,13 @@
 @inject ucc.Services.InventoryService IS
 @inject IJSRuntime JS;
 
-<div class="input-group input-group-sm">
+<div class="input-group input-group-sm px-3">
     <input type="search" id="search-bar" value="@searchString" autofocus="true"
            class="input-group input-group-sm form-control form-control-lg rounded-1" @oninput="OnSearchChanged"
            placeholder="Search..." />
 
     <label for="search-bar">
-        <img src="icons/search.svg" class="position-absolute top-50 start-0 translate-middle-y mx-2 search-icon"
+        <img src="icons/search.svg" class="position-absolute top-50 start-0 translate-middle-y mx-2 px-3 search-icon"
              draggable="false">
     </label>
 
@@ -26,7 +26,7 @@
     }
 </div>
 
-<div class="d-grid gap-2 py-3 px-2 overflow-scroll h-100 item-list">
+<div class="d-grid gap-2 py-3 overflow-scroll h-100 item-list">
     <div>
         <BtnAdd OnClicked="@(async () => { await modalItemAdd.OpenAsync(); })" style="max-height: 160px; height: 100%; width: 100%;" />
     </div>
