@@ -22,12 +22,12 @@
     <EditForm EditContext="editContext" OnSubmit="OnSubmit">
         <DataAnnotationsValidator />
 
-        <div class="input-group input-group-sm pt-3">
+        <div class="input-group pt-3">
             <InputText @ref="inputText" id="text-input" class="form-control" @bind-Value="Item.Name"
                        placeholder="New Item" title="Choose Item Name" aria-required="true"
-                       style="width: clamp(30px, 70%, 70%);" />
+                       style="" />
 
-            <input type="color" class="form-control form-control-color" style="width: clamp(20px, 30%, 30%);"
+            <input type="color" class="form-control form-control-color flex-grow-0" style="width: 38px"
                    title="Choose Item Color" @bind-value="@Item.ColorHex" />
         </div>
 

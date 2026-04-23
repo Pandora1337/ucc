@@ -9,19 +9,19 @@
 @inject ucc.Services.InventoryService IS
 @inject IJSRuntime JS;
 
-<div class="input-group input-group-sm px-3">
+<div class="input-group px-3">
     <input type="search" id="search-bar" value="@searchString" autofocus="true"
-           class="input-group input-group-sm form-control form-control-lg rounded-1" @oninput="OnSearchChanged"
+           class="input-group form-control form-control-lg rounded-1" @oninput="OnSearchChanged"
            placeholder="Search..." />
 
     <label for="search-bar">
-        <img src="icons/search.svg" class="position-absolute top-50 start-0 translate-middle-y mx-2 px-3 search-icon"
+        <img src="icons/search.svg" class="position-absolute top-50 start-0 translate-middle-y mx-3 px-2 search-icon"
              draggable="false">
     </label>
 
     @if (!string.IsNullOrEmpty(searchString))
     {
-        <button type="button" class="position-absolute top-50 end-0 translate-middle-y btn btn-close btn-clear"
+        <button type="button" class="position-absolute top-50 end-0 translate-middle-y mx-3 px-2 py-0 h-100 btn btn-close btn-clear"
                 @onclick="@(async () => { searchString = ""; await GrabFocus(); })"/>
     }
 </div>
