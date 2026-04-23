@@ -1,3 +1,4 @@
+@using ucc.Components.BtnDelete
 @using ucc.Components.Item
 @using ucc.Models
 
@@ -6,9 +7,9 @@
 @inject ucc.Services.InventoryService IS;
 
 <div class="d-flex p-3 border rounded bg-light" style="@style">
-    <div class="flex-shrink-0 pe-2 icon" @onclick="IconClick">
+    <button class="btn-custom flex-shrink-0 pe-2 icon" @onclick="IconClick">
         <ItemIcon Size="@IconSize" Item="@Item" />
-    </div>
+    </button>
 
     <div class="d-flex flex-grow-1 flex-column justify-content-center w-50">
         <h4 class="mb-1 text-truncate" title="@Item.Name">
@@ -26,9 +27,8 @@
 
     @if (EnableBtn)
     {
-        <button type="button" class="btn btn-danger btn-sm p-0 ms-2 border-0 flex-shrink-0"
-                style="width: 40px; z-index: 10;" title="Remove" @onclick="BtnClick">X
-        </button>
+        <BtnDelete OnDelete="BtnClick" ImgSrc="x-lg.svg" cClass="btn-danger p-0 ms-2 border-0 flex-shrink-0 h-100"
+                   style="position: relative; right: 0; top: 0; z-index: 10;" Size="32px" />
     }
 </div>
 

@@ -26,7 +26,7 @@
     {
         <ItemCard @key="item.Id" Item="item" IconSize="128px" cClass="position-relative"
                   OnItemClicked="@(async () => await OpenItemAddModal(item))" ShowItemDate="true">
-            <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(item))">X</BtnDelete>
+            <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(item))" ImgSrc="trash3.svg" />
         </ItemCard>
     }
 </div>
@@ -46,12 +46,14 @@
     {
         <div @key="recipe.Guid" class="col-12 col-lg-6 col-xxl-4">
             <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))">
-                <BtnDelete OnDelete="@(async () => await OpenRecipeAddModal(recipe))" style="right: 48px;"
-                           cClass="btn-outline-primary">
-                    <img src="icons/pencil-square.svg" class="centered-icon" />
-                </BtnDelete>
+                <div class="bg-white">
+                    <div class="position-absolute bg-white" style="top: 8px; right: 6px; height: 38px; width: 80px;"></div>
+                </div>
 
-                <BtnDelete OnDelete="@(async () => await OpenRecipeDeleteModal(recipe))">X</BtnDelete>
+                <BtnDelete OnDelete="@(async () => await OpenRecipeAddModal(recipe))" style="right: 48px;"
+                           cClass="btn-outline-primary" ImgSrc="pencil-square.svg" Title="Edit" />
+
+                <BtnDelete OnDelete="@(async () => await OpenRecipeDeleteModal(recipe))" ImgSrc="trash3.svg" />
             </RecipeCard>
         </div>
     }

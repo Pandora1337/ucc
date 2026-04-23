@@ -8,10 +8,6 @@
 @inject ucc.Services.InventoryService IS;
 
 <div class="card p-3 delete-target recipe-card">
-    <div class="bg-white">
-        <div class="btn-bg position-absolute bg-white"></div>
-    </div>
-    
     <div>
         <RecipeIngredient style="background-color: white !important; border: 0px !important; padding: 0px !important;"
                           ItemId="@recipe.ResultId" Quantity="@recipe.Yield" DisableInput=true OnIconClicked="@(() => OnClick())" />
