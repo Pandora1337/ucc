@@ -7,15 +7,6 @@ namespace ucc.Services;
 
 public class InventoryService
 {
-    public event Action? OnItemListChange;
-    public event Action<string>? OnItemUpdate;
-
-    public event Action? OnRecipeListChange;
-    public event Action<Guid>? OnRecipeUpdate;
-
-    private Dictionary<string, Item> items = [];
-    private List<Recipe> recipes = [];
-
     private IndexedDBManager DB;
     public InventoryService(IndexedDBManager db)
     {
@@ -33,7 +24,8 @@ public class InventoryService
         OnItemListChange?.Invoke();
 
         // Get all recipes
-        recipes = await DB.GetRecords<Recipe>(IndexedDB.Recipes);
+        List<Recipe> recipeList = await DB.GetRecords<Recipe>(IndexedDB.Recipes);
+        recipes = recipeList.ToDictionary(x => x.Guid);
         OnRecipeListChange?.Invoke();
 
         if (items.Count == 0 && recipes.Count == 0)
@@ -76,6 +68,11 @@ public class InventoryService
         });
     }
 
+    private Dictionary<string, Item> items = [];
+
+    public event Action? OnItemListChange;
+    public event Action<string>? OnItemUpdate;
+
     public bool TryAddItem(string name)
     {
         if (name == "")
@@ -108,25 +105,23 @@ public class InventoryService
 
     public bool TryUpdateItem(string id, Item newItem)
     {
-        bool resp = items.ContainsKey(id);
-        if (resp)
+        if (!items.ContainsKey(id))
+            return false;
+
+        items[id] = newItem;
+        DB.UpdateRecord(new StoreRecord<Item>()
         {
-            items[id] = newItem;
-            DB.UpdateRecord(new StoreRecord<Item>()
-            {
-                Storename = IndexedDB.Items,
-                Data = newItem
-            });
+            Storename = IndexedDB.Items,
+            Data = newItem
+        });
 
-            OnItemUpdate?.Invoke(id);
-        }
-
-        return resp;
+        OnItemUpdate?.Invoke(id);
+        return true;
     }
 
     public bool TryRemoveItem(string itemId)
     {
-        if (RecipesWithItem(itemId).Count > 0)
+        if (GetRecipesWithItem(itemId).Count > 0)
         {
             Console.WriteLine($"Removing item ({itemId}) thats used in recipe(s)!");
         }
@@ -178,24 +173,15 @@ public class InventoryService
         return items;
     }
 
-    public List<Recipe> RecipesWithItem(string itemId)
-    {
-        List<Recipe> list = new();
-        foreach (Recipe recipe in recipes)
-        {
-            if (!recipe.ContainsItemId(itemId))
-                continue;
+    private Dictionary<Guid, Recipe> recipes = [];
 
-            list.Add(recipe);
-        }
-
-        return list;
-    }
+    public event Action? OnRecipeListChange;
+    public event Action<Guid>? OnRecipeUpdate;
 
     public void AddRecipe(Recipe recipe)
     {
         recipe.Guid = Guid.NewGuid();
-        recipes.Add(recipe);
+        recipes.Add(recipe.Guid, recipe);
         DB.AddRecord(new StoreRecord<Recipe>()
         {
             Storename = IndexedDB.Recipes,
@@ -209,11 +195,10 @@ public class InventoryService
 
     public bool TryUpdateRecipe(Guid guid, Recipe recipe)
     {
-        int index = recipes.IndexOf(recipe);
-        if (index < 0)
+        if (!recipes.ContainsKey(guid))
             return false;
 
-        recipes[index] = recipe;
+        recipes[guid] = recipe;
         DB.UpdateRecord(new StoreRecord<Recipe>()
         {
             Storename = IndexedDB.Recipes,
@@ -226,7 +211,7 @@ public class InventoryService
 
     public bool TryRemoveRecipe(Recipe recipe)
     {
-        bool resp = recipes.Remove(recipe);
+        bool resp = recipes.Remove(recipe.Guid);
         if (resp)
         {
             DB.DeleteRecord(IndexedDB.Recipes, recipe.Guid);
@@ -243,10 +228,24 @@ public class InventoryService
         OnRecipeListChange?.Invoke();
     }
 
-    // public Recipe GetRecipeById(string id)
-    // {
-    //     return recipes[id];
-    // }
+    public Recipe GetRecipeById(Guid guid)
+    {
+        return recipes[guid];
+    }
+
+    public List<Recipe> GetRecipesWithItem(string itemId)
+    {
+        List<Recipe> list = new();
+        foreach (Recipe recipe in recipes.Values)
+        {
+            if (!recipe.ContainsItemId(itemId))
+                continue;
+
+            list.Add(recipe);
+        }
+
+        return list;
+    }
 
     // public Recipe? GetRecipeByResultId(string resultId)
     // {
@@ -260,7 +259,7 @@ public class InventoryService
     //     return null;
     // }
 
-    public List<Recipe> GetRecipes()
+    public Dictionary<Guid, Recipe> GetRecipes()
     {
         return recipes;
     }

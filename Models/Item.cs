@@ -52,6 +52,16 @@ public partial class Item(string name) : IValidatableObject
         return RegexDashes().Replace(dashed.Trim('-'), "-");
     }
 
+    public Item Copy()
+    {
+        return new Item(this.Name)
+        {
+            Id = this.Id,
+            ColorHex = this.ColorHex,
+            CreatedAt = this.CreatedAt,
+        };
+    }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         InventoryService? IS = validationContext.GetService(typeof(InventoryService)) as InventoryService;

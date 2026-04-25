@@ -25,6 +25,20 @@ public partial class Recipe : IValidatableObject
         return new Recipe{ };
     }
 
+    public Recipe Copy()
+    {
+        return new Recipe
+        {
+            Products = this.Products.Select(x => x.Copy()).ToList(),
+            Ingredients = this.Ingredients.Select(x => x.Copy()).ToList(),
+            StationId = this.StationId,
+            BatchSize = this.BatchSize,
+            CraftingTime = this.CraftingTime,
+            CreatedAt = this.CreatedAt,
+            Guid = this.Guid,
+        };
+    }
+
     public bool ContainsItemId(string itemId)
     {
         foreach (Ingredient prod in Products)

@@ -44,6 +44,7 @@
         if (id != Item.Id)
             return;
 
+        Item = IS.GetItem(id);
         StateHasChanged();
     }
 }

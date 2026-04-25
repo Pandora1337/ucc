@@ -79,6 +79,7 @@
         if (id != recipe.Guid)
             return;
 
+        recipe = IS.GetRecipeById(id);
         StateHasChanged();
     }
 

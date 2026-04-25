@@ -22,7 +22,7 @@
      style="grid-template-columns: repeat(auto-fit, 128px);">
     <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenItemAddModal())" />
     
-    @foreach (Item item in IS.GetItems().Values.ToList())
+    @foreach (Item item in IS.GetItems().Values)
     {
         <ItemCard @key="item.Id" Item="item" IconSize="128px" cClass="position-relative"
                   OnItemClicked="@(async () => await OpenItemAddModal(item))" ShowItemDate="true">
@@ -42,7 +42,7 @@
 </div>
     
 <div class="row g-3 mb-3">
-    @foreach (Recipe recipe in IS.GetRecipes())
+    @foreach (Recipe recipe in IS.GetRecipes().Values)
     {
         <div @key="recipe.Guid" class="col-12 col-lg-6 col-xxl-4">
             <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))">
@@ -128,13 +128,13 @@
     private List<Recipe> deleteRecipes = [];
     private async Task OpenItemAddModal(Item item = null!)
     {
-        modalItem = item == null ? new("") : item;
+        modalItem = item == null ? new("") : item.Copy();
         await modalAddItem.OpenAsync();
     }
 
     private async Task OpenItemDeleteModal(Item item)
     {
-        deleteRecipes = IS.RecipesWithItem(item.Id);
+        deleteRecipes = IS.GetRecipesWithItem(item.Id);
         modalItem = item;
         await modalDeleteItem.OpenAsync();
     }
@@ -157,7 +157,7 @@
     private ModalDelete modalDeleteRecipe = null!;
     private async Task OpenRecipeAddModal(Recipe recipe = null!)
     {
-        modalRecipe = recipe == null ? Recipe.GetNew() : recipe;
+        modalRecipe = recipe == null ? Recipe.GetNew() : recipe.Copy();
         await modalAddRecipe.OpenAsync();
     }
     
