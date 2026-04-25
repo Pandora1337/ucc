@@ -10,7 +10,19 @@
 <div class="card p-3 delete-target recipe-card">
     <div>
         <RecipeIngredient style="background-color: white !important; border: 0px !important; padding: 0px !important;"
-                          ItemId="@recipe.ResultId" Quantity="@recipe.Yield" DisableInput=true OnIconClicked="@(() => OnClick())" />
+                          ItemId="@recipe.Products[0].ItemId" Quantity="@recipe.Products[0].Amount" DisableInput=true
+                          OnIconClicked="@(() => OnClick())" />
+
+        @if (recipe.Products.Count > 1)
+        {
+            <div class="d-flex flex-wrap gap-1 mt-2">
+                @for (int i = 1; i < recipe.Products.Count; i++)
+                {
+                    <ItemBadge ItemId="@recipe.Products[i].ItemId" Amount="@recipe.Products[i].Amount"
+                               style="max-width: 49%;" />
+                }
+            </div>
+        }
     </div>
 
     <span class="mt-2">Ingredients:</span>

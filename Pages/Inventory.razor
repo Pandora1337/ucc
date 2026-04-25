@@ -62,7 +62,7 @@
 
 <Modal @ref="modalAddItem" Title="Add New Item">
     <div class="modal-body">
-        <ItemForm OnItemAdded="@modalAddItem.CloseAsync" Item="@modalItem" />
+        <ItemForm OnItemAdded="@modalAddItem.CloseAsync" Item="modalItem" />
     </div>
 </Modal>
 
@@ -83,7 +83,10 @@
             @foreach (Recipe recipe in deleteRecipes)
             {
                 <li class="list-group-item">
-                    <ItemBadge ItemId="@recipe.ResultId" Amount="@recipe.Yield" />
+                    @foreach (Ingredient prod in recipe.Products)
+                    {
+                        <ItemBadge ItemId="@prod.ItemId" Amount="@prod.Amount" />
+                    }
                     =
                     @foreach (Ingredient ingr in recipe.Ingredients)
                     {

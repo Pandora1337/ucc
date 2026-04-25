@@ -9,31 +9,43 @@
 
 @inject ucc.Services.InventoryService IS;
 
-<EditForm EditContext="editContext" OnValidSubmit="AddRecipe" class="w-100" style="max-width: 1000px;">
+<EditForm EditContext="editContext" OnValidSubmit="AddRecipe" class="w-100" style="max-width: 960px;">
     <DataAnnotationsValidator />
 
     <div @ref="focusElement" tabindex="0">
         <div>
-            <h3>Result:</h3>
-            @if (recipe.ResultId == "")
-            {
-                <BtnAdd OnClicked="@(async () => await ModalItemPickerOpen(PickerContext.RESULT))"
-                        style="height: 96px; width: 250px;" />
-            }
-            else
-            {
-                <RecipeIngredient ItemId="@recipe.ResultId" @bind-Quantity="recipe.Yield"
-                                  OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.RESULT))" />
-                <ValidationMessage For="@(() => recipe.Yield)" />
-            }
-            <ValidationMessage For="@(() => recipe.ResultId)" />
+            <h3>Product:</h3>
+
+            <div class="row g-2">
+                @for (int i = 0; i < recipe.Products.Count; i++)
+                {
+                    int index = i; // DOESNT WORK OTHERWISE!
+                    <div class="col-12
+                        @(recipe.Products.Count > 1 ? "col-sm-6" : "")
+                        @(recipe.Products.Count > 2 ? "col-lg-4" : "")">
+
+                        <RecipeIngredient @bind-Quantity="recipe.Products[index].Amount"
+                                          ItemId="@recipe.Products[index].ItemId"
+                                          OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.RESULT, index))"
+                                          OnBtnClicked="@(() => { recipe.Products.RemoveAt(index); })" EnableBtn="true" />
+                    </div>
+                }
+            </div>
+
+            <ValidationMessage For="@(() => recipe.Products)" />
+
+            <button type="button" class="btn btn-primary mt-2 w-100"
+                    @onclick="@(async () => await ModalItemPickerOpen(PickerContext.RESULT))">
+                + Add Product
+            </button>
         </div>
 
         <div class="mt-3">
             <h3>Options:</h3>
-            <div class=" card-body border rounded bg-light">
+
+            <div class="card-body border rounded bg-light">
                 <div class="row g-3">
-                    <div class="col-sm-6" title="Where the product is made in">
+                    <div class="col-sm-6 col-lg-4" title="Where the product is made in">
                         <label class="form-label">Crafting Station:</label>
 
                         @if (recipe.StationId == "")
@@ -54,17 +66,21 @@
                         }
                     </div>
 
-                    <div class="col-sm-6" title="Time it takes to complete this recipe, in seconds">
+                    <div class="col-sm-6 col-lg-4" title="Time it takes to complete this recipe, in seconds">
                         <label class="form-label">Crafting time (seconds):</label>
+
                         <InputNumber TValue="float?" class="form-control" min="0" max="@float.MaxValue"
                                      placeholder="Crafting Time in Seconds" @bind-Value="recipe.CraftingTime" />
+
                         <ValidationMessage For="@(() => recipe.CraftingTime)" />
                     </div>
 
-                    <div class="col-sm-6" title="How many recipes can you make at the same time?">
+                    <div class="col-sm-6 col-lg-4" title="How many recipes can you make at the same time?">
                         <label class="form-label">Batch size:</label>
+
                         <InputNumber TValue="int?" class="form-control" min="0" max="@int.MaxValue"
                                      placeholder="Batch Size" type="range" @bind-Value="recipe.BatchSize" />
+                        
                         <ValidationMessage For="@(() => recipe.BatchSize)" />
                     </div>
                 </div>
@@ -74,30 +90,32 @@
         <div class="mt-3">
             <h3>Ingredients:</h3>
 
-            <button type="button" class="btn btn-primary mb-3"
-                    @onclick="@(async () => await ModalItemPickerOpen(PickerContext.INGREDIENT, recipe.Ingredients.Count + 1))">
-                + Add Ingredient
-            </button>
+            <div class="row g-2">
+                @for (int i = 0; i < recipe.Ingredients.Count; i++)
+                {
+                    int index = i; // DOESNT WORK OTHERWISE!
+                    <div class="col-12
+                        @(recipe.Ingredients.Count > 1 ? "col-sm-6" : "")
+                        @(recipe.Ingredients.Count > 2 ? "col-lg-4" : "")">
+                        <RecipeIngredient @bind-Quantity="recipe.Ingredients[index].Amount"
+                                          ItemId="@recipe.Ingredients[index].ItemId"
+                                          OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.INGREDIENT, index))"
+                                          OnBtnClicked="@(() => { recipe.Ingredients.RemoveAt(index); })" EnableBtn="true" />
+                    </div>
+                }
+            </div>
 
             <ValidationMessage For="@(() => recipe.Ingredients)" />
 
-            <div class="container-fluid p-0">
-                <div class="row g-2">
-                    @for (int i = 0; i < recipe.Ingredients.Count; i++)
-                    {
-                        int index = i; // DOESNT WORK OTHERWISE!
-                        <div class="col-12 col-sm-6 col-lg-4">
-                            <RecipeIngredient @key="@recipe.Ingredients[index].ItemId"
-                                              @bind-Quantity="recipe.Ingredients[index].Amount" ItemId="@recipe.Ingredients[index].ItemId"
-                                              OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.INGREDIENT, index))"
-                                              OnBtnClicked="@(() => { recipe.Ingredients.RemoveAt(index); })" EnableBtn="true" />
-                        </div>
-                    }
-                </div>
-            </div>
+            <button type="button" class="btn btn-primary mt-2 w-100"
+                    @onclick="@(async () => await ModalItemPickerOpen(PickerContext.INGREDIENT))">
+                + Add Ingredient
+            </button>
         </div>
 
-        <button type="submit" class="btn btn-success mt-3">Save Recipe</button>
+        <div>
+            <button type="submit" class="btn btn-lg btn-success mt-3 w-100">@(recipe.Guid == Guid.Empty ? "Save Recipe" : "Update Recipe")</button>
+        </div>
     </div>
 </EditForm>
 
@@ -125,11 +143,9 @@
     {
         if (firstRender)
         {
-            @* recipe.ResultId = "thing-new-a-d-l-123-321"; *@
-            @* recipe.StationId = "thing-new-a-d-l-123-321"; *@
             await focusElement.FocusAsync();
             
-            if (recipe.ResultId == "")
+            if (recipe.Products.Count == 0)
             {
                 await ModalItemPickerOpen(PickerContext.RESULT);
             }
@@ -157,7 +173,7 @@
                 break;
 
             case PickerContext.INGREDIENT:
-                await modalItemPicker.OpenAsync("Choose an Item");
+                await modalItemPicker.OpenAsync("Choose the Ingredient");
                 break;
         }
     }
@@ -167,7 +183,14 @@
         switch (context)
         {
             case PickerContext.RESULT:
-                recipe.ResultId = itemId;
+                if (pickerIndex < 0)
+                {
+                    recipe.Products.Add(new(itemId));
+                }
+                else
+                {
+                    recipe.Products[pickerIndex].ItemId = itemId;
+                }
                 break;
 
             case PickerContext.STATION:
@@ -175,8 +198,7 @@
                 break;
 
             case PickerContext.INGREDIENT:
-                Ingredient? ing = recipe.Ingredients.ElementAtOrDefault(pickerIndex);
-                if (ing == null)
+                if (pickerIndex < 0)
                 {
                     recipe.Ingredients.Add(new(itemId));
                 }
@@ -198,8 +220,8 @@
     private async Task AddRecipe()
     {
         if (recipe.Guid == Guid.Empty)
-    {
-        IS.AddRecipe(recipe);
+        {
+            IS.AddRecipe(recipe);
         }
         else
         {

@@ -6,8 +6,8 @@
 @namespace ucc.Components.Item
 
 @inject ucc.Services.InventoryService IS
-<button class="btn-custom w-100 h-100 rounded-2 item-card @cClass" style="@style" @key="@Item.Id" title="@Item.Name"
-        @onclick="@(() => ItemClicked(Item.Id))">
+<button type="button" class="btn-custom w-100 h-100 rounded-2 item-card @cClass"
+        style="@style" title="@Item.Name" @onclick="@(() => ItemClicked(Item.Id))">
     <div class="d-flex flex-column w-100 h-100">
     
         <div class="flex-grow-0">

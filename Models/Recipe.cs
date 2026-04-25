@@ -5,11 +5,7 @@ namespace ucc.Models;
 
 public partial class Recipe : IValidatableObject
 {
-    public string ResultId { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Has to be more than 0!")]
-    [Range(0, float.MaxValue)]
-    public float Yield { get; set; } = 1;
+    public List<Ingredient> Products { get; set; } = [];
 
     public List<Ingredient> Ingredients { get; set; } = [];
     public string StationId { get; set; } = string.Empty;
@@ -31,9 +27,12 @@ public partial class Recipe : IValidatableObject
 
     public bool ContainsItemId(string itemId)
     {
-        if (ResultId == itemId)
+        foreach (Ingredient prod in Products)
         {
-            return true;
+            if (prod.ItemId == itemId)
+            {
+                return true;
+            }
         }
 
         if (StationId == itemId)
@@ -54,21 +53,36 @@ public partial class Recipe : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (Products.Count == 0)
+        {
+            yield return new ValidationResult("Need at least 1 Product!",
+                new[] { nameof(Products) });
+        }
+
         if (Ingredients.Count == 0)
         {
-            yield return new ValidationResult("Need at least 1 ingredient!",
+            yield return new ValidationResult("Need at least 1 Ingredient!",
                 new[] { nameof(Ingredients) });
         }
 
         InventoryService? IS = validationContext.GetService(typeof(InventoryService)) as InventoryService;
 
-        if (!IS!.ContainsItemId(ResultId))
+        foreach (Ingredient ing in Products)
         {
-            yield return new ValidationResult("The product item is invalid!",
-                new[] { nameof(ResultId) });
+            if (ing.Amount == 0)
+            {
+                yield return new ValidationResult("One of the Product amounts is 0!",
+                new[] { nameof(Products) });
+            }
+
+            if (!IS!.ContainsItemId(ing.ItemId))
+            {
+                yield return new ValidationResult("One of the Products is invalid!",
+                new[] { nameof(Ingredients) });
+            }
         }
 
-        if (!string.IsNullOrWhiteSpace(StationId) && !IS.ContainsItemId(StationId))
+        if (!string.IsNullOrWhiteSpace(StationId) && !IS!.ContainsItemId(StationId))
         {
             yield return new ValidationResult("The station item is invalid!",
                 new[] { nameof(StationId) });
@@ -76,7 +90,13 @@ public partial class Recipe : IValidatableObject
 
         foreach (Ingredient ing in Ingredients)
         {
-            if (!IS.ContainsItemId(ing.ItemId))
+            if (ing.Amount == 0)
+            {
+                yield return new ValidationResult("One of the Ingredient amounts is 0!",
+                new[] { nameof(Ingredients) });
+            }
+
+            if (!IS!.ContainsItemId(ing.ItemId))
             {
                 yield return new ValidationResult("One of the Ingredients is invalid!",
                 new[] { nameof(Ingredients) });

@@ -1,7 +1,7 @@
 @namespace ucc.Components.BtnDelete
 
 <div class="btn-container" style="@style">
-    <button class="btn btn-sm rounded-3 @cClass" @onclick="@OnDeleteClicked" @onclick:stopPropagation
+    <button type="button" class="btn btn-sm rounded-3 @cClass" @onclick="@OnDeleteClicked" @onclick:stopPropagation
             style="width: @Size; height: @Size;" title="@Title">
         @if (!string.IsNullOrEmpty(ImgSrc))
         {

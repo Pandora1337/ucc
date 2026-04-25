@@ -50,8 +50,10 @@ public class InventoryService
 
         AddRecipe(new Recipe
         {
-            ResultId = "plank",
-            Yield = 4,
+            Products = [
+              new("plank", 2),
+              new("plank", 2),
+            ],
             Ingredients = [
                 new("log", 1),
             ],
@@ -60,8 +62,9 @@ public class InventoryService
 
         AddRecipe(new Recipe
         {
-            ResultId = "crafting-table",
-            Yield = 1,
+            Products = [
+              new("crafting-table", 1),
+            ],
             Ingredients = [
                 new("plank", 1),
                 new("plank", 1),
