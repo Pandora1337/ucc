@@ -31,7 +31,7 @@ public partial class Item(string name) : IValidatableObject
 
     private string GetHashedColor()
     {
-        int hash = Id.GetHashCode();
+        int hash = this.GetHashCode();
         // Console.WriteLine(itemName + "'s hash: " + hash);
         byte r = (byte)((hash >> 0) & 0xFF);
         byte g = (byte)((hash >> 8) & 0xFF);
