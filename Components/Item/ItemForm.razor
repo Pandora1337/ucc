@@ -9,6 +9,7 @@
 @inject IJSRuntime JSRuntime;
 
 <div class="additem-container" style="@AdditionalStyle width: 200px">
+    @*
     <BtnAdd style="width: 100%; aspect-ratio: 1;" OnClicked="OpenFilePicker" Text="Choose Icon" ImgSrc="icons/image.svg"
             EnableChildContent="showPreview">
 
@@ -18,6 +19,7 @@
     </BtnAdd>
 
     <InputFile id="file-input" OnChange="OnFileSelected" accept="image/*" class="d-none" />
+    *@
 
     <EditForm EditContext="editContext" OnSubmit="OnSubmit">
         <DataAnnotationsValidator />
