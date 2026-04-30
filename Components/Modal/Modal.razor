@@ -4,18 +4,19 @@
 
 @if (isVisible)
 {
-    <div class="modal-overlay" @onclick="CloseAsync" tabindex="-1">
+    <div class="modal-overlay" @onclick="OnBgClick" tabindex="-1">
         <div class="modal-container bg-white rounded-3 @(CanScroll ? "overflow-scroll" : "")" tabindex="0"
              @onkeydown="HandleKeyDown" @onkeydown:stopPropagation @onclick:stopPropagation @ref="reference">
             
             <div class="modal-header">
                 <h4 class="modal-title">@Title</h4>
-                <button type="button" class="btn-close" aria-label="Close" @onclick="CloseAsync"/>
+                @if (!IsRequired)
+                {
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CloseAsync" />
+                }
             </div>
 
-            @* <div class="modal-body"> *@
             @ChildContent
-            @* </div> *@
         </div>
     </div>
 }
@@ -26,6 +27,7 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnOpen { get; set; }
+    [Parameter] public bool IsRequired { get; set; } = false;
 
     private bool isVisible { get; set; }
     private ElementReference reference;
@@ -67,8 +69,19 @@
         }
     }
 
+    private async Task OnBgClick()
+    {
+        if (IsRequired)
+            return;
+
+        await CloseAsync();
+    }
+
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
+        if (IsRequired)
+            return;
+
         if (e.Key == "Escape")
         {
             await CloseAsync();
