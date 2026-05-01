@@ -1,0 +1,56 @@
+@namespace ucc.Components.Accordion
+
+<div class="accordion-item" style="@style">
+    <h2 class="accordion-header">
+        <button type="button" class="accordion-button @(isShowing ? "" : "collapsed") @ClassBtn"
+                aria-expanded="@isShowing" aria-controls="flush-collapseOne" @onclick="ToggleAsync">
+            @Title
+        </button>
+    </h2>
+
+    <div id="flush-collapseOne" class="accordion-collapse collapse @(isShowing ? "show" : "") @ClassBody">
+        <div class="accordion-body">
+            @ChildContent
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string ClassBtn { get; set; } = "";
+    [Parameter] public string ClassBody { get; set; } = "";
+    [Parameter] public string style { get; set; } = "";
+    [Parameter] public bool OpenOnStart { get; set; } = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (OpenOnStart && firstRender)
+        {
+            await OpenAsync();
+            StateHasChanged();
+        }
+    }
+
+    private bool isShowing { get; set; } = false;
+
+    public async Task ToggleAsync()
+    {
+        isShowing = !isShowing;
+    }
+
+    public async Task OpenAsync()
+    {
+        isShowing = true;
+    }
+
+    public async Task CloseAsync()
+    {
+        isShowing = false;
+    }
+
+    public bool IsShowing()
+    {
+        return isShowing;
+    }
+}

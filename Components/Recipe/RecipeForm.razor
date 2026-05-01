@@ -1,5 +1,6 @@
 @using System.ComponentModel.DataAnnotations;
 @using System.Threading.Tasks
+@using ucc.Components.Accordion
 @using ucc.Models
 @using ucc.Components.BtnAdd
 @using ucc.Components.Modal
@@ -40,10 +41,8 @@
             </button>
         </div>
 
-        <div class="mt-3">
-            <h3>Options:</h3>
-
-            <div class="card-body border rounded bg-light">
+        <Accordion cClass="mt-3" style="min-width: 330px;">
+            <AccordionItem Title="Options" ClassBody="bg-light">
                 <div class="row g-3">
                     <div class="col-sm-6 col-lg-4" title="Where the product is made in">
                         <label class="form-label">Crafting Station:</label>
@@ -64,6 +63,8 @@
                                               OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
                                               OnBtnClicked="@(() => { recipe.StationId = ""; })" EnableBtn="true" />
                         }
+
+                        <ValidationMessage For="@(() => recipe.StationId)" />
                     </div>
 
                     <div class="col-sm-6 col-lg-4" title="Time it takes to complete this recipe, in seconds">
@@ -84,8 +85,12 @@
                         <ValidationMessage For="@(() => recipe.BatchSize)" />
                     </div>
                 </div>
-            </div>
-        </div>
+            </AccordionItem>
+        </Accordion>
+        
+        <ValidationMessage For="@(() => recipe.StationId)" />
+        <ValidationMessage For="@(() => recipe.CraftingTime)" />
+        <ValidationMessage For="@(() => recipe.BatchSize)" />
 
         <div class="mt-3">
             <h3>Ingredients:</h3>

@@ -1,0 +1,9 @@
+<div class="accordion @cClass" style="@style">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string style { get; set; } = "";
+    [Parameter] public string cClass { get; set; } = "";
+}
