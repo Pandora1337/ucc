@@ -136,10 +136,10 @@ public class InventoryService
         return resp;
     }
 
-    public void ClearAllItems()
+    public async Task ClearAllItems()
     {
         items.Clear();
-        DB.ClearStore(IndexedDB.Items);
+        await DB.ClearStore(IndexedDB.Items);
         OnItemListChange?.Invoke();
     }
 
@@ -221,10 +221,10 @@ public class InventoryService
         return resp;
     }
 
-    public void ClearAllRecipes()
+    public async Task ClearAllRecipes()
     {
         recipes.Clear();
-        DB.ClearStore(IndexedDB.Recipes);
+        await DB.ClearStore(IndexedDB.Recipes);
         OnRecipeListChange?.Invoke();
     }
 
@@ -267,6 +267,8 @@ public class InventoryService
     public async Task ClearDB()
     {
         await DB.DeleteDb(DB.DbName);
+        OnItemListChange?.Invoke();
+        OnRecipeListChange?.Invoke();
     }
 
     public void SerialiseToJSON(object data)

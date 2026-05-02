@@ -13,9 +13,9 @@
     <button class="btn btn-danger" @onclick="@(async () => await IS.ClearDB())">CLEAR DATABASE</button>
 </div>
 
-<div class="d-flex justify-content-between">
-    <h2>Items:</h2>
-    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => IS.ClearAllItems())">CLEAR ITEMS</button>
+<div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
+    <h2 class="mb-1">Items:</h2>
+    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteItemList.OpenAsync())">CLEAR ITEMS</button>
 </div>
 
 <div class="d-grid justify-content-sm-start justify-content-center g-3 gap-3 mb-3"
@@ -32,9 +32,9 @@
 </div>
 
 
-<div class="d-flex justify-content-between">
-    <h2>Recipes:</h2>
-    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => IS.ClearAllRecipes())">CLEAR RECIPES</button>
+<div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
+    <h2 class="mb-1">Recipes:</h2>
+    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteRecipeList.OpenAsync())">CLEAR RECIPES</button>
 </div>
 
 <div class="mb-3">
@@ -72,7 +72,7 @@
     </div>
 </Modal>
 
-<ModalDelete @ref="modalDeleteItem" Subject="Item" OnDelete="ItemRemove">
+<ModalDelete @ref="modalDeleteItem" Subject="this item" OnDelete="ItemRemove">
     @if (deleteRecipes.Count > 0)
     {
         <p class="mt-2 text-danger m-0">
@@ -98,7 +98,9 @@
     }
 </ModalDelete>
 
-<ModalDelete @ref="modalDeleteRecipe" Subject="Recipe" OnDelete="RecipeRemove" />
+<ModalDelete @ref="modalDeleteRecipe" Subject="this recipe" OnDelete="RecipeRemove" />
+<ModalDelete @ref="modalDeleteItemList" Subject="all items" OnDelete="@( async () => await IS.ClearAllItems())" />
+<ModalDelete @ref="modalDeleteRecipeList" Subject="all recipes" OnDelete="@( async () => await IS.ClearAllRecipes())" />
 
 @code {
     protected override void OnInitialized()
@@ -121,6 +123,9 @@
             StateHasChanged(); *@
         }
     }
+
+    private ModalDelete modalDeleteItemList = null!;
+    private ModalDelete modalDeleteRecipeList = null!;
 
     private Item modalItem = null!;
     private Modal modalAddItem = null!;
