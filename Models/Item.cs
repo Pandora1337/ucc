@@ -27,7 +27,7 @@ public partial class Item(string name) : IValidatableObject
         }
     }
 
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime DateModified { get; set; } = DateTime.Now;
 
     private string GetHashedColor()
     {
@@ -58,7 +58,7 @@ public partial class Item(string name) : IValidatableObject
         {
             Id = this.Id,
             ColorHex = this.ColorHex,
-            CreatedAt = this.CreatedAt,
+            DateModified = this.DateModified,
         };
     }
 

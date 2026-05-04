@@ -108,6 +108,7 @@ public class InventoryService
         if (!items.ContainsKey(id))
             return false;
 
+        newItem.DateModified = DateTime.Now;
         items[id] = newItem;
         DB.UpdateRecord(new StoreRecord<Item>()
         {
@@ -198,6 +199,7 @@ public class InventoryService
         if (!recipes.ContainsKey(guid))
             return false;
 
+        recipe.DateModified = DateTime.Now;
         recipes[guid] = recipe;
         DB.UpdateRecord(new StoreRecord<Recipe>()
         {

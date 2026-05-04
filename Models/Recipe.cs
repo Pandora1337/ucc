@@ -10,19 +10,19 @@ public partial class Recipe : IValidatableObject
     public List<Ingredient> Ingredients { get; set; } = [];
     public string StationId { get; set; } = string.Empty;
 
-    [Range(0, int.MaxValue)]
+    [Range(1, int.MaxValue)]
     public int? BatchSize { get; set; }
 
     [Range(0, float.MaxValue)]
     public float? CraftingTime { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime DateModified { get; set; } = DateTime.Now;
 
     public Guid Guid { get; set; }
 
     static public Recipe GetNew()
     {
-        return new Recipe{ };
+        return new Recipe { };
     }
 
     public Recipe Copy()
@@ -34,7 +34,7 @@ public partial class Recipe : IValidatableObject
             StationId = this.StationId,
             BatchSize = this.BatchSize,
             CraftingTime = this.CraftingTime,
-            CreatedAt = this.CreatedAt,
+            DateModified = this.DateModified,
             Guid = this.Guid,
         };
     }
