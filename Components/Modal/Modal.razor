@@ -8,13 +8,16 @@
         <div class="modal-container bg-white rounded-3 @(CanScroll ? "overflow-scroll" : "")" tabindex="0"
              @onkeydown="HandleKeyDown" @onkeydown:stopPropagation @onclick:stopPropagation @ref="reference">
             
-            <div class="modal-header">
-                <h4 class="modal-title">@Title</h4>
-                @if (!IsRequired)
-                {
-                    <button type="button" class="btn-close" aria-label="Close" @onclick="CloseAsync" />
-                }
-            </div>
+            @if (IsTitleEnabled)
+            {
+                <div class="modal-header">
+                    <h4 class="modal-title">@Title</h4>
+                    @if (!IsRequired)
+                    {
+                        <button type="button" class="btn-close" aria-label="Close" @onclick="CloseAsync" />
+                    }
+                </div>
+            }
 
             @ChildContent
         </div>
@@ -28,6 +31,7 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnOpen { get; set; }
     [Parameter] public bool IsRequired { get; set; } = false;
+    [Parameter] public bool IsTitleEnabled { get; set; } = true;
 
     private bool isVisible { get; set; }
     private ElementReference reference;
