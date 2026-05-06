@@ -65,6 +65,40 @@ public partial class Recipe : IValidatableObject
         return false;
     }
 
+    /// <summary>
+    /// Calculates the total crafting time of the recipe for int number of operations, taking into account BatchSize
+    /// </summary>
+    /// <param name="operations"></param>
+    /// <returns>float seconds</returns>
+    public float GetTotalCraftingTime(int operations)
+    {
+        if (!CraftingTime.HasValue || CraftingTime == 0)
+        {
+            return 0;
+        }
+
+        if (BatchSize > 0)
+        {
+            return (float)CraftingTime * float.Ceiling(operations / (float)BatchSize);
+        }
+        else
+        {
+            return (float)CraftingTime * operations;
+        }
+    }
+
+    /// <summary>
+    /// Compares the recipe's last modified date to a new DateTime value
+    /// </summary>
+    /// <param name="newDateTime"></param>
+    /// <returns>
+    /// True, if the value is later than recipe's. False if earlier or the same
+    /// </returns>
+    public bool IsOutdated(DateTime newDateTime)
+    {
+        return this.DateModified.CompareTo(newDateTime) < 0;
+    }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (Products.Count == 0)

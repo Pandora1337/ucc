@@ -249,17 +249,22 @@ public class InventoryService
         return list;
     }
 
-    // public Recipe? GetRecipeByResultId(string resultId)
-    // {
-    //     foreach (var i in recipes)
-    //     {
-    //         if (i.Value.ResultId == resultId)
-    //         {
-    //             return i.Value;
-    //         }
-    //     }
-    //     return null;
-    // }
+    public List<Recipe> GetRecipesByResultId(string resultId)
+    {
+        List<Recipe> list = [];
+        foreach (Recipe recipe in recipes.Values)
+        {
+            foreach (Ingredient prod in recipe.Products)
+            {
+                if (prod.ItemId != resultId)
+                    continue;
+
+                list.Add(recipe);
+                break;
+            }
+        }
+        return list;
+    }
 
     public Dictionary<Guid, Recipe> GetRecipes()
     {

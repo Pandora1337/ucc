@@ -1,0 +1,243 @@
+﻿@page "/crafting"
+
+@using System.ComponentModel
+@using ucc.Components.Accordion
+@using ucc.Components.BtnAdd
+@using ucc.Components.Crafting
+@using ucc.Components.Item
+@using ucc.Components.Modal
+@using ucc.Components.Recipe
+@using ucc.Models
+
+@inject ucc.Services.CraftingService CS
+@inject ucc.Services.InventoryService IS
+
+<PageTitle>Crafting Calculator</PageTitle>
+
+<h1 class="text-center">Crafting Calculator</h1>
+<h3 class="mb-2 border border-0 border-3 border-bottom">Planned crafts:</h3>
+<div class="d-grid justify-content-center g-3 gap-3 mb-3" style="grid-template-columns: repeat(auto-fit, 128px);">
+    <div class="me-3">
+        <BtnAdd OnClicked="@(() => OpenItemPicker())" style="width: 128px; min-height: 200px; height: 100%;" />
+    </div>
+    
+    @for (int i = 0; i < targets.Count; i++)
+    {
+        int index = i;
+        <ItemCard ItemId="@targets[index].ItemId" IconSize="128px" style="max-width: 128px;"
+                  OnItemClicked="@(() => targets.RemoveAt(index))">
+            <InputNumber TValue="float" class="form-control mt-2 border" @bind-Value="targets[index].Amount"
+                         min="@float.Epsilon" max="@float.MaxValue" placeholder="Amount" title="Amount of an item"
+                         @onclick:stopPropagation />
+        </ItemCard>
+    }
+</div>
+
+<div class="text-center mb-3">
+    <div class="invalid-feedback @(IsValid ? "" : "d-block") mb-3">
+        Item Amount must be more than 0!
+    </div>
+
+    <button type="button" class="btn btn-lg btn-primary" @onclick="Craft" disabled="@IsCrafting">
+        @if (IsCrafting)
+        {
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        }
+        <span role="status">@(IsCrafting ? "  Crafting..." : "Craft")</span>
+    </button>
+</div>
+
+
+@if (cd != null)
+{
+    <Accordion cClass="mb-3">
+        <AccordionItem Title="Item List" OpenOnStart="true">
+            <strong>Products:</strong>
+            <div class="d-flex flex-wrap gap-1 my-2">
+                @foreach ((string itemId, float amount) in cd.itemsProd)
+                {
+                    <ItemBadge @key="itemId" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
+                }
+            </div>
+
+            @if (cd.itemsInt.Count > 0)
+            {
+                <strong>Intermediate:</strong>
+                <div class="d-flex flex-wrap gap-1 my-2">
+                    @foreach ((string itemId, float amount) in cd.itemsInt)
+                    {
+                        <ItemBadge @key="itemId" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
+                    }
+                </div>
+            }
+        
+            <strong>Raw:</strong>
+            <div class="d-flex flex-wrap gap-1 my-2">
+                @foreach ((string itemId, float amount) in cd.itemsRaw)
+                {
+                    <ItemBadge @key="itemId" ItemId="@itemId" Amount="amount" style="max-width: 49%;" />
+                }
+            </div>
+        </AccordionItem>
+    </Accordion>
+
+
+    <div class="d-flex justify-content-between pb-1 mb-2 border border-0 border-3 border-bottom">
+        <h3 class="mb-0">Crafting Guide:</h3>
+        
+        <div class="btn-group" role="group">
+            <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
+                   checked="@(IsGridView)" />
+            <label class="btn btn-outline-secondary" for="viewGrid">
+                <img src="icons/grid.svg" draggable="false" />
+            </label>
+
+            <input type="radio" class="btn-check btn-sm" id="viewList" name="viewMode" @onchange="ToggleRecipeGrid"
+                   checked="@(!IsGridView)" />
+            <label class="btn btn-outline-secondary" for="viewList">
+                <img src="icons/view-list.svg" draggable="false" />
+            </label>
+        </div>
+    </div>
+
+    @if (cd.craftingTime > 0)
+    {
+        <h5>Total Crafting Time: @(cd.craftingTime)s</h5>
+    }
+
+    <div class="row">
+        @for (int i = 0; i < cd.recipeGuide.Count(); i++)
+        {
+            (Recipe recipe, int ops) = cd.recipeGuide.Reverse().ElementAt(i);
+
+            <div class="col-12 
+                @(IsGridView && cd.recipeGuide.Count() > 1 ? "col-lg-6" : "")
+                @(IsGridView && cd.recipeGuide.Count() > 2 ? "col-xxl-4" : "")">
+                <CraftingStep Recipe="recipe" Operations="ops" OrderNum="i + 1" cClass="mb-3"
+                              IsInvalid="@recipe.IsOutdated(IS.GetRecipeById(recipe.Guid).DateModified)" />
+            </div>
+        }
+    </div>
+}
+
+
+<Modal @ref="modalItemPick" Title="Choose an Item to craft">
+    <div class="modal-body">
+        <ItemPicker OnItemPicked="OnItemPicked" />
+    </div>
+</Modal>
+
+<Modal @ref="modalChoice" IsRequired="true" IsTitleEnabled="false">
+    <div class="modal-header justify-content-center">
+        <h4 class="modal-title pe-2">
+            Choose the recipe for
+        </h4>
+        <ItemBadge ItemId="@problemItem" />
+    </div>
+
+    <div class="modal-body overflow-hidden pb-0">
+        <ul class="list-group">
+            @foreach (Recipe recipe in CS.RecipeOptions!)
+            {
+                <li class="list-group-item border-0 p-0 pb-3">
+                    <button type="button" class="btn btn-light p-0 w-100" @onclick="@(async () => CS.SelectRecipe(recipe))">
+                        <CraftingStep Recipe="recipe" />
+                    </button>
+                </li>
+            }
+        </ul>
+    </div>
+</Modal>
+
+@code {
+    protected override void OnInitialized()
+    {
+        CS.OnCraftingFinish += OnCraftingFinished;
+        CS.OnChoiceRequest += async (e) => await OnNeedChoice(e);
+        CS.OnChoiceSelect += async () => await OnMadeChoice();
+
+        OnCraftingFinished();
+    }
+
+    public void Dispose()
+    {
+        CS.OnCraftingFinish -= OnCraftingFinished;
+        CS.OnChoiceRequest -= async (e) => await OnNeedChoice(e);
+        CS.OnChoiceSelect -= async () => await OnMadeChoice();
+    }
+
+    private bool IsGridView { get; set; }
+    private void ToggleRecipeGrid()
+    {
+        IsGridView = !IsGridView;
+    }
+
+    private Modal modalItemPick = null!;
+    private int pickerIndex;
+    private async Task OpenItemPicker(int index = -1)
+    {
+        pickerIndex = index;
+        await modalItemPick.OpenAsync();
+    }
+
+    private List<Ingredient> targets = [];
+    private async Task OnItemPicked(string itemId)
+    {
+        if (pickerIndex < 0)
+        {
+            targets.Add(new(itemId));
+        }
+        else
+        {
+            targets[pickerIndex].ItemId = itemId;
+        }
+
+        await modalItemPick.CloseAsync();
+    }
+
+    private bool IsValid = true;
+    private bool IsCrafting = false;
+    private async Task Craft()
+    {
+        if (targets.Count == 0)
+            return;
+
+        foreach (var i in targets)
+        {
+            if (i.Amount > 0)
+                continue;
+
+            IsValid = false;
+            return;
+        }
+
+        IsCrafting = true;
+        IsValid = true;
+        await CS.DoListCrafting(targets);
+    }
+
+    private string problemItem = "";
+    private Modal modalChoice = null!;
+    private async Task OnNeedChoice(string itemId)
+    {
+        if (CS.RecipeOptions != null)
+        {
+            problemItem = itemId;
+            await modalChoice.OpenAsync();
+        }
+    }
+
+    private async Task OnMadeChoice()
+    {
+        await modalChoice.CloseAsync();
+    }
+
+    CraftingData cd = null!;
+    private void OnCraftingFinished()
+    {
+        targets = CS.targetList;
+        IsCrafting = false;
+
+        cd = CS.craftingData!;
+    }
+}

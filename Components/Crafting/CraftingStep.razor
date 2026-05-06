@@ -1,0 +1,92 @@
+﻿@using ucc.Models
+@using ucc.Components.Item
+
+@namespace ucc.Components.Crafting
+
+<div class="card p-3 position-relative @(IsInvalid ? "invalid-col" : "") @cClass">
+    @if (OrderNum > -1)
+    {
+        <span
+            class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary d-flex justify-content-center align-items-center"
+            style="width: 24px; height: 24px;">
+            @OrderNum
+        </span>
+    }
+    
+    @if (IsInvalid)
+    {
+        <span class="position-absolute d-flex justify-content-center align-items-center"
+              style="width: 16px; height: 16px; top: 8px; right: 8px;"
+              title="This recipe has been modified, and needs re-crafting to update!">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#dc3545" class="bi bi-exclamation-circle"
+                 viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                <path
+                d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z" />
+            </svg>
+        </span>
+    }
+
+    <div class="d-flex flex-wrap gap-1 justify-content-center">
+        @for (int i = 0; i < Recipe.Ingredients.Count; i++)
+        {
+            <ItemBadge ItemId="@Recipe.Ingredients[i].ItemId" Amount="@(Recipe.Ingredients[i].Amount * Operations)"
+                       style="max-width: 49%;" />
+        }
+    </div>
+
+    <div class="row g-0 py-2">
+        <div class="col-5 d-flex justify-content-end align-items-center">
+            @if (Recipe.BatchSize > 0)
+            {
+                int batches = (Operations / (int)Recipe.BatchSize);
+                <span>@batches x @Recipe.BatchSize (+@(Operations % Recipe.BatchSize))</span>
+            }
+        </div>
+        
+        <div class="col-2">
+            @if (!string.IsNullOrEmpty(Recipe.StationId))
+            {
+                <img src="icons/caret-down-fill.svg" draggable="false" style="width: 16px;"
+                     class=" text-primary user-select-none d-block mx-auto" />
+            
+                <div class="text-center position-relative d-block mx-auto" style="width: 32px;">
+                    <ItemIcon ItemId="@Recipe.StationId" Size="32px"></ItemIcon>
+                </div>
+
+                <img src="icons/caret-down-fill.svg" draggable="false" style="width: 16px;"
+                     class=" text-primary user-select-none d-block mx-auto" />
+            }
+            else
+            {
+                <img src="icons/caret-down-fill.svg" draggable="false" style="width: 32px;"
+                     class=" text-primary user-select-none d-block mx-auto" />
+            }
+
+        </div>
+
+        <div class="col-5 d-flex justify-content-start align-items-center">
+            @if (Recipe.CraftingTime > 0)
+            {
+                <span>@(Recipe.GetTotalCraftingTime(Operations))s</span>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-1 justify-content-center">
+        @for (int i = 0; i < Recipe.Products.Count; i++)
+        {
+            <ItemBadge ItemId="@Recipe.Products[i].ItemId" Amount="@(Recipe.Products[i].Amount * Operations)"
+                       style="max-width: 100%;" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public Recipe Recipe { get; set; } = default!;
+    [Parameter] public int Operations { get; set; } = 1;
+    [Parameter] public string cClass { get; set; } = "";
+    [Parameter] public int OrderNum { get; set; } = -1;
+
+    [Parameter] public bool IsInvalid { get; set; } = false;
+}
