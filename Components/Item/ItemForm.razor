@@ -38,7 +38,10 @@
         </div>
 
         <div class="pt-2 w-100">
-            <button type="submit" class="btn btn-primary w-100">@(Item.Id == string.Empty ? "Add" : "Update")</button>
+            <button type="submit" class="btn btn-success w-100">
+                <i class="bi bi-floppy2 me-1" aria-hidden="true" />
+                @(Item.Id == string.Empty ? "Add Item" : "Update Item")
+            </button>
         </div>
     </EditForm>
 </div>

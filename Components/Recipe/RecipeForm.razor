@@ -37,15 +37,17 @@
 
             <button type="button" class="btn btn-primary mt-2 w-100"
                     @onclick="@(async () => await ModalItemPickerOpen(PickerContext.RESULT))">
-                + Add Product
+                <i class="bi bi-plus-lg me-1" aria-hidden="true" />Add Product
             </button>
         </div>
 
         <Accordion cClass="mt-3" style="min-width: 330px;">
-            <AccordionItem Title="Options" ClassBody="bg-light">
+            <AccordionItem Icon="bi-gear-fill" Title="Options" ClassBody="bg-light">
                 <div class="row g-3">
                     <div class="col-sm-6 col-lg-4" title="Where the product is made in">
-                        <label class="form-label">Crafting Station:</label>
+                        <label class="form-label">
+                            <i class="bi bi-tools me-2" aria-hidden="true" />Crafting Station:
+                        </label>
 
                         @if (recipe.StationId == "")
                         {
@@ -53,7 +55,7 @@
                                 <button type="button"
                                         @onclick="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
                                         class="btn btn-primary">
-                                    + Add Station
+                                    <i class="bi bi-plus-lg me-1" aria-hidden="true" />Add Station
                                 </button>
                             </div>
                         }
@@ -68,16 +70,22 @@
                     </div>
 
                     <div class="col-sm-6 col-lg-4" title="Time it takes to complete this recipe, in seconds">
-                        <label class="form-label">Crafting time (seconds):</label>
+                        <label class="form-label">
+                            <i class="bi bi-clock me-2" aria-hidden="true" />Crafting time (seconds):
+                        </label>
 
-                        <InputNumber TValue="float?" class="form-control" min="0" max="@float.MaxValue"
-                                     placeholder="Crafting Time in Seconds" @bind-Value="recipe.CraftingTime" />
-
+                        <div class="input-group mb-3">
+                            <InputNumber TValue="float?" class="form-control" min="0" max="@float.MaxValue"
+                                         placeholder="Crafting Time" @bind-Value="recipe.CraftingTime" />
+                            <span class="input-group-text">s</span>
+                        </div>
                         <ValidationMessage For="@(() => recipe.CraftingTime)" />
                     </div>
 
                     <div class="col-sm-6 col-lg-4" title="How many recipes can you make at the same time?">
-                        <label class="form-label">Batch size:</label>
+                        <label class="form-label">
+                            <i class="bi bi-stack me-2" aria-hidden="true" />Batch size:
+                        </label>
 
                         <InputNumber TValue="int?" class="form-control" min="0" max="@int.MaxValue"
                                      placeholder="Batch Size" type="range" @bind-Value="recipe.BatchSize" />
@@ -114,12 +122,15 @@
 
             <button type="button" class="btn btn-primary mt-2 w-100"
                     @onclick="@(async () => await ModalItemPickerOpen(PickerContext.INGREDIENT))">
-                + Add Ingredient
+                <i class="bi bi-plus-lg me-1" aria-hidden="true" />Add Ingredient
             </button>
         </div>
 
         <div>
-            <button type="submit" class="btn btn-lg btn-success mt-3 w-100">@(recipe.Guid == Guid.Empty ? "Save Recipe" : "Update Recipe")</button>
+            <button type="submit" class="btn btn-lg btn-success mt-3 w-100">
+                <i class="bi bi-floppy2 me-1" aria-hidden="true" />
+                @(recipe.Guid == Guid.Empty ? "Add Recipe" : "Update Recipe")
+            </button>
         </div>
     </div>
 </EditForm>

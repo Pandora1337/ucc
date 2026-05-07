@@ -11,7 +11,7 @@
     else
     {
         <div class="p-1">
-            <img src="@ImgSrc" class="upload-icon mb-2" draggable="false" alt="Upload Icon">
+            <i class="bi @ImgSrc upload-icon mb-2" aria-hidden="true"/>
             <p class="btn-text mb-0 fw-bold">@Text</p>
         </div>
 
@@ -29,7 +29,7 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback OnClicked { get; set; }
 
-    [Parameter] public string ImgSrc { get; set; } = "icons/plus-square-fill.svg";
+    [Parameter] public string ImgSrc { get; set; } = "bi-plus-square-fill";
     [Parameter] public string Text { get; set; } = "Add New";
     [Parameter] public string? style { get; set; }
 

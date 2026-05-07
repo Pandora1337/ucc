@@ -41,9 +41,14 @@
     <button type="button" class="btn btn-lg btn-primary" @onclick="Craft" disabled="@IsCrafting">
         @if (IsCrafting)
         {
-            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+            <span role="status">Crafting...</span>
         }
-        <span role="status">@(IsCrafting ? "  Crafting..." : "Craft")</span>
+        else
+        {
+            <i class="bi bi-tools me-1" aria-hidden="true" />
+            <span role="status">Craft</span>
+        }
     </button>
 </div>
 
@@ -51,8 +56,10 @@
 @if (cd != null)
 {
     <Accordion cClass="mb-3">
-        <AccordionItem Title="Item List" OpenOnStart="true">
-            <strong>Products:</strong>
+        <AccordionItem Icon="bi-list" Title="Item List" OpenOnStart="true">
+            <strong>
+                <i class="bi bi-gem me-2" aria-hidden="true" />Products:
+            </strong>
             <div class="d-flex flex-wrap gap-1 my-2">
                 @foreach ((string itemId, float amount) in cd.itemsProd)
                 {
@@ -62,7 +69,9 @@
 
             @if (cd.itemsInt.Count > 0)
             {
-                <strong>Intermediate:</strong>
+                <strong>
+                    <i class="bi bi-layers-half me-2" aria-hidden="true" />Intermediate:
+                </strong>
                 <div class="d-flex flex-wrap gap-1 my-2">
                     @foreach ((string itemId, float amount) in cd.itemsInt)
                     {
@@ -71,7 +80,9 @@
                 </div>
             }
         
-            <strong>Raw:</strong>
+            <strong>
+                <i class="bi bi-minecart-loaded me-2" aria-hidden="true" />Raw:
+            </strong>
             <div class="d-flex flex-wrap gap-1 my-2">
                 @foreach ((string itemId, float amount) in cd.itemsRaw)
                 {
@@ -88,21 +99,23 @@
         <div class="btn-group" role="group">
             <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
                    checked="@(IsGridView)" />
-            <label class="btn btn-outline-secondary" for="viewGrid">
-                <img src="icons/grid.svg" draggable="false" />
+            <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
+                <i class="bi bi-grid" aria-label="Grid View" />
             </label>
 
             <input type="radio" class="btn-check btn-sm" id="viewList" name="viewMode" @onchange="ToggleRecipeGrid"
                    checked="@(!IsGridView)" />
-            <label class="btn btn-outline-secondary" for="viewList">
-                <img src="icons/view-list.svg" draggable="false" />
+            <label class="btn btn-outline-secondary" for="viewList" title="List View">
+                <i class="bi bi-view-stacked" aria-label="List View" />
             </label>
         </div>
     </div>
 
     @if (cd.craftingTime > 0)
     {
-        <h5>Total Crafting Time: @(cd.craftingTime)s</h5>
+        <h5>
+            Total Crafting Time:<i class="bi bi-clock ms-2 me-1" aria-hidden="true" />@(cd.craftingTime)s
+        </h5>
     }
 
     <div class="row">

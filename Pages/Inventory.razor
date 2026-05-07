@@ -9,24 +9,29 @@
 
 @inject ucc.Services.InventoryService IS;
 
+<PageTitle>Inventory</PageTitle>
+
+<h1 class="text-center">Inventory</h1>
 <div class="w-100 text-center">
     <button class="btn btn-danger" @onclick="@(async () => await IS.ClearDB())">CLEAR DATABASE</button>
 </div>
 
 <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
     <h2 class="mb-1">Items:</h2>
-    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteItemList.OpenAsync())">CLEAR ITEMS</button>
+    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteItemList.OpenAsync())">
+        <i class="bi bi-trash3" aria-label="Delete All Items" />
+    </button>
 </div>
 
 <div class="d-grid justify-content-sm-start justify-content-center g-3 gap-3 mb-3"
      style="grid-template-columns: repeat(auto-fit, 128px);">
-    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenItemAddModal())" />
+    <BtnAdd style="width: 128px; min-height: 200px; height: 100%;" OnClicked="@(async () => await OpenItemAddModal())" />
     
     @foreach (Item item in IS.GetItems().Values)
     {
         <ItemCard @key="item.Id" Item="item" IconSize="128px" cClass="position-relative"
                   OnItemClicked="@(async () => await OpenItemAddModal(item))" ShowItemDate="true">
-            <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(item))" ImgSrc="trash3.svg" />
+            <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(item))" ImgSrc="bi-trash3" />
         </ItemCard>
     }
 </div>
@@ -34,7 +39,9 @@
 
 <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
     <h2 class="mb-1">Recipes:</h2>
-    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteRecipeList.OpenAsync())">CLEAR RECIPES</button>
+    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteRecipeList.OpenAsync())">
+        <i class="bi bi-trash3" aria-label="Delete All Recipes" />
+    </button>
 </div>
 
 <div class="mb-3">
@@ -51,9 +58,9 @@
                 </div>
 
                 <BtnDelete OnDelete="@(async () => await OpenRecipeAddModal(recipe))" style="right: 48px;"
-                           cClass="btn-outline-primary" ImgSrc="pencil-square.svg" Title="Edit" />
+                           cClass="btn-outline-primary" ImgSrc="bi-pencil-square" Title="Edit" />
 
-                <BtnDelete OnDelete="@(async () => await OpenRecipeDeleteModal(recipe))" ImgSrc="trash3.svg" />
+                <BtnDelete OnDelete="@(async () => await OpenRecipeDeleteModal(recipe))" ImgSrc="bi-trash3" />
             </RecipeCard>
         </div>
     }

@@ -37,7 +37,9 @@
     @if (recipe.CraftingTime > 0)
     {
         <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Time to craft:</span>
+            <span class="text-muted">
+                <i class="bi bi-clock me-2" aria-hidden="true" />Time to craft:
+            </span>
             <span>@(recipe.CraftingTime + "s")</span>
         </div>
     }
@@ -45,7 +47,9 @@
     @if (recipe.BatchSize > 0)
     {
         <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Crafts per batch:</span>
+            <span class="text-muted">
+                <i class="bi bi-stack me-2" aria-hidden="true" />Crafts per batch:
+            </span>
             <span>@recipe.BatchSize</span>
         </div>
     }
@@ -53,13 +57,17 @@
     @if (!string.IsNullOrEmpty(recipe.StationId))
     {
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="text-muted">Crafted in:</span>
+            <span class="text-muted">
+                <i class="bi bi-tools me-2" aria-hidden="true" />Crafted in:
+            </span>
             <ItemBadge ItemId="@recipe.StationId" style="max-width: 50%;" />
         </div>
     }
 
     <div class="d-flex justify-content-between">
-        <span class="text-muted">Last Modified:</span>
+        <span class="text-muted">
+            <i class="bi bi-calendar-event me-2" aria-hidden="true" />Last Modified:
+        </span>
         <span>@recipe.DateModified.ToString("hh:mm tt, dd/MM/yyyy")</span>
     </div>
 

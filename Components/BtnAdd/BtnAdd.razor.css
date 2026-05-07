@@ -35,7 +35,7 @@
 */
 
 .upload-icon {
-    height: clamp(2.5rem, 18cqw, 8rem);
+    font-size: clamp(2.5rem, 18cqw, 8rem);
     width: auto;
     max-width: 90%;
     max-height: 25vh;

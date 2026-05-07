@@ -10,10 +10,3 @@
 .delete-target:hover .delete-btn {
     /* opacity: 1; */
 }
-
-.centered-icon {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    width: 16px;
-}
