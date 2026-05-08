@@ -1,17 +1,15 @@
 .btn-body {
-    background: var(--bs-light, #f8f9fa);
     container-type: inline-size;
-    border: 2px dashed var(--bs-border-color, #dee2e6);
-    border-radius: 1rem;
+    border: dashed;
     overflow: hidden;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-body:hover,
 .btn-body:focus {
-    border-color: var(--bs-primary, #0d6efd) !important;
-    background: var(--bs-primary-bg-subtle, #cfe2ff) !important;
-    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    border-color: var(--bs-primary) !important;
+    background: var(--bs-primary-bg-subtle) !important;
+    box-shadow: 0 0 0 0.25rem var(--bs-primary-bg-subtle);
     /* transform: translateY(-1px) scale(1.02); */
     transform: scale(1.02);
 }
@@ -44,7 +42,6 @@
 
 .btn-text {
     font-size: clamp(0.875rem, 6cqw, 1.75rem) !important;
-    color: var(--bs-secondary-color, #6c757d);
     line-height: 1.3;
 }
 

@@ -4,8 +4,8 @@
 
 @if (isVisible)
 {
-    <div class="modal-overlay" @onclick="OnBgClick" tabindex="-1">
-        <div class="modal-container bg-white rounded-3 @(CanScroll ? "overflow-scroll" : "")" tabindex="0"
+    <div class="modal modal-overlay" @onclick="OnBgClick" tabindex="-1">
+        <div class="modal-container bg-body rounded-3 @(CanScroll ? "overflow-scroll" : "")" tabindex="0"
              @onkeydown="HandleKeyDown" @onkeydown:stopPropagation @onclick:stopPropagation @ref="reference">
             
             @if (IsTitleEnabled)

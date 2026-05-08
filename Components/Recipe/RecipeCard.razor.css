@@ -4,8 +4,8 @@
 
 .recipe-card:hover,
 .recipe-card:focus {
-    border-color: var(--bs-primary, #0d6efd) !important;
-    /* background: var(--bs-primary-bg-subtle, #cfe2ff) !important; */
-    /* box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25); */
+    border-color: var(--bs-primary) !important;
+    /* background: var(--bs-primary-bg-subtle) !important; */
+    /* box-shadow: 0 0 0 0.25rem var(--bs-primary-bg-subtle) !important; */
     transform: scale(1.02);
 }

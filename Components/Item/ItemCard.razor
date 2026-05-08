@@ -6,7 +6,7 @@
 @namespace ucc.Components.Item
 
 @inject ucc.Services.InventoryService IS
-<button type="button" class="btn-custom w-100 h-100 rounded-2 item-card @cClass"
+<button type="button" class="btn-custom w-100 h-100 rounded-2 bg-body-secondary border-0 shadow-sm item-card @cClass"
         style="@style" title="@Item.Name" @onclick="@(() => ItemClicked(Item.Id))">
     <div class="d-flex flex-column w-100 h-100">
     
@@ -15,12 +15,16 @@
         </div>
 
         <div class="flex-grow-1 p-sm-1 p-2 d-flex flex-column">
-            <h5 class="text-truncate text-wrap m-0 flex-grow-1 text-height">@Item.Name</h5>
+            <h5 class="text-truncate text-center text-wrap m-0 flex-grow-1 text-height">
+                @Item.Name
+            </h5>
         
             @if (ShowItemDate)
             {
-                <span class="text-wrap text-truncate text-muted fst-italic flex-shrink-1 pt-2">
-                    Last Modified: @Item.DateModified.ToString("hh:mm tt, dd/MM/yyyy")
+                <span
+                    class="text-wrap text-truncate text-center text-body-secondary fw-lighter fst-itali fs-6 flex-shrink-1 pt-2"
+                    title="Last Modified">
+                    @Item.DateModified.ToString("hh:mm tt dd/MM/yyyy")
                 </span>
             }
             

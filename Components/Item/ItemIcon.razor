@@ -6,7 +6,7 @@
 @inject ucc.Services.InventoryService IS;
 @* @inject HttpClient Http *@
 
-<div class="icon-container" style="color: @color; width: @Size; height: @Size;" title="@Item.Name">
+<div class="icon-container bg-body-tertiary" style="color: @color; width: @Size; height: @Size;" title="@Item.Name">
     @if (imageExists)
     {
         @* <img src="@($"{itemId}.jpg")" alt="@itemName" title="@itemName"> *@
