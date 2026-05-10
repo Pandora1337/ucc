@@ -57,6 +57,11 @@
 
     private string GetDisplayName()
     {
+        if (Item.IsUnknown)
+        {
+            return "?";
+        }
+
         return useFullName ? Item.Name : GetStringInitials(Item.Name);
     }
 

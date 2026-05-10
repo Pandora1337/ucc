@@ -18,6 +18,12 @@
         {
             <span class="text-xs fw-medium"> (@(Amount)x)</span>
         }
+
+        @if (Item.IsUnknown == true)
+        {
+            <span class="text-xs fw-medium bi bi-exclamation-circle text-danger" aria-label="This item is invalid!"
+                  title="This item is invalid!" />
+        }
     </div>
 </div>
             

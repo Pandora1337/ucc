@@ -11,22 +11,38 @@
 
 @inject ucc.Services.CraftingService CS
 @inject ucc.Services.InventoryService IS
+@inject ucc.Data.LocalStorage LS;
 
 <PageTitle>Crafting Calculator</PageTitle>
 
+<button type="button" class="btn btn-danger p-0 w-100" title="Deletes all planned crafts and crafting data"
+        @onclick="@(async () => { cd = null!; plannedCrafts = []; await LS.Clear(); })">
+    DELETE LOCAL STORAGE
+</button>
+
 <h1 class="text-center">Crafting Calculator</h1>
-<h3 class="mb-2 border border-0 border-3 border-bottom">Planned crafts:</h3>
+
+<div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
+    <h3 class="mb-1">Planned crafts:</h3>
+
+    <button class="btn btn-sm btn-danger h-100" @onclick="DeletePlannedCrafts" title="Clear Planned Crafts">
+        <i class="bi bi-trash3" aria-label="Clear Planned Crafts" />
+    </button>
+</div>
+
 <div class="d-grid justify-content-center g-3 gap-3 mb-3" style="grid-template-columns: repeat(auto-fit, 128px);">
     <div class="me-3">
         <BtnAdd OnClicked="@(() => OpenItemPicker())" style="width: 128px; min-height: 200px; height: 100%;" />
     </div>
     
-    @for (int i = 0; i < targets.Count; i++)
+    @for (int i = 0; i < plannedCrafts.Count; i++)
     {
         int index = i;
-        <ItemCard ItemId="@targets[index].ItemId" IconSize="128px" style="max-width: 128px;"
-                  OnItemClicked="@(() => targets.RemoveAt(index))">
-            <InputNumber TValue="float" class="form-control mt-2 border" @bind-Value="targets[index].Amount"
+        <ItemCard ItemId="@plannedCrafts[index].ItemId" IconSize="128px" style="max-width: 128px;"
+                  OnItemClicked="@(() => OnItemDeleted(index))">
+            <InputNumber TValue="float" class="form-control mt-2 border" Value="plannedCrafts[index].Amount"
+                         ValueExpression="@(()=> plannedCrafts[index].Amount)"
+                         ValueChanged="@(async (float v) => { plannedCrafts[index].Amount = v; await UpdatePlannedCrafts(); })"
                          min="@float.Epsilon" max="@float.MaxValue" placeholder="Amount" title="Amount of an item"
                          @onclick:stopPropagation />
         </ItemCard>
@@ -61,19 +77,19 @@
                 <i class="bi bi-gem me-2" aria-hidden="true" />Products:
             </strong>
             <div class="d-flex flex-wrap gap-1 my-2">
-                @foreach ((string itemId, float amount) in cd.itemsProd)
+                @foreach ((string itemId, float amount) in cd.ItemsProd)
                 {
                     <ItemBadge @key="itemId" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
                 }
             </div>
 
-            @if (cd.itemsInt.Count > 0)
+            @if (cd.ItemsInt.Count > 0)
             {
                 <strong>
                     <i class="bi bi-layers-half me-2" aria-hidden="true" />Intermediate:
                 </strong>
                 <div class="d-flex flex-wrap gap-1 my-2">
-                    @foreach ((string itemId, float amount) in cd.itemsInt)
+                    @foreach ((string itemId, float amount) in cd.ItemsInt)
                     {
                         <ItemBadge @key="itemId" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
                     }
@@ -84,7 +100,7 @@
                 <i class="bi bi-minecart-loaded me-2" aria-hidden="true" />Raw:
             </strong>
             <div class="d-flex flex-wrap gap-1 my-2">
-                @foreach ((string itemId, float amount) in cd.itemsRaw)
+                @foreach ((string itemId, float amount) in cd.ItemsRaw)
                 {
                     <ItemBadge @key="itemId" ItemId="@itemId" Amount="amount" style="max-width: 49%;" />
                 }
@@ -96,38 +112,56 @@
     <div class="d-flex justify-content-between pb-1 mb-2 border border-0 border-3 border-bottom">
         <h3 class="mb-0">Crafting Guide:</h3>
         
-        <div class="btn-group" role="group">
-            <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
-                   checked="@(IsGridView)" />
-            <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
-                <i class="bi bi-grid" aria-label="Grid View" />
-            </label>
+        <div>
+            <div class="btn-group d-none d-lg-inline-flex" role="group">
+                <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
+                       checked="@(IsGridView)" />
+                <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
+                    <i class="bi bi-grid" aria-label="Grid View" />
+                </label>
 
-            <input type="radio" class="btn-check btn-sm" id="viewList" name="viewMode" @onchange="ToggleRecipeGrid"
-                   checked="@(!IsGridView)" />
-            <label class="btn btn-outline-secondary" for="viewList" title="List View">
-                <i class="bi bi-view-stacked" aria-label="List View" />
-            </label>
+                <input type="radio" class="btn-check btn-sm" id="viewList" name="viewMode" @onchange="ToggleRecipeGrid"
+                       checked="@(!IsGridView)" />
+                <label class="btn btn-outline-secondary" for="viewList" title="List View">
+                    <i class="bi bi-view-stacked" aria-label="List View" />
+                </label>
+            </div>
+
+            <button class="btn btn-sm btn-danger h-100" @onclick="@(() => cd = null!)" title="Clear Crafting Data"
+                    style="width: 38px;">
+                <i class="bi bi-trash3" aria-label="Clear Crafting Data" />
+            </button>
         </div>
     </div>
 
-    @if (cd.craftingTime > 0)
+    @if (cd.CraftingTime > 0)
     {
         <h5>
-            Total Crafting Time:<i class="bi bi-clock ms-2 me-1" aria-hidden="true" />@(cd.craftingTime)s
+            Total Crafting Time:
+            <i class="bi bi-clock ms-2 me-1" aria-hidden="true" />
+            @(cd.CraftingTime)s
         </h5>
     }
 
     <div class="row">
-        @for (int i = 0; i < cd.recipeGuide.Count(); i++)
+        @for (int i = 0; i < cd.RecipeGuide.Count(); i++)
         {
-            (Recipe recipe, int ops) = cd.recipeGuide.Reverse().ElementAt(i);
+            (Guid guid, int ops) = cd.RecipeGuide.Reverse().ElementAt(i);
+            Recipe recipe = IS.GetRecipeById(guid);
 
             <div class="col-12 
-                @(IsGridView && cd.recipeGuide.Count() > 1 ? "col-lg-6" : "")
-                @(IsGridView && cd.recipeGuide.Count() > 2 ? "col-xxl-4" : "")">
-                <CraftingStep Recipe="recipe" Operations="ops" OrderNum="i + 1" cClass="mb-3"
-                              IsInvalid="@recipe.IsOutdated(IS.GetRecipeById(recipe.Guid).DateModified)" />
+                @(IsGridView && cd.RecipeGuide.Count() > 1 ? "col-lg-6" : "")
+                @(IsGridView && cd.RecipeGuide.Count() > 2 ? "col-xxl-4" : "")">
+                
+                @if (recipe != null)
+                {
+                    <CraftingStep Recipe="recipe" Operations="ops" OrderNum="i + 1" cClass="mb-3"
+                                  IsInvalid="@(!recipe.IsOutdated(cd.DateCrafted))" />
+                }
+                else
+                {
+                    <CraftingStep IsInvalid="true" cClass="mb-3" />
+                }
             </div>
         }
     </div>
@@ -163,18 +197,27 @@
 </Modal>
 
 @code {
+    private List<Ingredient> plannedCrafts = [];
+
+    private CraftingData cd = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        List<Ingredient>? storedList = await LS.Get<List<Ingredient>>("plannedCrafts");
+        plannedCrafts = storedList == null ? [] : storedList;
+
+        CraftingData? storedCD = await LS.Get<CraftingData>("craftingData");
+        cd = storedCD == null ? null! : storedCD;
+    }
+
     protected override void OnInitialized()
     {
-        CS.OnCraftingFinish += OnCraftingFinished;
         CS.OnChoiceRequest += async (e) => await OnNeedChoice(e);
         CS.OnChoiceSelect += async () => await OnMadeChoice();
-
-        OnCraftingFinished();
     }
 
     public void Dispose()
     {
-        CS.OnCraftingFinish -= OnCraftingFinished;
         CS.OnChoiceRequest -= async (e) => await OnNeedChoice(e);
         CS.OnChoiceSelect -= async () => await OnMadeChoice();
     }
@@ -193,29 +236,46 @@
         await modalItemPick.OpenAsync();
     }
 
-    private List<Ingredient> targets = [];
     private async Task OnItemPicked(string itemId)
     {
         if (pickerIndex < 0)
         {
-            targets.Add(new(itemId));
+            plannedCrafts.Add(new(itemId));
         }
         else
         {
-            targets[pickerIndex].ItemId = itemId;
+            plannedCrafts[pickerIndex].ItemId = itemId;
         }
 
+        await UpdatePlannedCrafts();
         await modalItemPick.CloseAsync();
+    }
+
+    private async Task OnItemDeleted(int index)
+    {
+        plannedCrafts.RemoveAt(index);
+        await UpdatePlannedCrafts();
+    }
+
+    private async Task UpdatePlannedCrafts()
+    {
+        await LS.Set("plannedCrafts", plannedCrafts);
+    }
+
+    private async Task DeletePlannedCrafts()
+    {
+        plannedCrafts.Clear();
+        await LS.Remove("plannedCrafts");
     }
 
     private bool IsValid = true;
     private bool IsCrafting = false;
     private async Task Craft()
     {
-        if (targets.Count == 0)
+        if (plannedCrafts.Count == 0)
             return;
 
-        foreach (var i in targets)
+        foreach (var i in plannedCrafts)
         {
             if (i.Amount > 0)
                 continue;
@@ -226,7 +286,11 @@
 
         IsCrafting = true;
         IsValid = true;
-        await CS.DoListCrafting(targets);
+
+        cd = await CS.DoListCrafting(plannedCrafts);
+
+        IsCrafting = false;
+        await LS.Set("craftingData", cd);
     }
 
     private string problemItem = "";
@@ -243,14 +307,5 @@
     private async Task OnMadeChoice()
     {
         await modalChoice.CloseAsync();
-    }
-
-    CraftingData cd = null!;
-    private void OnCraftingFinished()
-    {
-        targets = CS.targetList;
-        IsCrafting = false;
-
-        cd = CS.craftingData!;
     }
 }

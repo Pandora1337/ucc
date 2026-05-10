@@ -13,19 +13,22 @@
 
 <h1 class="text-center">Inventory</h1>
 <div class="w-100 text-center">
+    <button class="btn btn-success" @onclick="IS.GenerateStuff">Generate demo data</button>
     <button class="btn btn-danger" @onclick="@(async () => await IS.ClearDB())">CLEAR DATABASE</button>
 </div>
 
 <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
     <h2 class="mb-1">Items:</h2>
-    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteItemList.OpenAsync())">
+    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteItemList.OpenAsync())"
+            title="Delete All Items" >
         <i class="bi bi-trash3" aria-label="Delete All Items" />
     </button>
 </div>
 
 <div class="d-grid justify-content-sm-start justify-content-center g-3 gap-3 mb-3"
      style="grid-template-columns: repeat(auto-fit, 128px);">
-    <BtnAdd style="width: 128px; min-height: 200px; height: 100%;" OnClicked="@(async () => await OpenItemAddModal())" />
+    <BtnAdd style="width: 128px; min-height: 200px; height: 100%;"
+            OnClicked="@(async () => await OpenItemAddModal())" />
     
     @foreach (Item item in IS.GetItems().Values)
     {
@@ -39,7 +42,8 @@
 
 <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
     <h2 class="mb-1">Recipes:</h2>
-    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteRecipeList.OpenAsync())">
+    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteRecipeList.OpenAsync())"
+            title="Delete All Recipes">
         <i class="bi bi-trash3" aria-label="Delete All Recipes" />
     </button>
 </div>
@@ -53,7 +57,8 @@
     {
         <div @key="recipe.Guid" class="col-12 col-lg-6 col-xxl-4">
             <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))">
-                <div class="position-absolute bg-body-tertiary" style="top: 8px; right: 6px; height: 38px; width: 80px;"></div>
+                <div class="position-absolute bg-body-tertiary" style="top: 8px; right: 6px; height: 38px; width: 80px;">
+                </div>
 
                 <BtnDelete OnDelete="@(async () => await OpenRecipeAddModal(recipe))" style="right: 48px;"
                            cClass="btn-outline-primary" ImgSrc="bi-pencil-square" Title="Edit" />
@@ -104,8 +109,8 @@
 </ModalDelete>
 
 <ModalDelete @ref="modalDeleteRecipe" Subject="this recipe" OnDelete="RecipeRemove" />
-<ModalDelete @ref="modalDeleteItemList" Subject="all items" OnDelete="@( async () => await IS.ClearAllItems())" />
-<ModalDelete @ref="modalDeleteRecipeList" Subject="all recipes" OnDelete="@( async () => await IS.ClearAllRecipes())" />
+<ModalDelete @ref="modalDeleteItemList" Subject="all items" OnDelete="@(async () => await IS.ClearAllItems())" />
+<ModalDelete @ref="modalDeleteRecipeList" Subject="all recipes" OnDelete="@(async () => await IS.ClearAllRecipes())" />
 
 @code {
     protected override void OnInitialized()
@@ -154,7 +159,7 @@
         IS.TryRemoveItem(modalItem.Id);
         foreach (Recipe recipe in deleteRecipes)
         {
-            IS.TryRemoveRecipe(recipe);
+            IS.TryRemoveRecipe(recipe.Guid);
         }
 
         modalItem = null!;
@@ -179,7 +184,7 @@
 
     private async Task RecipeRemove()
     {
-        IS.TryRemoveRecipe(modalRecipe);
+        IS.TryRemoveRecipe(modalRecipe.Guid);
         modalRecipe = null!;
     }
 }

@@ -3,7 +3,18 @@
 
 @namespace ucc.Components.Crafting
 
-<div class="card bg-body-tertiary p-3 position-relative @(IsInvalid ? "invalid-col" : "") @cClass">
+@if (Recipe == null)
+{
+    <div class="card bg-body-tertiary p-3 position-relative border-danger @cClass">
+        <span class="text-danger text-center">
+            <span class="visually-hidden">Error: </span>
+            Recipe is no longer available :(
+        </span>
+    </div>
+    return;
+}
+
+<div class="card bg-body-tertiary p-3 position-relative @(IsInvalid ? "border-danger" : "") @cClass">
     @if (OrderNum > -1)
     {
         <span
@@ -39,7 +50,7 @@
                 <span title="Number of full batches, batch size, and the size of the incomplete batch">
                     @batches x
                     <i class="bi bi-stack" aria-hidden="true" />
-                    @Recipe.BatchSize 
+                    @Recipe.BatchSize
                     (+@(Operations % Recipe.BatchSize))
                 </span>
             }

@@ -11,10 +11,9 @@ public class InventoryService
     public InventoryService(IndexedDBManager db)
     {
         DB = db;
-        _ = DBinit();
     }
 
-    private async Task DBinit()
+    public async Task InitializeAsync()
     {
         await DB.OpenDb();
 
@@ -27,14 +26,9 @@ public class InventoryService
         List<Recipe> recipeList = await DB.GetRecords<Recipe>(IndexedDB.Recipes);
         recipes = recipeList.ToDictionary(x => x.Guid);
         OnRecipeListChange?.Invoke();
-
-        if (items.Count == 0 && recipes.Count == 0)
-        {
-            GenerateStuff();
-        }
     }
 
-    void GenerateStuff()
+    public void GenerateStuff()
     {
         TryAddItem("Crafting Table");
         TryAddItem("Log");
@@ -49,7 +43,7 @@ public class InventoryService
             Ingredients = [
                 new("log", 1),
             ],
-            BatchSize = 64,
+            BatchSize = 16,
         });
 
         AddRecipe(new Recipe
@@ -161,7 +155,7 @@ public class InventoryService
 
     public Item GetItem(string itemId)
     {
-        return items.GetValueOrDefault(itemId)!;
+        return items.GetValueOrDefault(itemId, Item.GetUnknown(itemId));
     }
 
     public bool TryGetItem(string itemId, out Item item)
@@ -211,12 +205,12 @@ public class InventoryService
         return true;
     }
 
-    public bool TryRemoveRecipe(Recipe recipe)
+    public bool TryRemoveRecipe(Guid id)
     {
-        bool resp = recipes.Remove(recipe.Guid);
+        bool resp = recipes.Remove(id);
         if (resp)
         {
-            DB.DeleteRecord(IndexedDB.Recipes, recipe.Guid);
+            DB.DeleteRecord(IndexedDB.Recipes, id);
             OnRecipeListChange?.Invoke();
         }
 
@@ -232,7 +226,7 @@ public class InventoryService
 
     public Recipe GetRecipeById(Guid guid)
     {
-        return recipes[guid];
+        return recipes.GetValueOrDefault(guid)!;
     }
 
     public List<Recipe> GetRecipesWithItem(string itemId)
@@ -274,6 +268,8 @@ public class InventoryService
     public async Task ClearDB()
     {
         await DB.DeleteDb(DB.DbName);
+        recipes.Clear();
+        items.Clear();
         OnItemListChange?.Invoke();
         OnRecipeListChange?.Invoke();
     }

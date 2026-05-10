@@ -9,21 +9,27 @@
 <button type="button" class="btn-custom w-100 h-100 rounded-2 bg-body-secondary border-0 shadow-sm item-card @cClass"
         style="@style" title="@Item.Name" @onclick="@(() => ItemClicked(Item.Id))">
     <div class="d-flex flex-column w-100 h-100">
-    
         <div class="flex-grow-0">
             <ItemIcon Item="@Item" Size="@IconSize" />
         </div>
 
         <div class="flex-grow-1 p-sm-1 p-2 d-flex flex-column">
-            <h5 class="text-truncate text-center text-wrap m-0 flex-grow-1 text-height">
+            <h5 class="text-truncate text-center text-wrap m-0 flex-grow-1 text-height position-relative">
                 @Item.Name
+
+                @if (Item.IsUnknown == true)
+                {
+                    <span aria-label="This item is invalid!" title="This item is invalid!"
+                          class="text-xs fw-medium me-1 ms-2 position-absolute end-0 top-50 translate-middle-y">
+                        <i class="bi bi-exclamation-circle text-danger"></i>
+                    </span>
+                }
             </h5>
         
             @if (ShowItemDate)
             {
-                <span
-                    class="text-wrap text-truncate text-center text-body-secondary fs-6 flex-shrink-1 pt-2"
-                    title="Last Modified">
+                <span class="text-wrap text-truncate text-center text-body-secondary fs-6 flex-shrink-1 pt-2"
+                      title="Last Modified">
                     @Item.DateModified.ToString("hh:mm tt dd/MM/yyyy")
                 </span>
             }

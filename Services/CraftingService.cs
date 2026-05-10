@@ -6,12 +6,7 @@ public class CraftingService(InventoryService inventoryService)
 {
     protected InventoryService IS { get; set; } = inventoryService;
 
-    public CraftingData? craftingData = null;
-    public List<Ingredient> targetList = [];
-
-    public event Action? OnCraftingFinish;
-
-    public async Task DoListCrafting(List<Ingredient> products)
+    public async Task<CraftingData> DoListCrafting(List<Ingredient> products)
     {
         Dictionary<Recipe, int> recipeGuide = [];
         Dictionary<string, Recipe> selectedRecipes = [];
@@ -26,15 +21,11 @@ public class CraftingService(InventoryService inventoryService)
             await Recurse(item.Key, item.Value, []);
         }
 
-        targetList = products;
-        craftingData = new()
-        {
-            recipeGuide = recipeGuide,
-        };
-
+        CraftingData craftingData = new();
         foreach ((Recipe recipe, int ops) in recipeGuide)
         {
-            craftingData.craftingTime += recipe.GetTotalCraftingTime(ops);
+            craftingData.CraftingTime += recipe.GetTotalCraftingTime(ops);
+            craftingData.RecipeGuide.Add(recipe.Guid, ops);
         }
 
         // Console.WriteLine("totalIngs:");
@@ -44,8 +35,7 @@ public class CraftingService(InventoryService inventoryService)
         // IS.SerialiseToJSON(itemDeltas);
 
         SortItemCategories();
-
-        OnCraftingFinish?.Invoke();
+        return craftingData;
 
         async Task Recurse(string itemId, float amount, HashSet<string> visited)
         {
@@ -112,18 +102,18 @@ public class CraftingService(InventoryService inventoryService)
                     case > 0:
                         if (!targetDict.ContainsKey(itemId))
                         {
-                            craftingData.itemsInt.Add(itemId, totalIngs[itemId]);
+                            craftingData.ItemsInt.Add(itemId, totalIngs[itemId]);
                         }
 
-                        craftingData.itemsProd.Add(itemId, amount);
+                        craftingData.ItemsProd.Add(itemId, amount);
                         continue;
 
                     case 0:
-                        craftingData.itemsInt.Add(itemId, totalIngs[itemId]);
+                        craftingData.ItemsInt.Add(itemId, totalIngs[itemId]);
                         continue;
 
                     case < 0:
-                        craftingData.itemsRaw.Add(itemId, amount * -1);
+                        craftingData.ItemsRaw.Add(itemId, amount * -1);
                         continue;
 
                 }

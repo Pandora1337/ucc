@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using ucc.Services;
 
@@ -28,6 +29,9 @@ public partial class Item(string name) : IValidatableObject
     }
 
     public DateTime DateModified { get; set; } = DateTime.Now;
+
+    [JsonIgnore]
+    public bool IsUnknown { get; private set; } = false;
 
     private string GetHashedColor()
     {
@@ -59,6 +63,15 @@ public partial class Item(string name) : IValidatableObject
             Id = this.Id,
             ColorHex = this.ColorHex,
             DateModified = this.DateModified,
+        };
+    }
+
+    public static Item GetUnknown(string itemId)
+    {
+        return new(itemId)
+        {
+            IsUnknown = true,
+            ColorHex = "#dc3545",
         };
     }
 
