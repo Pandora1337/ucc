@@ -41,21 +41,11 @@
     [Parameter] public bool EnableBtn { get; set; } = false;
     [Parameter] public string IconSize { get; set; } = "64px";
     [Parameter] public string style { get; set; } = "";
+    [Parameter] public string cClass { get; set; } = "";
 
-    private float quantity;
-    [Parameter] public float Quantity
-    {
-        get => quantity;
-        set
-        {
-            if (quantity == value)
-                return;
-            
-            quantity = value;
-            QuantityChanged.InvokeAsync(value);
-        }
-    }
-    
+    [Parameter] public float Quantity { get; set; }
+    private float prevQuantity;
+
     [Parameter] public Item Item { get; set; } = null!;
     [Parameter] public string ItemId { get; set; } = "";
 
@@ -66,6 +56,16 @@
             Item = IS.GetItem(ItemId);
             StateHasChanged();
         }
+    }
+
+    protected override bool ShouldRender()
+    {
+        if (prevQuantity == Quantity)
+            return false;
+
+        prevQuantity = Quantity;
+        QuantityChanged.InvokeAsync(Quantity);
+        return true;
     }
 
     protected override void OnInitialized() => IS.OnItemUpdate += OnItemUpdated;
