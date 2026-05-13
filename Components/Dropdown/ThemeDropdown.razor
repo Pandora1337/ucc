@@ -1,0 +1,93 @@
+@using ucc.Services;
+
+@namespace ucc.Components.Dropdown
+
+@inject ucc.Services.ThemeService TS;
+
+<div class="dropdown">
+    <button type="button" class="btn dropdown-toggle d-flex align-items-center @cClass"
+            aria-expanded="@IsOpen" aria-label="@ariaTheme" title="@ariaTheme" @onclick="Toggle">
+        <i class="bi @icon" aria-hidden="true"></i>
+    </button>
+
+    <ul class="dropdown-menu @(IsOpen ? "show" : null)" style="min-width: 8rem !important;">
+        <li>
+            <button type="button" class="dropdown-item d-flex align-items-center @(TS.IsLight ? "active" : null)"
+                    @onclick="@(() => ChooseOption(ThemeService.Themes.Light))" aria-pressed="@TS.IsLight">
+                <i class="bi @IconLight me-2" aria-hidden="true"></i>
+                Light
+                <i class="bi bi-check-lg ms-auto @(TS.IsLight ? "" : "d-none")" aria-hidden="true"></i>
+            </button>
+        </li>
+
+        <li>
+            <button type="button" class="dropdown-item d-flex align-items-center @(TS.IsDark ? "active" : null)"
+                    @onclick="@(() => ChooseOption(ThemeService.Themes.Dark))" aria-pressed="@TS.IsDark">
+                <i class="bi @IconDark me-2" aria-hidden="true"></i>
+                Dark
+                <i class="bi bi-check-lg ms-auto @(TS.IsDark ? "" : "d-none")" aria-hidden="true"></i>
+            </button>
+        </li>
+        
+        <li>
+            <button type="button" class="dropdown-item d-flex align-items-center @(TS.IsAuto ? "active" : null)"
+                    @onclick="@(() => ChooseOption(ThemeService.Themes.Auto))" aria-pressed="@TS.IsAuto">
+                <i class="bi @IconAuto me-2" aria-hidden="true"></i>
+                Auto
+                <i class="bi bi-check-lg ms-auto @(TS.IsAuto ? "" : "d-none")" aria-hidden="true"></i>
+            </button>
+        </li>
+    </ul>
+</div>
+
+@code {
+    [Parameter] public string cClass { get; set; } = "btn-outline-primary";
+
+    private string IconLight = "bi-brightness-high-fill";
+    private string IconDark = "bi-moon-fill";
+    private string IconAuto = "bi-circle-half";
+
+    protected override async Task OnInitializedAsync()
+    {
+        TS.OnThemeChange += UpdateIcon;
+        UpdateIcon(TS.Theme);
+    }
+
+    public void Dispose() => TS.OnThemeChange -= UpdateIcon;
+
+    private bool IsOpen { get; set; } = false;
+
+    private void Toggle() => IsOpen = !IsOpen;
+
+    private void Close() => IsOpen = false;
+
+    private async void ChooseOption(ThemeService.Themes theme)
+    {
+        Close();
+        await TS.SelectTheme(theme);
+    }
+
+    private string icon = "";
+    private string ariaTheme = "";
+    private void UpdateIcon(ThemeService.Themes theme)
+    {
+        switch (theme)
+        {
+            case ThemeService.Themes.Auto:
+                icon = IconAuto;
+                ariaTheme = "Toggle theme (Auto)";
+                break;
+
+            case ThemeService.Themes.Light:
+                icon = IconLight;
+                ariaTheme = "Toggle theme (Light)";
+                break;
+
+            case ThemeService.Themes.Dark:
+                icon = IconDark;
+                ariaTheme = "Toggle theme (Dark)";
+                break;
+        }
+        StateHasChanged();
+    }
+}
