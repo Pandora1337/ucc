@@ -39,15 +39,18 @@ public class ThemeService(IJSRuntime jSRuntime, LocalStorage localStorage)
 
     private async Task ChangeTheme(Themes theme)
     {
-        if (theme == Themes.Auto)
+        Themes privTheme = theme;
+        if (privTheme == Themes.Auto)
         {
+            // If not matched or no preference,
+            // Default is light
             bool isDark = await JS.InvokeAsync<bool>("eval", "window.matchMedia('(prefers-color-scheme: dark)').matches");
-            theme = isDark ? Themes.Dark : Themes.Light;
+            privTheme = isDark ? Themes.Dark : Themes.Light;
         }
 
-        string themeStr = theme == Themes.Light ? "light" : "dark";
+        string themeStr = privTheme == Themes.Light ? "light" : "dark";
         await JS.InvokeVoidAsync("eval", $"document.documentElement.setAttribute('data-bs-theme', '{themeStr}')");
         await LS.Set("theme", theme);
-        OnThemeChange?.Invoke(Theme);
+        OnThemeChange?.Invoke(theme);
     }
 }
