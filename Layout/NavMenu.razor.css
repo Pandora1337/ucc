@@ -1,9 +1,10 @@
 .navbar-toggler {
     background-color: rgba(255, 255, 255, 0.1);
+    display: none;
 }
 
 .top-row {
-    height: 3.5rem;
+    height: 3.875rem; /* 62px */
     background-color: rgba(0,0,0,0.4);
 }
 
@@ -13,24 +14,13 @@
 
 .nav-item {
     font-size: 0.9rem;
-    padding-bottom: 0.5rem;
 }
-
-    .nav-item:first-of-type {
-        padding-top: 1rem;
-    }
-
-    .nav-item:last-of-type {
-        padding-bottom: 1rem;
-    }
 
     .nav-item ::deep a {
         color: #d7d7d7;
         border-radius: 4px;
-        height: 3rem;
         display: flex;
         align-items: center;
-        line-height: 3rem;
     }
 
 .nav-item ::deep a.active {
@@ -43,19 +33,44 @@
     color: white;
 }
 
-@media (min-width: 641px) {
-    .navbar-toggler {
+/* sm: 575.98px)  */
+/* md 767.98px)  */
+/* lg  991.98px) */
+/* xl  1199.98px)  */
+/* xxl  1399.98px) */
+
+/* Hide nav icons */
+@media (max-width: 428.98px) {
+    .navbar-collapse:not(.show) ::deep .nav-item {
+        display: none !important;
+    }
+}
+
+/* Show only nav icons */
+/* Enable nav menu toggle */
+@media (max-width: 767.98px) {
+    .navbar-collapse:not(.show) {
+        flex-basis: auto !important;
+        order: 1 !important;
+    }
+
+    .navbar-collapse:not(.show) .collapse-text {
         display: none;
     }
 
-    .collapse {
-        /* Never collapse the sidebar for wide screens */
-        display: block;
+    .navbar-collapse:not(.show) .show-row {
+        flex-direction: row !important;
+    }
+
+    .col-pad .nav-item:first-of-type {
+        padding-top: 1.5rem !important;
     }
     
-    .nav-scrollable {
-        /* Allow sidebar to scroll for tall menus */
-        height: calc(100vh - 3.5rem);
-        overflow-y: auto;
+    .col-pad .nav-item:last-of-type {
+        padding-bottom: 0.5rem !important;
+    }
+
+    .navbar-toggler {
+        display: block;
     }
 }
