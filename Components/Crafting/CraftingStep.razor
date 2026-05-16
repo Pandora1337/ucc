@@ -46,13 +46,23 @@
         <div class="col-5 d-flex justify-content-end align-items-center">
             @if (Recipe.BatchSize > 0)
             {
-                int batches = (Operations / (int)Recipe.BatchSize);
-                <span title="Number of full batches, batch size, and the size of the incomplete batch">
-                    @batches x
-                    <i class="bi bi-stack" aria-hidden="true" />
-                    @Recipe.BatchSize
-                    (+@(Operations % Recipe.BatchSize))
-                </span>
+                @if (OrderNum > -1)
+                {
+                    int batches = (Operations / (int)Recipe.BatchSize);
+                    <span title="Number of full batches, batch size, and the size of the incomplete batch">
+                        @batches x
+                        <i class="bi bi-stack" aria-hidden="true" />
+                        @Recipe.BatchSize
+                        (+@(Operations % Recipe.BatchSize))
+                    </span>
+                }
+                else
+                {
+                    <span title="Batch size">
+                        <i class="bi bi-stack mx-1" aria-hidden="true" />
+                        @Recipe.BatchSize
+                    </span>
+                }
             }
         </div>
         
