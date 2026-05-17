@@ -203,6 +203,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        IsGridView = await LS.Get<bool>("craftingPageIsGridView");
         List<Ingredient>? storedList = await LS.Get<List<Ingredient>>("plannedCrafts");
         plannedCrafts = storedList == null ? [] : storedList;
 
@@ -223,9 +224,10 @@
     }
 
     private bool IsGridView { get; set; }
-    private void ToggleRecipeGrid()
+    private async Task ToggleRecipeGrid()
     {
         IsGridView = !IsGridView;
+        await LS.Set("craftingPageIsGridView", IsGridView);
     }
 
     private Modal modalItemPick = null!;
