@@ -1,0 +1,276 @@
+@page "/settings"
+
+@using System.Text
+@using System.Text.Json
+@using ucc.Components.Modal
+@using ucc.Models
+
+@inject ucc.Data.LocalStorage LS;
+@inject ucc.Services.CraftingService CS;
+@inject ucc.Services.InventoryService IS;
+@inject Microsoft.JSInterop.IJSRuntime JS;
+
+<PageTitle>Settings</PageTitle>
+
+<h1 class="text-center h1">Settings</h1>
+
+<div class="col-lg-8 mx-auto">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h1 class="h5 mb-1">Configuration</h1>
+            <p class="text-muted mb-0">Import or export app configuration.</p>
+        </div>
+
+        <div class="card-body">
+            <ul class="nav nav-tabs role=" tablist">
+                <li class="nav-item">
+                    <button class="nav-link @(ShowImport ? "active" : "")" id="import-tab" type="button" role="tab"
+                            aria-controls="import-pane" aria-selected="@(ShowImport)" @onclick="@(() => ShowImport = true)">
+                        <span class="bi bi-download me-1" aria-hidden="true"></span>
+                        Import
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link @(!ShowImport ? "active" : "")" id="export-tab" type="button" role="tab"
+                            aria-controls="export-pane" aria-selected="@(!ShowImport)"
+                            @onclick="@(() => ShowImport = false)">
+                        <span class="bi bi-upload me-1" aria-hidden="true"></span>
+                        Export
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content border border-top-0 rounded-bottom p-3">
+                <div class="tab-pane @(ShowImport ? "show active" : "")" id="import-pane" role="tabpanel"
+                     aria-labelledby="import-tab" tabindex="0" aria-selected="@ShowImport">
+                    <div class="mb-3">
+                        <label for="importFile" class="form-label">
+                            Upload config file
+                        </label>
+
+                        <InputFile accept=".json" id="importFile" OnChange="LoadFile"
+                                   class="@($"form-control {CssInvalidClass} {CssValidClass}")" />
+
+                        <div class="invalid-feedback">
+                            Error reading file!
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        Import will <strong>overwrite</strong> existing configuration. All current <strong>Items and
+                        Recipes</strong> will be lost!
+                    </div>
+
+                    <button class="btn btn-primary" type="button" @onclick="ImportConfig"
+                            disabled="@(Import != ImportStage.FileValid)">
+                        @if (Import == ImportStage.Importing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                            <span role="status">Importing...</span>
+                        }
+                        else if (Import == ImportStage.Done)
+                        {
+                            <span class="bi bi-check-lg me-1" aria-hidden="true"></span>
+                            <span>Import</span>
+                        }
+                        else
+                        {
+                            <span class="bi bi-download me-1" aria-hidden="true"></span>
+                            <span>Import</span>
+                        }
+                    </button>
+                </div>
+
+                <div class="tab-pane @(!ShowImport ? "show active" : "")" id="export-pane" role="tabpanel"
+                     aria-labelledby="export-tab" tabindex="0" aria-selected="@(!ShowImport)">
+
+                    <label class="mb-1" for="text-input">
+                        Filename
+                    </label>
+                    <InputText id="text-input" class="form-control" placeholder="@defaultFilename"
+                               @bind-Value="FileName" title="Choose config filename" aria-required="false" />
+
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="checkPC"
+                               @bind-value="IsPlannedCraftsIncluded" switch>
+                        <label class="form-check-label" for="checkPC">
+                            Include Planned Crafts
+                        </label>
+                    </div>
+
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="checkCD"
+                               @bind-value="IsCraftingDataIncluded" switch>
+                        <label class="form-check-label" for="checkCD">
+                            Include Crafting Data
+                        </label>
+                    </div>
+
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="checkIndented" @bind-value="IsIndented"
+                               switch>
+                        <label class="form-check-label" for="checkIndented">
+                            Write Indented
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <span class="text-muted">Human readable, but also larger in size</span>
+                    </div>
+
+                    <button class="btn btn-primary mt-3" type="button" @onclick="ExportConfig">
+                        <span class="bi bi-upload me-1" aria-hidden="true"></span>
+                        Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="col-lg-8 mx-auto my-3">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h1 class="h5 mb-1">Storage settings</h1>
+            <p class="text-muted mb-0">Manage saved browser data.</p>
+        </div>
+
+        <div class="card-body">
+            @* <div class="border rounded p-3 mb-3">
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" role="switch" id="lowRamMode">
+                    <label class="form-check-label fw-semibold" for="lowRamMode">Low ram mode</label>
+                </div>
+                <div class="text-muted small">
+                    Reduces memory usage by limiting cache size and background storage activity.
+                </div>
+            </div> *@
+
+            <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-3">
+                <div>
+                    <h2 class="h6 mb-1">Local storage</h2>
+                    <div class="text-muted small">User preferences, Planned Crafts list, and Crafting Data.
+                    </div>
+                </div>
+                <button class="btn btn-outline-danger" title="Delete LocalStorage"
+                        @onclick="@(() => modalDeleteLS.OpenAsync())">
+                    <i class="bi bi-trash3" aria-label="Delete LocalStorage" />
+                </button>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-3">
+                <div>
+                    <h2 class="h6 mb-1">Database</h2>
+                    <div class="text-muted small">Stores Items and Recipes.</div>
+                </div>
+                <button class="btn btn-outline-danger" title="Delete Database"
+                        @onclick="@(() => modalDeleteDB.OpenAsync())">
+                    <i class="bi bi-trash3" aria-label="Delete Database" />
+                </button>
+            </div>
+
+            <div class="alert alert-warning mt-3 mb-0">
+                Deleting storage cannot be undone. Make sure you have backups before continuing.
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<ModalDelete @ref="modalDeleteLS" Subject="local storage" OnDelete="@(async () => await LS.Clear())" />
+<ModalDelete @ref="modalDeleteDB" Subject="the database" OnDelete="@(async () => await IS.ClearDB())" />
+
+
+@code {
+    ModalDelete modalDeleteLS = null!;
+    ModalDelete modalDeleteDB = null!;
+
+    private string CssInvalidClass => Import == ImportStage.FileNotValid ? "is-invalid" : "";
+    private string CssValidClass => Import == ImportStage.FileValid ? "is-valid" : "";
+    private bool ShowImport { get; set; } = true;
+
+    private Config? config = null;
+
+    private ImportStage Import = ImportStage.None;
+    enum ImportStage
+    {
+        None,
+        FileNotValid,
+        FileValid,
+        Importing,
+        Done,
+    }
+
+    private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        IBrowserFile? file = e.File;
+        if (file == null)
+        {
+            Import = ImportStage.None;
+            return;
+        }
+
+        try
+        {
+            using Stream? stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            config = await JsonSerializer.DeserializeAsync<Config>(stream);
+        }
+        catch
+        {
+            Import = ImportStage.FileNotValid;
+            return;
+        }
+
+        if (config == null)
+        {
+            Import = ImportStage.FileNotValid;
+            return;
+        }
+
+        Import = ImportStage.FileValid;
+    }
+
+    private async Task ImportConfig()
+    {
+        // this SHOULD HAVE been checked by ImportStage.FileValid,
+        // but if i ever forget about that this should help
+        if (config == null)
+            return;
+
+        Import = ImportStage.Importing;
+
+        await IS.SetItems(config.Items);
+        await IS.SetRecipes(config.Recipes);
+        await CS.SetCraftingData(config.CraftingData);
+        CS.PlannedCrafts = config.PlannedCrafts ?? [];
+
+        Import = ImportStage.Done;
+    }
+
+    private readonly string defaultFilename = "ucc-config";
+    private string FileName { get; set; } = "";
+
+    private bool IsIndented { get; set; } = false;
+    private bool IsCraftingDataIncluded { get; set; } = false;
+    private bool IsPlannedCraftsIncluded { get; set; } = false;
+
+    private async Task ExportConfig()
+    {
+        Config config = new()
+        {
+            Items = IS.GetItems(),
+            Recipes = IS.GetRecipes(),
+            PlannedCrafts = IsPlannedCraftsIncluded ? CS.PlannedCrafts : null,
+            CraftingData = IsCraftingDataIncluded ? CS.GetCraftingData() : null,
+        };
+
+        string? json = JsonSerializer.Serialize(config, new JsonSerializerOptions
+        {
+            WriteIndented = IsIndented,
+        });
+
+        byte[]? bytes = Encoding.UTF8.GetBytes(json);
+        string newFilename = string.IsNullOrEmpty(FileName) ? defaultFilename : FileName;
+        await JS.InvokeVoidAsync("downloadFileBytes", $"{newFilename}.json", bytes);
+    }
+}

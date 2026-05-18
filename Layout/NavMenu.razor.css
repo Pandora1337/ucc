@@ -40,7 +40,7 @@
 /* xxl  1399.98px) */
 
 /* Hide nav icons */
-@media (max-width: 428.98px) {
+@media (max-width: 485.98px) {
     .navbar-collapse:not(.show) ::deep .nav-item {
         display: none !important;
     }

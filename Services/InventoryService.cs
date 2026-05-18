@@ -5,13 +5,9 @@ using TG.Blazor.IndexedDB;
 
 namespace ucc.Services;
 
-public class InventoryService
+public class InventoryService(IndexedDBManager db)
 {
-    private IndexedDBManager DB;
-    public InventoryService(IndexedDBManager db)
-    {
-        DB = db;
-    }
+    private IndexedDBManager DB = db;
 
     public async Task InitializeAsync()
     {
@@ -163,6 +159,22 @@ public class InventoryService
         return items.TryGetValue(itemId, out item!);
     }
 
+    public async Task SetItems(Dictionary<string, Item> newItems)
+    {
+        await DB.ClearStore(IndexedDB.Items);
+        foreach ((string id, Item item) in newItems)
+        {
+            await DB.AddRecord<Item>(new()
+            {
+                Storename = IndexedDB.Items,
+                Data = item
+            });
+        }
+
+        items = newItems;
+        OnItemListChange?.Invoke();
+    }
+
     public Dictionary<string, Item> GetItems()
     {
         return items;
@@ -258,6 +270,22 @@ public class InventoryService
             }
         }
         return list;
+    }
+
+    public async Task SetRecipes(Dictionary<Guid, Recipe> newRecipes)
+    {
+        await DB.ClearStore(IndexedDB.Recipes);
+        foreach ((Guid id, Recipe recipe) in newRecipes)
+        {
+            await DB.AddRecord<Recipe>(new()
+            {
+                Storename = IndexedDB.Recipes,
+                Data = recipe
+            });
+        }
+
+        recipes = newRecipes;
+        OnRecipeListChange?.Invoke();
     }
 
     public Dictionary<Guid, Recipe> GetRecipes()

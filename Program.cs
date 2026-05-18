@@ -20,5 +20,6 @@ var app = builder.Build();
 
 await app.Services.GetRequiredService<ThemeService>().InitializeAsync();
 await app.Services.GetRequiredService<InventoryService>().InitializeAsync();
+await app.Services.GetRequiredService<CraftingService>().InitializeAsync();
 
 await app.RunAsync();

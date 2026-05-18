@@ -1,13 +1,13 @@
 ﻿@page "/crafting"
 
-@using System.ComponentModel
 @using ucc.Components.Accordion
 @using ucc.Components.BtnAdd
 @using ucc.Components.Crafting
 @using ucc.Components.Item
 @using ucc.Components.Modal
-@using ucc.Components.Recipe
 @using ucc.Models
+
+@implements IDisposable
 
 @inject ucc.Services.CraftingService CS
 @inject ucc.Services.InventoryService IS
@@ -15,17 +15,12 @@
 
 <PageTitle>Crafting Calculator</PageTitle>
 
-<button type="button" class="btn btn-danger p-0 w-100" title="Deletes all planned crafts and crafting data"
-        @onclick="@(async () => { cd = null!; plannedCrafts = []; await LS.Clear(); })">
-    DELETE LOCAL STORAGE
-</button>
-
 <h1 class="text-center">Crafting Calculator</h1>
 
 <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
     <h3 class="mb-1">Planned crafts:</h3>
 
-    <button class="btn btn-sm btn-danger h-100" @onclick="DeletePlannedCrafts" title="Clear Planned Crafts">
+    <button class="btn btn-sm btn-danger h-100" @onclick="CS.DeletePlannedCrafts" title="Clear Planned Crafts">
         <i class="bi bi-trash3" aria-label="Clear Planned Crafts" />
     </button>
 </div>
@@ -34,15 +29,15 @@
     <div class="me-3">
         <BtnAdd OnClicked="@(() => OpenItemPicker())" style="width: 128px; min-height: 200px; height: 100%;" />
     </div>
-    
+
     @for (int i = 0; i < plannedCrafts.Count; i++)
     {
         int index = i;
         <ItemCard ItemId="@plannedCrafts[index].ItemId" IconSize="128px" style="max-width: 128px;"
-                  OnItemClicked="@(() => OnItemDeleted(index))">
+                  OnItemClicked="@(() => CS.OnItemDeleted(index))">
             <InputNumber TValue="float" class="form-control mt-2 border" Value="plannedCrafts[index].Amount"
                          ValueExpression="@(()=> plannedCrafts[index].Amount)"
-                         ValueChanged="@(async (float v) => { plannedCrafts[index].Amount = v; await UpdatePlannedCrafts(); })"
+                         ValueChanged="@(async (float v) => { plannedCrafts[index].Amount = v; await CS.UpdatePlannedCrafts(); })"
                          min="@float.Epsilon" max="@float.MaxValue" placeholder="Amount" title="Amount of an item"
                          @onclick:stopPropagation />
         </ItemCard>
@@ -95,7 +90,7 @@
                     }
                 </div>
             }
-        
+
             <strong>
                 <i class="bi bi-minecart-loaded me-2" aria-hidden="true" />Raw:
             </strong>
@@ -111,7 +106,7 @@
 
     <div class="d-flex justify-content-between pb-1 mb-2 border border-0 border-3 border-bottom">
         <h3 class="mb-0">Crafting Guide:</h3>
-        
+
         <div>
             <div class="btn-group d-none d-lg-inline-flex" role="group">
                 <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
@@ -127,8 +122,8 @@
                 </label>
             </div>
 
-            <button class="btn btn-sm btn-danger h-100" @onclick="@(() => cd = null!)" title="Clear Crafting Data"
-                    style="width: 38px;">
+            <button class="btn btn-sm btn-danger h-100" @onclick="@(() => CS.SetCraftingData(null))"
+                    title="Clear Crafting Data" style="width: 38px;">
                 <i class="bi bi-trash3" aria-label="Clear Crafting Data" />
             </button>
         </div>
@@ -152,7 +147,7 @@
             <div class="col-12 
                 @(IsGridView && cd.RecipeGuide.Count() > 1 ? "col-lg-6" : "")
                 @(IsGridView && cd.RecipeGuide.Count() > 2 ? "col-xxl-4" : "")">
-                
+
                 @if (recipe != null)
                 {
                     <CraftingStep Recipe="recipe" Operations="ops" OrderNum="i + 1" cClass="mb-3"
@@ -166,7 +161,6 @@
         }
     </div>
 }
-
 
 <Modal @ref="modalItemPick" Title="Choose an Item to craft">
     <div class="modal-body pb-0 px-0">
@@ -197,18 +191,13 @@
 </Modal>
 
 @code {
-    private List<Ingredient> plannedCrafts = [];
+    private List<Ingredient> plannedCrafts => CS.PlannedCrafts;
 
-    private CraftingData cd = null!;
+    private CraftingData? cd => CS.GetCraftingData();
 
     protected override async Task OnInitializedAsync()
     {
         IsGridView = await LS.Get<bool>("craftingPageIsGridView");
-        List<Ingredient>? storedList = await LS.Get<List<Ingredient>>("plannedCrafts");
-        plannedCrafts = storedList == null ? [] : storedList;
-
-        CraftingData? storedCD = await LS.Get<CraftingData>("craftingData");
-        cd = storedCD == null ? null! : storedCD;
     }
 
     protected override void OnInitialized()
@@ -249,25 +238,8 @@
             plannedCrafts[pickerIndex].ItemId = itemId;
         }
 
-        await UpdatePlannedCrafts();
+        await CS.UpdatePlannedCrafts();
         await modalItemPick.CloseAsync();
-    }
-
-    private async Task OnItemDeleted(int index)
-    {
-        plannedCrafts.RemoveAt(index);
-        await UpdatePlannedCrafts();
-    }
-
-    private async Task UpdatePlannedCrafts()
-    {
-        await LS.Set("plannedCrafts", plannedCrafts);
-    }
-
-    private async Task DeletePlannedCrafts()
-    {
-        plannedCrafts.Clear();
-        await LS.Remove("plannedCrafts");
     }
 
     private bool IsValid = true;
@@ -277,7 +249,7 @@
         if (plannedCrafts.Count == 0)
             return;
 
-        foreach (var i in plannedCrafts)
+        foreach (Ingredient i in plannedCrafts)
         {
             if (i.Amount > 0)
                 continue;
@@ -289,10 +261,8 @@
         IsCrafting = true;
         IsValid = true;
 
-        cd = await CS.DoListCrafting(plannedCrafts);
-
+        await CS.DoListCrafting();
         IsCrafting = false;
-        await LS.Set("craftingData", cd);
     }
 
     private string problemItem = "";

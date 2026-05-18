@@ -7,6 +7,8 @@
 @using ucc.Components.BtnDelete;
 @using ucc.Components.Modal;
 
+@implements IDisposable
+
 @inject ucc.Services.InventoryService IS;
 
 <PageTitle>Inventory</PageTitle>
@@ -14,7 +16,6 @@
 <h1 class="text-center">Inventory</h1>
 <div class="w-100 text-center">
     <button class="btn btn-success" @onclick="IS.GenerateStuff">Generate demo data</button>
-    <button class="btn btn-danger" @onclick="@(async () => await IS.ClearDB())">CLEAR DATABASE</button>
 </div>
 
 <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">

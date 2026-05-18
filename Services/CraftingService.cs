@@ -1,12 +1,55 @@
+using ucc.Data;
 using ucc.Models;
 
 namespace ucc.Services;
 
-public class CraftingService(InventoryService inventoryService)
+public class CraftingService(InventoryService inventoryService, LocalStorage localStorage)
 {
     protected InventoryService IS { get; set; } = inventoryService;
+    protected LocalStorage LS { get; set; } = localStorage;
 
-    public async Task<CraftingData> DoListCrafting(List<Ingredient> products)
+    public async Task InitializeAsync()
+    {
+        List<Ingredient>? storedList = await LS.Get<List<Ingredient>>("plannedCrafts");
+        PlannedCrafts = storedList ?? [];
+
+        CraftingData? storedCD = await LS.Get<CraftingData>("craftingData");
+        craftingData = storedCD ?? null;
+    }
+
+    public List<Ingredient> PlannedCrafts { get; set; } = new();
+
+    public async Task OnItemDeleted(int index)
+    {
+        PlannedCrafts.RemoveAt(index);
+        await UpdatePlannedCrafts();
+    }
+
+    public async Task DeletePlannedCrafts()
+    {
+        PlannedCrafts.Clear();
+        await LS.Remove("plannedCrafts");
+    }
+
+    public async Task UpdatePlannedCrafts()
+    {
+        await LS.Set("plannedCrafts", PlannedCrafts);
+    }
+
+    private CraftingData? craftingData = null;
+
+    public CraftingData? GetCraftingData()
+    {
+        return craftingData;
+    }
+
+    public async Task SetCraftingData(CraftingData? newData)
+    {
+        craftingData = newData;
+        await LS.Set("craftingData", craftingData!);
+    }
+
+    public async Task DoListCrafting()
     {
         Dictionary<Recipe, int> recipeGuide = [];
         Dictionary<string, Recipe> selectedRecipes = [];
@@ -15,7 +58,7 @@ public class CraftingService(InventoryService inventoryService)
         Dictionary<string, float> itemDeltas = [];
         HashSet<string> deadEndItems = [];
 
-        Dictionary<string, float> targetDict = CollapseList(products);
+        Dictionary<string, float> targetDict = CollapseList(PlannedCrafts);
         foreach (KeyValuePair<string, float> item in targetDict)
         {
             await Recurse(item.Key, item.Value, []);
@@ -35,7 +78,7 @@ public class CraftingService(InventoryService inventoryService)
         // IS.SerialiseToJSON(itemDeltas);
 
         SortItemCategories();
-        return craftingData;
+        await SetCraftingData(craftingData);
 
         async Task Recurse(string itemId, float amount, HashSet<string> visited)
         {
@@ -72,7 +115,7 @@ public class CraftingService(InventoryService inventoryService)
 
             Dictionary<string, float> totalProd = CollapseList(recipe.Products);
 
-            int ops = (int) Math.Ceiling(amount / totalProd[itemId]);
+            int ops = (int)Math.Ceiling(amount / totalProd[itemId]);
             recipeGuide[recipe] = recipeGuide.GetValueOrDefault(recipe, 0) + ops;
             itemDeltas[itemId] = itemDeltas.GetValueOrDefault(itemId, 0) + (ops * totalProd[itemId]);
 
