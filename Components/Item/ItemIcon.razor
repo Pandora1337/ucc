@@ -1,10 +1,8 @@
-﻿@using System.Drawing
-@using ucc.Models
+﻿@using ucc.Models
+
+@inherits ItemBase
 
 @namespace ucc.Components.Item
-
-@inject ucc.Services.InventoryService IS;
-@* @inject HttpClient Http *@
 
 <div class="icon-container bg-body-tertiary" style="color: @color; width: @Size; height: @Size;" title="@Item.Name">
     @if (imageExists)
@@ -21,39 +19,9 @@
 @code {
     [Parameter] public bool useFullName { get; set; } = false;
     [Parameter] public string? Size { get; set; } = "64px";
-    [Parameter] public Item Item { get; set; } = null!;
-    [Parameter] public string ItemId { get; set; } = "";
 
     private bool imageExists;
     private string color => Item.ColorHex;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (!string.IsNullOrEmpty(ItemId) && (Item == null || Item.Id != ItemId))
-        {
-            Item = IS.GetItem(ItemId);
-            StateHasChanged();
-        }
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await IsImageExist();
-    }
-
-    // wrong grammar, but naming conventions are important
-    private async Task IsImageExist()
-    {
-        @* try
-        {
-            var response = await Http.GetAsync(itemId + ".png");
-            imageExists = response.IsSuccessStatusCode;
-        }
-        catch
-        {
-            imageExists = false;
-        } *@
-    }
 
     private string GetDisplayName()
     {

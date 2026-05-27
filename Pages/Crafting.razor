@@ -202,14 +202,14 @@
 
     protected override void OnInitialized()
     {
-        CS.OnChoiceRequest += async (e) => await OnNeedChoice(e);
-        CS.OnChoiceSelect += async () => await OnMadeChoice();
+        CS.OnChoiceRequest += OnNeedChoice;
+        CS.OnChoiceSelect += OnMadeChoice;
     }
 
     public void Dispose()
     {
-        CS.OnChoiceRequest -= async (e) => await OnNeedChoice(e);
-        CS.OnChoiceSelect -= async () => await OnMadeChoice();
+        CS.OnChoiceRequest -= OnNeedChoice;
+        CS.OnChoiceSelect -= OnMadeChoice;
     }
 
     private bool IsGridView { get; set; }
@@ -267,7 +267,7 @@
 
     private string problemItem = "";
     private Modal modalChoice = null!;
-    private async Task OnNeedChoice(string itemId)
+    private async void OnNeedChoice(string itemId)
     {
         if (CS.RecipeOptions != null)
         {
@@ -276,7 +276,7 @@
         }
     }
 
-    private async Task OnMadeChoice()
+    private async void OnMadeChoice()
     {
         await modalChoice.CloseAsync();
     }

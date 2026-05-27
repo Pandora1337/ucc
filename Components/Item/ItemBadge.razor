@@ -1,8 +1,8 @@
 @using ucc.Models
 
-@namespace ucc.Components.Item
+@inherits ItemBase
 
-@inject ucc.Services.InventoryService IS;
+@namespace ucc.Components.Item
 
 <div class="position-relative d-inline-block" style="@style" title="@Item.Name">
     <div class="d-flex flex-shrink-0 align-items-center gap-2 px-2 py-1 border-2 rounded-3"
@@ -30,27 +30,4 @@
 @code {
     [Parameter] public string style { get; set; } = "";
     [Parameter] public float? Amount { get; set; } = null;
-    [Parameter] public Item Item { get; set; } = null!;
-    [Parameter] public string ItemId { get; set; } = "";
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (!string.IsNullOrEmpty(ItemId) && (Item == null || Item.Id != ItemId))
-        {
-            Item = IS.GetItem(ItemId);
-            StateHasChanged();
-        }
-    }
-
-    protected override void OnInitialized() => IS.OnItemUpdate += OnItemUpdated;
-    public void Dispose() => IS.OnItemUpdate -= OnItemUpdated;
-
-    private void OnItemUpdated(string id)
-    {
-        if (id != Item.Id)
-            return;
-
-        Item = IS.GetItem(id);
-        StateHasChanged();
-    }
 }

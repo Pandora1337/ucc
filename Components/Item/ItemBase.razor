@@ -1,0 +1,35 @@
+@using ucc.Models
+
+@implements IDisposable
+
+@namespace ucc.Components.Item
+
+@inject ucc.Services.InventoryService IS
+
+@code {
+    [Parameter] public Item Item { get; set; } = null!;
+    [Parameter] public string ItemId { get; set; } = "";
+    protected bool IsItemChanged = false;
+
+    protected override void OnInitialized()
+    {
+        IS.OnItemUpdate += OnItemUpdated;
+
+        if (!string.IsNullOrEmpty(ItemId) && (Item == null || Item.Id != ItemId))
+        {
+            Item = IS.GetItem(ItemId);
+        }
+    }
+
+    public void Dispose() => IS.OnItemUpdate -= OnItemUpdated;
+
+    private void OnItemUpdated(string id)
+    {
+        if (id != Item.Id)
+            return;
+
+        IsItemChanged = true;
+        Item = IS.GetItem(id);
+        StateHasChanged();
+    }
+}

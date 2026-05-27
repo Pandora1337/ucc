@@ -1,7 +1,7 @@
 @using ucc.Models
-@using ucc.Components.BtnDelete
-@using ucc.Components.Modal
 @using ucc.Components.Item
+
+@implements IDisposable
 
 @namespace ucc.Components.Recipe
 
@@ -90,11 +90,6 @@
         recipe = IS.GetRecipeById(id);
         StateHasChanged();
     }
-
-    @* protected override void OnInitialized()
-    {
-        base.OnInitialized();
-    } *@
     
     private void OnClick()
     {

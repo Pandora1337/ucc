@@ -2,6 +2,8 @@
 @using ucc.Components.Item
 @using ucc.Models
 
+@inherits ItemBase
+
 @namespace ucc.Components.Recipe
 
 @inject ucc.Services.InventoryService IS;
@@ -46,46 +48,22 @@
     [Parameter] public float Quantity { get; set; }
     private float prevQuantity;
 
-    [Parameter] public Item Item { get; set; } = null!;
-    [Parameter] public string ItemId { get; set; } = "";
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (!string.IsNullOrEmpty(ItemId) && (Item == null || Item.Id != ItemId))
-        {
-            Item = IS.GetItem(ItemId);
-            StateHasChanged();
-        }
-    }
-
     protected override bool ShouldRender()
     {
-        if (prevQuantity == Quantity)
-            return false;
-
-        prevQuantity = Quantity;
-        QuantityChanged.InvokeAsync(Quantity);
-        return true;
-    }
-
-    protected override void OnInitialized() => IS.OnItemUpdate += OnItemUpdated;
-    public void Dispose() => IS.OnItemUpdate -= OnItemUpdated;
-
-    private void OnItemUpdated(string id)
-    {
-        if (id != Item.Id)
-            return;
-
-        Item = IS.GetItem(id);
-        StateHasChanged();
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
+        if (prevQuantity != Quantity)
         {
-
+            prevQuantity = Quantity;
+            QuantityChanged.InvokeAsync(Quantity);
+            return true;
         }
+
+        if (base.IsItemChanged)
+        {
+            base.IsItemChanged = false;
+            return true;
+        }
+        
+        return false;
     }
 
     private async Task IconClick()
