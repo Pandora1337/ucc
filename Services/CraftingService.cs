@@ -10,11 +10,8 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
 
     public async Task InitializeAsync()
     {
-        List<Ingredient>? storedList = await LS.Get<List<Ingredient>>("plannedCrafts");
-        PlannedCrafts = storedList ?? [];
-
-        CraftingData? storedCD = await LS.Get<CraftingData>("craftingData");
-        craftingData = storedCD ?? null;
+        PlannedCrafts = await LS.Get<List<Ingredient>>("plannedCrafts", []);
+        craftingData = await LS.Get<CraftingData>("craftingData", null);
     }
 
     public List<Ingredient> PlannedCrafts { get; set; } = new();

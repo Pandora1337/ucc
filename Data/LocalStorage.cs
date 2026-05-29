@@ -13,12 +13,12 @@ public class LocalStorage(IJSRuntime jsRuntime)
         await JS.InvokeVoidAsync("localStorage.setItem", key, serialisedData);
     }
 
-    public async ValueTask<TResult> Get<TResult>(string key)
+    public async ValueTask<TResult> Get<TResult>(string key, TResult? defaultValue = default)
     {
         string? data = await JS.InvokeAsync<string>("localStorage.getItem", key);
         if (data == null)
         {
-            return default!;
+            return defaultValue!;
         }
 
         var result = JsonSerializer.Deserialize<TResult>(data!);
