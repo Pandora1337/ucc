@@ -1,8 +1,6 @@
-@using System.ComponentModel.DataAnnotations;
 @using System.Threading.Tasks
 @using ucc.Components.Accordion
 @using ucc.Models
-@using ucc.Components.BtnAdd
 @using ucc.Components.Modal
 @using ucc.Components.Item
 
@@ -26,7 +24,7 @@
                         @(recipe.Products.Count > 2 ? "col-lg-4" : "")">
 
                         <RecipeIngredient @bind-Quantity="recipe.Products[index].Amount"
-                                          ItemId="@recipe.Products[index].ItemId"
+                                          ItemId="@recipe.Products[index].ItemId" @key="@recipe.Products[index].ItemId"
                                           OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.RESULT, index))"
                                           OnBtnClicked="@(() => { recipe.Products.RemoveAt(index); })" EnableBtn="true" />
                     </div>
@@ -62,6 +60,7 @@
                         else
                         {
                             <RecipeIngredient ItemId="@recipe.StationId" EnableInput="false" IconSize="32px"
+                                              @key="@recipe.StationId"
                                               OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
                                               OnBtnClicked="@(() => { recipe.StationId = ""; })" EnableBtn="true" />
                         }
@@ -89,13 +88,13 @@
 
                         <InputNumber TValue="int?" class="form-control" min="0" max="@int.MaxValue"
                                      placeholder="Batch Size" type="range" @bind-Value="recipe.BatchSize" />
-                        
+
                         <ValidationMessage For="@(() => recipe.BatchSize)" />
                     </div>
                 </div>
             </AccordionItem>
         </Accordion>
-        
+
         <ValidationMessage For="@(() => recipe.StationId)" />
         <ValidationMessage For="@(() => recipe.CraftingTime)" />
         <ValidationMessage For="@(() => recipe.BatchSize)" />
@@ -111,7 +110,7 @@
                         @(recipe.Ingredients.Count > 1 ? "col-sm-6" : "")
                         @(recipe.Ingredients.Count > 2 ? "col-lg-4" : "")">
                         <RecipeIngredient @bind-Quantity="recipe.Ingredients[index].Amount"
-                                          ItemId="@recipe.Ingredients[index].ItemId"
+                                          ItemId="@recipe.Ingredients[index].ItemId" @key="@recipe.Ingredients[index].ItemId"
                                           OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.INGREDIENT, index))"
                                           OnBtnClicked="@(() => { recipe.Ingredients.RemoveAt(index); })" EnableBtn="true" />
                     </div>
@@ -160,7 +159,7 @@
         if (firstRender)
         {
             await focusElement.FocusAsync();
-            
+
             if (recipe.Products.Count == 0)
             {
                 await ModalItemPickerOpen(PickerContext.RESULT);

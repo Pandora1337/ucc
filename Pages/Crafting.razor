@@ -33,8 +33,8 @@
     @for (int i = 0; i < plannedCrafts.Count; i++)
     {
         int index = i;
-        <ItemCard ItemId="@plannedCrafts[index].ItemId" IconSize="128px" style="max-width: 128px;"
-                  OnItemClicked="@(() => CS.OnItemDeleted(index))">
+        <ItemCard @key="@plannedCrafts[index].ItemId" ItemId="@plannedCrafts[index].ItemId" IconSize="128px"
+                  style="max-width: 128px;" OnItemClicked="@(() => CS.OnItemDeleted(index))">
             <InputNumber TValue="float" class="form-control mt-2 border" Value="plannedCrafts[index].Amount"
                          ValueExpression="@(()=> plannedCrafts[index].Amount)"
                          ValueChanged="@(async (float v) => { plannedCrafts[index].Amount = v; await CS.UpdatePlannedCrafts(); })"
@@ -74,7 +74,7 @@
             <div class="d-flex flex-wrap gap-1 my-2">
                 @foreach ((string itemId, float amount) in cd.ItemsProd)
                 {
-                    <ItemBadge @key="itemId" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
+                    <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
                 }
             </div>
 
@@ -86,7 +86,7 @@
                 <div class="d-flex flex-wrap gap-1 my-2">
                     @foreach ((string itemId, float amount) in cd.ItemsInt)
                     {
-                        <ItemBadge @key="itemId" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
+                        <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
                     }
                 </div>
             }
@@ -97,7 +97,7 @@
             <div class="d-flex flex-wrap gap-1 my-2">
                 @foreach ((string itemId, float amount) in cd.ItemsRaw)
                 {
-                    <ItemBadge @key="itemId" ItemId="@itemId" Amount="amount" style="max-width: 49%;" />
+                    <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="amount" style="max-width: 49%;" />
                 }
             </div>
         </AccordionItem>
@@ -144,7 +144,7 @@
             (Guid guid, int ops) = cd.RecipeGuide.Reverse().ElementAt(i);
             Recipe recipe = IS.GetRecipeById(guid);
 
-            <div class="col-12 
+            <div @key="@guid" class="col-12 
                 @(IsGridView && cd.RecipeGuide.Count() > 1 ? "col-lg-6" : "")
                 @(IsGridView && cd.RecipeGuide.Count() > 2 ? "col-xxl-4" : "")">
 
@@ -173,14 +173,14 @@
         <h4 class="modal-title pe-2">
             Choose the recipe for
         </h4>
-        <ItemBadge ItemId="@problemItem" />
+        <ItemBadge @key="@problemItem" ItemId="@problemItem" />
     </div>
 
     <div class="modal-body overflow-hidden pb-0">
         <ul class="list-group">
             @foreach (Recipe recipe in CS.RecipeOptions!)
             {
-                <li class="list-group-item border-0 p-0 pb-3">
+                <li class="list-group-item border-0 p-0 pb-3" @key="recipe.Guid">
                     <button type="button" class="btn btn-light p-0 w-100" @onclick="@(async () => CS.SelectRecipe(recipe))">
                         <CraftingStep Recipe="recipe" />
                     </button>
