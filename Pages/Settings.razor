@@ -8,6 +8,7 @@
 @inject ucc.Data.LocalStorage LS;
 @inject ucc.Services.CraftingService CS;
 @inject ucc.Services.InventoryService IS;
+@inject ucc.Services.IconService IconService;
 @inject Microsoft.JSInterop.IJSRuntime JS;
 
 <PageTitle>Settings</PageTitle>
@@ -55,11 +56,25 @@
                         <div class="invalid-feedback">
                             Error reading file!
                         </div>
+
+                        <div class="form-check form-switch user-select-none mt-2">
+                            <input class="form-check-input" type="checkbox" id="checkID"
+                                   @bind-value="IsDeletingIcons" checked="@IsDeletingIcons" switch>
+
+                            <label class="form-check-label" for="checkID">
+                                Delete existing icons
+                            </label>
+
+                            <div class="text-muted small">
+                                If disabled, it may leave icons without a related item, which will bloat storage.
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="alert alert-warning">
-                        Import will <strong>overwrite</strong> existing configuration. All current <strong>Items and
-                        Recipes</strong> will be lost!
+                    <div class="alert alert-warning small" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        Import will <strong>overwrite</strong> existing configuration. All
+                        current <strong>Items and Recipes</strong> will be lost!
                     </div>
 
                     <button class="btn btn-primary" type="button" @onclick="ImportConfig"
@@ -126,26 +141,63 @@
             </div>
         </div>
     </div>
-</div>
 
-<div class="col-lg-8 mx-auto my-3">
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mt-3">
         <div class="card-header">
-            <h1 class="h5 mb-1">Storage settings</h1>
-            <p class="text-muted mb-0">Manage saved browser data.</p>
+            <h1 class="h5 mb-1">Memory</h1>
+            <p class="text-muted mb-0">Manage RAM usage and caching.</p>
         </div>
 
         <div class="card-body">
-            @* <div class="border rounded p-3 mb-3">
+            <div class="border rounded p-3">
                 <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" role="switch" id="lowRamMode">
-                    <label class="form-check-label fw-semibold" for="lowRamMode">Low ram mode</label>
+                    <input class="form-check-input" type="checkbox" role="switch" id="lowRamMode" switch
+                           checked="@IconService.IsIconsEnabled" @onclick="IconService.ToggleIcons">
+                    <label class="form-check-label fw-semibold" for="lowRamMode">Enable Icons</label>
                 </div>
                 <div class="text-muted small">
-                    Reduces memory usage by limiting cache size and background storage activity.
+                    If disabled, reduces memory usage by disabling icon rendering.
                 </div>
-            </div> *@
+            </div>
 
+            <div class="border rounded p-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="h6 mb-1">Icon Cache</h2>
+
+                        <div class="text-muted small">
+                            Stores item icons to avoid re-loading them. This improves performance by reusing a single copy of each icon.
+                        </div>
+                    </div>
+
+                    <button class="btn btn-sm btn-outline-primary" title="Show which icons are currently cached (developer tool)"
+                            @onclick="@(() => IconService.ShowCache())">
+                        Show Cache
+                    </button>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-1">
+                    <div class="text-muted small">
+                        Unused icons should be automatically removed after 10 seconds of not being used.
+                        If not, you can press this button.
+                    </div>
+
+                    <button class="btn btn-outline-danger" title="Remove all cached icons immediately"
+                            @onclick="@(() => IconService.EvictCache(true))">
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm my-3">
+        <div class="card-header">
+            <h1 class="h5 mb-1">Storage</h1>
+            <p class="text-muted mb-0">Manage saved browser data on disk.</p>
+        </div>
+
+        <div class="card-body">
             <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-3">
                 <div>
                     <h2 class="h6 mb-1">Local storage</h2>
@@ -158,19 +210,50 @@
                 </button>
             </div>
 
+            <div class="border rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="h6 mb-1">Icons</h2>
+                        <div class="text-muted small">A database store exclusively for images</div>
+                    </div>
+
+                    <button class="btn btn-outline-danger" title="Delete Icons"
+                            @onclick="@(() => modalDeleteIC.OpenAsync())">
+                        <i class="bi bi-trash3" aria-label="Delete Icons" />
+                    </button>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted small mt-1">
+                        Estimated size on disk:
+                        <span class="badge text-bg-primary ms-1">
+                            @(iconStoreSize / 1024) KB
+                        </span>
+                    </div>
+
+                    <button class="btn btn-sm btn-outline-primary mt-2" type="button"
+                            @onclick="@(async () => await modalIconLoad.OpenAsync())">
+                        <span>Recalculate</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-3">
                 <div>
                     <h2 class="h6 mb-1">Database</h2>
-                    <div class="text-muted small">Stores Items and Recipes.</div>
+                    <div class="text-muted small">Stores all Items, Recipes, and Icons.</div>
                 </div>
+
                 <button class="btn btn-outline-danger" title="Delete Database"
                         @onclick="@(() => modalDeleteDB.OpenAsync())">
                     <i class="bi bi-trash3" aria-label="Delete Database" />
                 </button>
             </div>
 
-            <div class="alert alert-warning mt-3 mb-0">
-                Deleting storage cannot be undone. Make sure you have backups before continuing.
+            <div class="alert alert-warning small mt-3 mb-0" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                Deleting storage cannot be undone.
+                Make sure you have backups before continuing.
             </div>
         </div>
     </div>
@@ -179,11 +262,39 @@
 
 <ModalDelete @ref="modalDeleteLS" Subject="local storage" OnDelete="@(async () => await LS.Clear())" />
 <ModalDelete @ref="modalDeleteDB" Subject="the database" OnDelete="@(async () => await IS.ClearDB())" />
+<ModalDelete @ref="modalDeleteIC" Subject="all icons"
+             OnDelete="@(async () => { await IconService.ClearIcons(); iconStoreSize = 0; })" />
+
+<Modal @ref="modalIconLoad" Title="Confirm Action">
+    <div class="modal-body">
+        <div class="alert alert-warning m-0" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            Loading all icons into memory can cause problems if you have many large images!
+        </div>
+    </div>
+
+    <div class="modal-footer flex-nowrap">
+        <button type="button" class="btn btn-lg btn-secondary w-50" @onclick="@modalIconLoad.CloseAsync">
+            Cancel
+        </button>
+
+        <button type="button" class="btn btn-lg btn-warning w-50"
+                @onclick="@(async () =>
+                {
+                    iconStoreSize = await IconService.RecalculateTotalIconSize();
+                    await modalIconLoad.CloseAsync();
+                })">
+            Recalculate
+        </button>
+    </div>
+</Modal>
 
 
 @code {
     ModalDelete modalDeleteLS = null!;
     ModalDelete modalDeleteDB = null!;
+    ModalDelete modalDeleteIC = null!;
+    Modal modalIconLoad = null!;
 
     private string CssInvalidClass => Import == ImportStage.FileNotValid ? "is-invalid" : "";
     private string CssValidClass => Import == ImportStage.FileValid ? "is-valid" : "";
@@ -199,6 +310,12 @@
         FileValid,
         Importing,
         Done,
+    }
+
+    private int iconStoreSize = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        iconStoreSize = await IconService.GetTotalIconSize();
     }
 
     private async Task LoadFile(InputFileChangeEventArgs e)
@@ -230,6 +347,7 @@
         Import = ImportStage.FileValid;
     }
 
+    private bool IsDeletingIcons { get; set; } = true;
     private async Task ImportConfig()
     {
         // this SHOULD HAVE been checked by ImportStage.FileValid,
@@ -243,6 +361,11 @@
         await IS.SetRecipes(config.Recipes);
         await CS.SetCraftingData(config.CraftingData);
         CS.PlannedCrafts = config.PlannedCrafts ?? [];
+
+        if (IsDeletingIcons)
+        {
+            await IconService.ClearIcons();
+        }
 
         Import = ImportStage.Done;
     }

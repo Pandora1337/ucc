@@ -23,3 +23,10 @@ window.createBlobUrl = (fileBytes, fileType) => {
     const blob = new Blob([fileBytes], { type: fileType });
     return URL.createObjectURL(blob);
 };
+
+window.previewImage = (inputElement, imgElement) => {
+    const url = URL.createObjectURL(inputElement.files[0]);
+    imgElement.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+    imgElement.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
+    imgElement.src = url;
+};

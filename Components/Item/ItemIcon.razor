@@ -4,11 +4,14 @@
 
 @namespace ucc.Components.Item
 
+@implements IAsyncDisposable
+
+@inject ucc.Services.IconService IconService;
+
 <div class="icon-container bg-body-tertiary" style="color: @color; width: @Size; height: @Size;" title="@Item.Name">
-    @if (imageExists)
+    @if (!string.IsNullOrEmpty(imageUrl))
     {
-        @* <img src="@($"{itemId}.jpg")" alt="@itemName" title="@itemName"> *@
-        @* <img class="icon-item" src="favicon.png" alt="@itemName" draggable="false"> *@
+        <img src="@imageUrl" class="icon-item" alt="@Item.Name" title="@Item.Name" />
     }
     else
     {
@@ -20,8 +23,34 @@
     [Parameter] public bool useFullName { get; set; } = false;
     [Parameter] public string? Size { get; set; } = "64px";
 
-    private bool imageExists;
     private string color => Item.ColorHex;
+
+    private string imageUrl = "";
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchIcon();
+        IconService.OnIconUpdate += UpdateIcon;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        IconService.OnIconUpdate -= UpdateIcon;
+        await IconService.DisposeOfIcon(Item.Id);
+        imageUrl = "";
+    }
+
+    private void UpdateIcon(string id)
+    {
+        if (id != Item.Id)
+            return;
+
+        _ = FetchIcon();
+    }
+
+    private async Task FetchIcon(){
+        imageUrl = await IconService.GetIconUrl(Item.Id);
+        StateHasChanged();
+    }
 
     private string GetDisplayName()
     {
@@ -30,7 +59,7 @@
             return "?";
         }
 
-        return useFullName ? Item.Name : GetStringInitials(Item.Name);
+        return useFullName ? Item.Name.ToUpper() : GetStringInitials(Item.Name);
     }
 
     private string GetStringInitials(string str)

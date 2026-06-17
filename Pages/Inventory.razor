@@ -104,7 +104,7 @@
 </ModalDelete>
 
 <ModalDelete @ref="modalDeleteRecipe" Subject="this recipe" OnDelete="RecipeRemove" />
-<ModalDelete @ref="modalDeleteItemList" Subject="all items" OnDelete="@(async () => await IS.ClearAllItems())" />
+<ModalDelete @ref="modalDeleteItemList" Subject="all items" OnDelete="@(async () => { await IS.ClearAllItems(); await IconService.ClearIcons(); })" />
 <ModalDelete @ref="modalDeleteRecipeList" Subject="all recipes" OnDelete="@(async () => await IS.ClearAllRecipes())" />
 
 @code {
@@ -143,6 +143,7 @@
     private async Task ItemRemove()
     {
         IS.TryRemoveItem(modalItem.Id);
+        await IconService.DeleteIcon(modalItem.Id);
 
         modalItem = null!;
         deleteRecipes = [];

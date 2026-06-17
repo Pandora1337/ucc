@@ -1,33 +1,35 @@
-@using System.ComponentModel.DataAnnotations;
-@using System.Linq.Expressions
+@using System.Threading.Tasks
 @using ucc.Components.BtnAdd
+@using ucc.Components.BtnDelete
 @using ucc.Models
 
 @namespace ucc.Components.Item
 
+@implements IAsyncDisposable
+
 @inject ucc.Services.InventoryService IS;
-@inject IJSRuntime JSRuntime;
+@inject ucc.Services.IconService IconService;
+@inject IJSRuntime JS;
 
 <div class="additem-container" style="@AdditionalStyle width: 200px">
-    @*
-    <BtnAdd style="width: 100%; aspect-ratio: 1;" OnClicked="OpenFilePicker" Text="Choose Icon" ImgSrc="icons/image.svg"
-            EnableChildContent="showPreview">
+    <BtnAdd style="width: 100%; aspect-ratio: 1;" OnClicked="OpenFilePicker" Text="Choose Icon" ImgSrc="bi-image"
+            EnableChildContent="!string.IsNullOrEmpty(ImageUrl) || State == IconState.Imported">
 
         <div class="preview-area">
-            <img src="@imageData" alt="Image Preview" class="preview-image" draggable="false" />
+            <img @ref="imgElement" src="@ImageUrl" alt="Image Preview" class="preview-image" draggable="false" />
+            <BtnDelete ImgSrc="bi-x-lg" Size="40px" OnDelete="DeleteIcon" />
         </div>
     </BtnAdd>
 
-    <InputFile id="file-input" OnChange="OnFileSelected" accept="image/*" class="d-none" />
-    *@
+    <InputFile @key="@fileKey" @ref="inputFile" id="file-input" OnChange="OnFileSelected" accept="image/*"
+               class="form-control d-none" />
 
     <EditForm EditContext="editContext" OnSubmit="OnSubmit">
         <DataAnnotationsValidator />
 
         <div class="input-group pt-3">
-            <InputText @ref="inputText" id="text-input" class="form-control" @bind-Value="Item.Name"
-                       placeholder="New Item" title="Choose Item Name" aria-required="true"
-                       style="" />
+            <InputText @ref="inputText" class="form-control" @bind-Value="@Item.Name" placeholder="New Item" title="Choose Item Name"
+                       aria-required="true" />
 
             <input type="color" class="form-control form-control-color flex-grow-0" style="width: 38px"
                    title="Choose Item Color" @bind-value="@Item.ColorHex" />
@@ -51,12 +53,6 @@
     [Parameter] public EventCallback<string> OnItemAdded { get; set; }
     [Parameter] public Item Item { get; set; } = new("");
 
-    private InputText inputText = null!;
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await inputText.Element!.Value.FocusAsync();
-    }
-
     private EditContext editContext = default!;
     protected override void OnInitialized()
     {
@@ -64,10 +60,98 @@
         editContext.SetFieldCssClassProvider(new BootstrapFormCssProvider());
     }
 
+    private string ImageUrl = "";
+    private bool ImageExists = false;
+    protected override async Task OnInitializedAsync()
+    {
+        // Item doesnt exist yet so nothing to fetch
+        if (string.IsNullOrEmpty(Item.Id))
+            return;
+
+        ImageUrl = await IconService.GetIconUrl(Item.Id);
+        ImageExists = !string.IsNullOrEmpty(ImageUrl);
+    }
+
+    private InputText? inputText;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await inputText!.Element!.Value.FocusAsync();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (State == IconState.None && ImageExists)
+        {
+            await IconService.DisposeOfIcon(Item.Id);
+        }
+
+        icon = null;
+        Item = null!;
+        ImageUrl = "";
+    }
+
+    private async Task OpenFilePicker()
+    {
+        await JS.InvokeVoidAsync("clickElement", "file-input");
+    }
+
+    private IconState State = IconState.None;
+    private enum IconState
+    {
+        None,
+        Imported,
+        ToDelete,
+    }
+
+    private Icon? icon = null;
+    private Guid fileKey = Guid.NewGuid();
+    private InputFile? inputFile;
+    private ElementReference imgElement;
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        IBrowserFile? file = e.File;
+        long MaxSize = 5 * 1024 * 1024;
+
+        if (file == null || !file.ContentType.StartsWith("image/") || file.Size > MaxSize)
+            return;
+
+        using var memoryStream = new MemoryStream();
+        using var stream = file.OpenReadStream(maxAllowedSize: MaxSize);
+        await stream.CopyToAsync(memoryStream);
+        byte[]? bytes = memoryStream.ToArray();
+
+        if (bytes == null)
+            return;
+
+        icon = new()
+        {
+            FileType = file.ContentType,
+            FileBytes = bytes,
+        };
+
+        if (State == IconState.None && ImageExists)
+        {
+            _ = IconService.DisposeOfIcon(Item.Id);
+        }
+
+        State = IconState.Imported;
+        StateHasChanged();
+
+        await JS.InvokeVoidAsync("previewImage", inputFile!.Element, imgElement);
+
+        // Re-render InputFile to dispose of the file blob
+        // Or else it lingers and haunts the memory stack
+        // Why? Because webdev is fun like that
+        fileKey = Guid.NewGuid();
+    }
+
     private async Task OnSubmit()
     {
         bool resp = false;
-        if (Item.Id == string.Empty)
+        if (string.IsNullOrEmpty(Item.Id))
         {
             if (!editContext.Validate())
                 return;
@@ -77,31 +161,41 @@
         }
         else
         {
+            if (string.IsNullOrEmpty(Item.Name))
+                return;
+
             resp = IS.TryUpdateItem(Item.Id, Item);
         }
 
-        if (resp && OnItemAdded.HasDelegate)
+        if (!resp)
+            return;
+
+        if (State == IconState.Imported && icon != null)
+        {
+            icon.Id = Item.Id;
+            await IconService.AddIcon(icon, ImageExists);
+        }
+        else if (State == IconState.ToDelete && ImageExists)
+        {
+            await IconService.DeleteIcon(Item.Id);
+        }
+
+        if (OnItemAdded.HasDelegate)
         {
             await OnItemAdded.InvokeAsync(Item.Id);
         }
     }
 
-    private async Task OpenFilePicker()
+    private async Task DeleteIcon()
     {
-        await JSRuntime.InvokeVoidAsync("clickElement", "file-input");
-    }
-
-    private string imageData = "";
-    private bool showPreview = false;
-    private async Task OnFileSelected(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-        if (file != null && file.ContentType.StartsWith("image/"))
+        // To display the button, icon state has to be either Fetched, or Imported
+        if (State == IconState.None && ImageExists)
         {
-            var buffer = new byte[file.Size];
-            await file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).ReadAsync(buffer);
-            imageData = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
-            showPreview = true;
+            // icon is loaded from DB
+            await IconService.DisposeOfIcon(Item.Id);
         }
+
+        ImageUrl = "";
+        State = IconState.ToDelete;
     }
 }
