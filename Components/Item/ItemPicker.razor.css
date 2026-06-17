@@ -6,7 +6,6 @@
     min-height: 185px;
     max-height: calc(95dvh - 140px);
     padding-left: 0.9375rem;
-    padding-right: 0.9375rem;
 }
 
 #search-bar {
