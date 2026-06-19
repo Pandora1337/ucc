@@ -6,8 +6,6 @@
 
 @namespace ucc.Components.Recipe
 
-@inject ucc.Services.InventoryService IS;
-
 <div class="d-flex p-3 border rounded bg-body-secondary @cClass" style="@style">
     <button type="button" class="btn-custom flex-shrink-0 pe-2 icon" @onclick="IconClick">
         <ItemIcon Size="@IconSize" Item="@Item" />
@@ -15,6 +13,12 @@
 
     <div class="d-flex flex-grow-1 flex-column justify-content-center w-50">
         <h4 class="mb-1 text-truncate" title="@Item.Name">
+            @if (Item.IsUnknown == true)
+            {
+                <span class="text-xs fw-medium bi bi-exclamation-circle text-danger me-2" aria-label="This item is invalid!"
+                      title="This item is invalid!" />
+            }
+
             @Item.Name
         </h4>
 
@@ -62,7 +66,7 @@
             base.IsItemChanged = false;
             return true;
         }
-        
+
         return false;
     }
 
