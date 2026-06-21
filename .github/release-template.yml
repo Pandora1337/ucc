@@ -1,0 +1,37 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+change-template: "- $TITLE (#$NUMBER) @$AUTHOR"
+# You can add # and @ to disable mentions, and add ` to disable code blocks.
+change-title-escapes: '\<*_&'
+
+categories:
+  - title: "Major Release"
+    semver-increment: "major"
+    when:
+      label: "major"
+      label: "breaking-change"
+  - title: "Features"
+    semver-increment: minor
+    when:
+      labels:
+        - "feature"
+        - "enhancement"
+  - type: "version-resolver"
+    semver-increment: "patch"
+  - title: "Bug Fixes"
+    when:
+      labels:
+        - "fix"
+        - "bugfix"
+        - "bug"
+  - title: "Maintenance"
+    when:
+      label: "chore"
+  - type: "pre-exclude"
+    when:
+      label: "skip-changelog"
+
+template: |
+  ## Changes
+
+  $CHANGES
