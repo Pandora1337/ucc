@@ -8,8 +8,9 @@ categories:
   - title: "Major Release"
     semver-increment: "major"
     when:
-      label: "major"
-      label: "breaking-change"
+      labels:
+        - "major"
+        - "breaking-change"
   - title: "Features"
     semver-increment: minor
     when:
