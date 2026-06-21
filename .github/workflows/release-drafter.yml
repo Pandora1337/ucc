@@ -1,0 +1,35 @@
+name: Release Drafter
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional version override (for example: 2.0.0)"
+        required: false
+        type: string
+
+jobs:
+  update_release_draft:
+    name: Update Release Draft
+    permissions:
+      contents: write
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
+        uses: release-drafter/release-drafter@v7
+        with:
+          config-name: release-template.yml
+          version: ${{ github.event.inputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - if: github.event_name != 'workflow_dispatch' || github.event.inputs.version == ''
+        uses: release-drafter/release-drafter@v7
+        with:
+          config-name: release-template.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
