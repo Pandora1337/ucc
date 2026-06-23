@@ -20,8 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      TAG: ${{ steps.get-tag.outputs.tag }}
     steps:
       - name: Download artifacts from build workflow
         if: ${{ github.event_name != 'workflow_dispatch' }}
@@ -47,9 +45,13 @@ jobs:
           echo "tag=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
       - name: Creating tarball
+        env:
+          TAG: ${{ steps.get-tag.outputs.tag }}
         run: tar -czvf ucc-$TAG.tar.gz ./build/$TAG
 
       - name: Upload to release
+        env:
+          TAG: ${{ steps.get-tag.outputs.tag }}
         uses: softprops/action-gh-release@v2
         with:
           files: ucc-$TAG.tar.gz
