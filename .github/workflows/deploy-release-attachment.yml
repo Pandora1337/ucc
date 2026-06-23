@@ -41,18 +41,20 @@ jobs:
       - name: Parse tag from Artifact
         id: get-tag
         run: |
-          ARTIFACT_NAME=$(ls ./build | head -n1)
+          ARTIFACT_NAME=$(ls /home/runner/work/ucc/ucc/build | head -n1)
           echo "Artifact name: $ARTIFACT_NAME"
           echo "tag=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
       - name: Creating tarball
         env:
           TAG: ${{ steps.get-tag.outputs.tag }}
-        run: tar -czvf ucc-$TAG.tar.gz ./build/$TAG
+        run: tar -czvf "ucc-${TAG}.tar.gz" "/home/runner/work/ucc/ucc/build/${TAG}"
 
       - name: Upload to release
         env:
           TAG: ${{ steps.get-tag.outputs.tag }}
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b #v3.01
         with:
-          files: ucc-$TAG.tar.gz
+          draft: true
+          tag_name: ${{ env.TAG }}
+          files: ucc-${{ env.TAG }}.tar.gz
