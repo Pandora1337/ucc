@@ -15,6 +15,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Display RUN ID
+        run: echo "RUN ID ${{ github.run_id }}"
+
+      - name: Get Tag
+        id: get-tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
 
@@ -28,23 +40,14 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet publish --no-restore -c Release
+        env:
+          TAG: ${{ steps.get-tag.outputs.tag }}
+        run: dotnet publish --no-restore -c Release -o ./build/${TAG}
       
-      - name: Display RUN ID
-        run: echo "RUN ID ${{ github.run_id }}"
-      
-      - name: Upload Artifact with release tag
+      - name: Upload Artifact
         if: ${{ github.event_name != 'workflow_dispatch' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a #v7.0.1
         with:
-          name: ${{ github.event.release.tag_name }}
-          path: /home/runner/work/ucc/ucc/bin/Release/net8.0/publish
-          retention-days: 1
-
-      - name: Upload Artifact with manual tag
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a #v7.0.1
-        with:
-          name: ${{ github.event.inputs.tag }}
-          path: /home/runner/work/ucc/ucc/bin/Release/net8.0/publish
+          name: ${{ steps.get-tag.outputs.tag }}
+          path: ./build
           retention-days: 1
