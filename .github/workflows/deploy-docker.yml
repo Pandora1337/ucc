@@ -58,7 +58,7 @@ jobs:
         env:
           TAG: ${{ steps.get-tag.outputs.tag }}
         run: |
-          mkdir -p ./bin/Release/net8.0
+          mkdir -p ./bin/Release/net8.0/publish
           mv ./build/${TAG}/* ./bin/Release/net8.0/publish
 
       - name: Login to Docker Hub
