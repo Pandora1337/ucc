@@ -3,16 +3,16 @@
 
 <div align="center">
 
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-<!-- Shields.io badges. You can a comprehensive list with many more badges at: https://github.com/inttter/md-badges -->
-  [![Issues][issues-shield]][issues-url]
-  [![License][license-shield]][license-url]
-  <!-- [![LinkedIn][linkedin-shield]][linkedin-url] -->
+  <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+  <!-- Shields.io badges. You can a comprehensive list with many more badges at: https://github.com/inttter/md-badges -->
+  [![Issues](https://img.shields.io/github/issues/Pandora1337/ucc.svg?style=for-the-badge)](https://github.com/Pandora1337/ucc/issues)
+  [![Release](https://img.shields.io/github/v/release/Pandora1337/ucc?style=for-the-badge)](https://github.com/Pandora1337/ucc/releases/latest)
+  [![License](https://img.shields.io/github/license/Pandora1337/ucc.svg?style=for-the-badge)](https://github.com/Pandora1337/ucc/blob/main/LICENSE)
 
   [![.NET 8](https://img.shields.io/badge/.NET_8-%23512bd4?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com)
   [![Blazor](https://img.shields.io/badge/Blazor-%23512bd4?style=for-the-badge&logo=blazor)](https://dotnet.microsoft.com/aspnet/blazor)
   [![Bootstrap](https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
-  [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=fff)](#)
+  [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=fff)](https://hub.docker.com/)
 </div>
 
 <!-- PROJECT LOGO -->
@@ -22,14 +22,18 @@
     <img src="wwwroot/favicon.png" alt="Logo" width="64" height="64">
   </a>
 
-<h3 align="center">Universal Crafting Calculator</h3>
+  <h3 align="center">Universal Crafting Calculator</h3>
   <p align="center">
     Fully client-side, feature-rich, and user configurable crafting calculator for any game. Define items, add them to recipes, and calculate the resources needed, all without editing files or creating accounts!
     <br />
     <br />
-    <a href="https://github.com/Pandora1337/ucc/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    <a href="https://github.com/Pandora1337/ucc/issues/new?labels=bug&template=bug-report---.md">
+      Report Bug
+    </a>
     &middot;
-    <a href="https://github.com/Pandora1337/ucc/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    <a href="https://github.com/Pandora1337/ucc/issues/new?labels=enhancement&template=feature-request---.md">
+      Request Feature
+    </a>
   </p>
 </div>
 
@@ -40,11 +44,12 @@
   <summary>Table of Contents</summary>
   <ol>
     <li><a href="#features">Features</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#usage">Usage</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
     <li>
       <a href="#self-hosting">Self-Hosting</a>
       <ul>
+        <li><a href="#docker">Docker</a></li>
         <li><a href="#static-site-hosting">Static Site Hosting</a></li>
       </ul>
     </li>
@@ -79,20 +84,6 @@
 
 
 
-<!-- ROADMAP -->
-### Roadmap
-
-- [ ] Storage usage stats
-- [ ] Item amount expression parsing
-- [ ] Checklist page
-- [ ] Sync Server
-
-See the [open issues](https://github.com/Pandora1337/ucc/issues) for a full list of proposed features (and known issues).
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 <!-- USAGE EXAMPLES -->
 ## Usage
 
@@ -108,7 +99,49 @@ Or, if you want to run it yourself, see <a href="#self-hosting">Self-Hosting</a>
 
 
 
+<!-- ROADMAP -->
+### Roadmap
+
+- [ ] Storage usage stats
+- [ ] Item amount expression parsing
+- [ ] Checklist page
+- [ ] Sync Server
+- [ ] Add Crafting Chance
+
+See the [open issues](https://github.com/Pandora1337/ucc/issues) for a full list of proposed features (and known issues).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
 ## Self-Hosting
+
+### Docker
+
+Using docker compose:
+
+```yaml
+services:
+  ucc:
+    image: pandora1337/ucc:latest
+    container_name: ucc
+    restart: unless-stopped
+    ports:
+      - 80:80 # CAN CHANGE : dont change
+```
+
+or docker run:
+
+```bash
+docker run pandora1337/ucc:latest \
+  --name ucc \
+  --restart unless-stopped \
+  -p 80:80
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
 
 ### Static Site hosting
 1. Get the static website files from the [Latest Release](https://github.com/Pandora1337/ucc/releases/latest) or [Build them from source](#building-from-source).
@@ -211,16 +244,3 @@ Discord - [Pandora1337](https://discord.com/users/280299811310272513)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[issues-shield]: https://img.shields.io/github/issues/Pandora1337/ucc.svg?style=for-the-badge
-[issues-url]: https://github.com/Pandora1337/ucc/issues
-
-[license-shield]: https://img.shields.io/github/license/Pandora1337/ucc.svg?style=for-the-badge
-[license-url]: https://github.com/Pandora1337/ucc/blob/main/LICENSE
-
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/linkedin_username
