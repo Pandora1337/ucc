@@ -76,4 +76,5 @@ jobs:
           TAG: ${{ steps.get-tag.outputs.tag }}
         with:
           push: true
+          context: .
           tags: pandora1337/ucc:latest,pandora1337/ucc:${{ env.TAG }}
