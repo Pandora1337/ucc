@@ -41,7 +41,7 @@ jobs:
       - name: Parse tag from Artifact
         id: get-tag
         run: |
-          ARTIFACT_NAME=$(basename "$(ls ./build | head -n1)" | sed 's/\.[^.]*$//')
+          ARTIFACT_NAME=$(basename "$(ls ./build | head -n1)")
           echo "Artifact name: $ARTIFACT_NAME"
           echo "tag=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
