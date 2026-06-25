@@ -19,6 +19,8 @@ jobs:
     name: Docker Image
     if: ${{ github.repository == 'Pandora1337/ucc' && (github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
     steps:
       - name: Get Run ID
         id: get-run-id
