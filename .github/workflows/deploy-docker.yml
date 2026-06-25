@@ -49,8 +49,8 @@ jobs:
         env:
           TAG: ${{ steps.get-tag.outputs.tag }}
         run: |
-          mkdir -p /bin/Release/net8.0
-          mv ./build/${TAG}/* /bin/Release/net8.0
+          mkdir -p ./bin/Release/net8.0
+          mv ./build/${TAG}/* ./bin/Release/net8.0
 
       - name: Checkout nginx.conf and Dockerfile
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
