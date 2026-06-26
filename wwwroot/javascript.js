@@ -7,6 +7,12 @@ window.focusElement = (elementId) => {
     document.getElementById(elementId).focus();
 };
 
+window.getStorageEstimate = async () => {
+  const estimate = await navigator.storage.estimate();
+  console.log(estimate);
+  return estimate;
+};
+
 window.downloadFileBytes = async (filename, fileBytes) => {
     const url = createBlobUrl(fileBytes, { type: "application/json"});
 

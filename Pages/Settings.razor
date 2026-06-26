@@ -58,8 +58,8 @@
                         </div>
 
                         <div class="form-check form-switch user-select-none mt-2">
-                            <input class="form-check-input" type="checkbox" id="checkID"
-                                   @bind-value="IsDeletingIcons" checked="@IsDeletingIcons" switch>
+                            <input class="form-check-input" type="checkbox" id="checkID" @bind-value="IsDeletingIcons"
+                                   checked="@IsDeletingIcons" switch>
 
                             <label class="form-check-label" for="checkID">
                                 Delete existing icons
@@ -106,31 +106,31 @@
                     <InputText id="text-input" class="form-control" placeholder="@defaultFilename"
                                @bind-Value="FileName" title="Choose config filename" aria-required="false" />
 
-                    <div class="form-check form-switch mt-2">
+                    <div class="form-check form-switch user-select-none mt-2">
                         <input class="form-check-input" type="checkbox" id="checkPC"
-                               @bind-value="IsPlannedCraftsIncluded" switch>
+                               @bind-value="IsPlannedCraftsIncluded" checked="@IsPlannedCraftsIncluded" switch>
                         <label class="form-check-label" for="checkPC">
                             Include Planned Crafts
                         </label>
                     </div>
 
-                    <div class="form-check form-switch mt-2">
+                    <div class="form-check form-switch user-select-none mt-2">
                         <input class="form-check-input" type="checkbox" id="checkCD"
-                               @bind-value="IsCraftingDataIncluded" switch>
+                               @bind-value="IsCraftingDataIncluded" checked="@IsCraftingDataIncluded" switch>
                         <label class="form-check-label" for="checkCD">
                             Include Crafting Data
                         </label>
                     </div>
 
-                    <div class="form-check form-switch mt-2">
+                    <div class="form-check form-switch user-select-none mt-2">
                         <input class="form-check-input" type="checkbox" id="checkIndented" @bind-value="IsIndented"
-                               switch>
+                               checked="@IsIndented" switch>
                         <label class="form-check-label" for="checkIndented">
                             Write Indented
                         </label>
-                    </div>
-                    <div class="form-check form-switch">
-                        <span class="text-muted">Human readable, but also larger in size</span>
+                        <div class="text-muted small">
+                            Human readable, but also larger in size
+                        </div>
                     </div>
 
                     <button class="btn btn-primary mt-3" type="button" @onclick="ExportConfig">
@@ -150,7 +150,7 @@
 
         <div class="card-body">
             <div class="border rounded p-3">
-                <div class="form-check form-switch mb-2">
+                <div class="form-check form-switch user-select-none mb-2">
                     <input class="form-check-input" type="checkbox" role="switch" id="lowRamMode" switch
                            checked="@IconService.IsIconsEnabled" @onclick="IconService.ToggleIcons">
                     <label class="form-check-label fw-semibold" for="lowRamMode">Enable Icons</label>
@@ -166,11 +166,13 @@
                         <h2 class="h6 mb-1">Icon Cache</h2>
 
                         <div class="text-muted small">
-                            Stores item icons to avoid re-loading them. This improves performance by reusing a single copy of each icon.
+                            Stores item icons to avoid re-loading them. This improves performance by reusing a single
+                            copy of each icon.
                         </div>
                     </div>
 
-                    <button class="btn btn-sm btn-outline-primary" title="Show which icons are currently cached (developer tool)"
+                    <button class="btn btn-sm btn-outline-primary"
+                            title="Show which icons are currently cached (developer tool)"
                             @onclick="@(() => IconService.ShowCache())">
                         Show Cache
                     </button>
@@ -198,6 +200,50 @@
         </div>
 
         <div class="card-body">
+            @if (storageEstimate != null)
+            {
+                float usagePercent = storageEstimate.GetPercent(storageEstimate.Usage);
+                float percentIcons = storageEstimate.GetPercent(iconStoreSize);
+                float percentOther = usagePercent - percentIcons;
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title mb-0">Usage</h5>
+                        <span class="badge text-bg-primary
+                            @(usagePercent > 75 ? "text-bg-warning" : "")
+                            @(usagePercent > 90 ? "text-bg-danger" : "")">
+                            Used: @(StorageEstimate.Get2SigFig(usagePercent))%
+                        </span>
+                    </div>
+
+                    <div class="progress-stacked">
+                        <div class="progress" role="progressbar" aria-valuenow="@percentIcons" aria-valuemin="0"
+                             aria-valuemax="100" aria-label="Percentage of storage taken up by icons"
+                             title="Percentage of storage taken up by icons" style="width: @(percentIcons)%">
+                            <div class="progress-bar text-bg-primary">
+                                @(StorageEstimate.Get2SigFig(percentIcons))%
+                            </div>
+                        </div>
+
+                        <div class="progress" role="progressbar" aria-valuenow="@percentOther" aria-valuemin="0"
+                             aria-valuemax="100" aria-label="Percentage of storage taken up by other data"
+                             title="Percentage of storage taken up by other data" style="width: @(percentOther)%">
+                            <div class="progress-bar text-bg-info">
+                                @(StorageEstimate.Get2SigFig(percentOther))%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between small text-muted mt-2">
+                        <span>
+                            Used: <strong>@StorageEstimate.GetHumanReadable(storageEstimate.Usage)</strong>
+                        </span>
+                        <span>
+                            Total: <strong>@StorageEstimate.GetHumanReadable(storageEstimate.Quota)</strong>
+                        </span>
+                    </div>
+                </div>
+            }
+
             <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-3">
                 <div>
                     <h2 class="h6 mb-1">Local storage</h2>
@@ -227,7 +273,7 @@
                     <div class="text-muted small mt-1">
                         Estimated size on disk:
                         <span class="badge text-bg-primary ms-1">
-                            @(iconStoreSize / 1024) KB
+                            @StorageEstimate.GetHumanReadable(iconStoreSize)
                         </span>
                     </div>
 
@@ -278,8 +324,7 @@
             Cancel
         </button>
 
-        <button type="button" class="btn btn-lg btn-warning w-50"
-                @onclick="@(async () =>
+        <button type="button" class="btn btn-lg btn-warning w-50" @onclick="@(async () =>
                 {
                     iconStoreSize = await IconService.RecalculateTotalIconSize();
                     await modalIconLoad.CloseAsync();
@@ -313,9 +358,11 @@
     }
 
     private int iconStoreSize = 0;
+    private StorageEstimate? storageEstimate = null;
     protected override async Task OnInitializedAsync()
     {
         iconStoreSize = await IconService.GetTotalIconSize();
+        storageEstimate = await JS.InvokeAsync<StorageEstimate>("getStorageEstimate");
     }
 
     private async Task LoadFile(InputFileChangeEventArgs e)

@@ -102,11 +102,11 @@ Or, if you want to run it yourself, see <a href="#self-hosting">Self-Hosting</a>
 <!-- ROADMAP -->
 ### Roadmap
 
-- [ ] Storage usage stats
+- [x] Storage usage stats
+- [ ] Add Crafting Chance
 - [ ] Item amount expression parsing
 - [ ] Checklist page
 - [ ] Sync Server
-- [ ] Add Crafting Chance
 
 See the [open issues](https://github.com/Pandora1337/ucc/issues) for a full list of proposed features (and known issues).
 
@@ -133,10 +133,10 @@ services:
 or docker run:
 
 ```bash
-docker run pandora1337/ucc:latest \
-  --name ucc \
+docker run --name ucc \
+  -p 80:80 \ 
   --restart unless-stopped \
-  -p 80:80
+  pandora1337/ucc:latest
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
