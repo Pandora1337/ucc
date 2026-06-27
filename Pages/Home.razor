@@ -1,7 +1,83 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+@using ucc.Components.Changelog
 
-<h1>Hello, world!</h1>
+<PageTitle>UCC</PageTitle>
 
-Welcome to your new app.
+<section class="row align-items-center g-5 py-4">
+  <div class="col-12 col-lg-6">
+    <h1 class="display-4 fw-bold lh-1 mb-3">
+      Universal Crafting Calculator
+    </h1>
+
+    <p class="lead mb-4">
+      Fully client-side, feature-rich, and user configurable crafting calculator for any game.
+      <br />
+      <br />
+      Define items, add them to recipes, and calculate the resources needed, all without editing files or creating
+      accounts!
+    </p>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/inventory" class="btn btn-primary btn-lg fw-semibold">
+        <i class="bi bi-box-seam-fill me-2" /> Add Recipes
+      </a>
+      <a href="/crafting" class="btn btn-primary btn-lg fw-semibold">
+        <i class="bi bi-calculator-fill me-2" /> Calculator
+      </a>
+      <a href="#features" class="btn btn-outline-secondary btn-lg">
+        View Features
+      </a>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6 d-flex justify-content-center">
+    <div class="p-1 rounded-2 border shadow bg-dark overflow-hidden" style="max-width: 440px; aspect-ratio: 440 / 380;">
+      <img src="images/RecipeForm.png" class="w-100 h-100 object-fit-cover" alt="Preview" />
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-center">
+    <Changelog />
+  </div>
+</section>
+
+<section id="features" class="my-3">
+  <h2 class="text-center mb-4 fw-bold">
+    Everything you need to optimize crafting
+  </h2>
+
+  <div class="row g-3">
+    @foreach (string[] feature in features)
+    {
+      <div class="col-sm-6 col-md-4">
+        <div class="card card-body p-4 h-100 shadow-sm">
+          <h5 class="card-title fw-semibold">
+            <i class="bi @feature[0] me-2" />@feature[1]
+          </h5>
+
+          <p class="card-text text-muted">
+            @feature[2]
+          </p>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+
+@code {
+  // saves on html boilerplate
+  private readonly string[][] features = [
+  ["bi-gear-fill", "Ease of use", "All editing happens inside the browser, no more editing files to add a new item or recipe!"],
+  ["bi-card-image", "Item Icons", "Supports user-added images for items"],
+  ["bi-wifi-off", "Offline-first", "No active internet connection required"],
+  ["bi-upload", "Config Import / Export", "Save and share configs"],
+@* ["bi-tools", "Custom recipes", "Users define items and recipes themselves for any game of any version"], *@
+  ["bi-repeat", "Variants", "Supports many alternate recipes for the same item"],
+  ["bi-box-seam", "Multi-Product", "A single recipe can make multiple items"],
+  ["bi-percent", "Fractional Recipes", "Recipes support non-integer amounts of items, such as liquids"],
+  ["bi-phone", "Mobile friendly", "All UI adapts dynamically to a phone or tablet screen"],
+  ["bi-moon-fill", "Darkmode", "Not a true website without it"]
+  ];
+}
