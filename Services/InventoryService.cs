@@ -112,11 +112,6 @@ public class InventoryService(IndexedDBManager db)
 
     public bool TryRemoveItem(string itemId)
     {
-        if (GetRecipesWithItem(itemId).Count > 0)
-        {
-            Console.WriteLine($"Removing item ({itemId}) thats used in recipe(s)!");
-        }
-
         bool resp = items.Remove(itemId);
         if (resp)
         {
