@@ -94,6 +94,9 @@ Or, if you want to run it yourself, see <a href="#self-hosting">Self-Hosting</a>
 
 3. To calculate resource totals, go to the [Crafting](http://pandora1337.github.io/ucc/crafting) tab
 
+<img width="1902" height="854" alt="Preview-1" src="https://github.com/user-attachments/assets/50ed206b-badb-4b74-8c3b-df3e7d21f1f0" />
+<img width="1895" height="847" alt="Preview-2" src="https://github.com/user-attachments/assets/c2cba6a9-e3c9-480a-872b-4d6afe4b71d3" />
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -146,7 +149,21 @@ docker run --name ucc \
 ### Static Site hosting
 1. Get the static website files from the [Latest Release](https://github.com/Pandora1337/ucc/releases/latest) or [Build them from source](#building-from-source).
 
-2. NGINX Setup:
+    They are contained in `wwwroot` directory.
+<br>
+
+2. <span title="Single Page Application">`SPA`</span> Routing
+
+    In BlazorWASM, routes for pages (such as `/inventory`)  don't have a corresponding `.html` file, resulting in a 404 error.
+
+    To fix this, you need to redirect all uri page requests to `index.html`, which will depend on the webserver of your choice (see next steps for those), but a platform-agnostic solution would be to:
+
+    i. Copy `index.html`
+    ii. Rename `index.html` to `404.html`
+
+<br>
+
+3. NGINX Setup:
 
     You can use the `nginx.conf` from [here](https://github.com/Pandora1337/ucc/blob/main/nginx.conf).
     
@@ -159,8 +176,9 @@ docker run --name ucc \
             }
         }
       ```
+  <br>
 
-3. For Apache, see this [guide](https://learn.microsoft.com/en-us/aspnet/core/blazor/host-and-deploy/webassembly/apache?view=aspnetcore-8.0).
+4. For Apache, see this [guide](https://learn.microsoft.com/en-us/aspnet/core/blazor/host-and-deploy/webassembly/apache?view=aspnetcore-8.0).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -244,3 +262,5 @@ Discord - [Pandora1337](https://discord.com/users/280299811310272513)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+<img width="1902" height="854" alt="Preview-1" src="https://github.com/user-attachments/assets/6c0d2f4c-ab9c-4651-9a24-b7a184fd8ab1" />
+<img width="1895" height="847" alt="Preview-2" src="https://github.com/user-attachments/assets/87b55061-79ca-4ea9-96b6-f370dabc54bc" />
