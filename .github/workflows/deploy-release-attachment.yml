@@ -5,7 +5,7 @@ on:
     types: [completed]
     branches: [main]
     workflows: 
-      - build-dotnet
+      - Build Dotnet
 
   workflow_dispatch:
     inputs:
