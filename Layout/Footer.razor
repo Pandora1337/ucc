@@ -1,0 +1,28 @@
+<footer>
+    <hr class="border-secondary m-0 mb-3">
+    <p align="center">
+        <a class="text-muted text-decoration-none" href="@reportBugUrl">
+            Report Bug
+        </a>
+        &middot;
+        <a class="text-muted text-decoration-none" href="@featureReqUrl">
+            Request Feature
+        </a>
+    </p>
+
+    <p align="center">
+        <a class="btn btn-outline-secondary btn-sm rounded-circle me-2" href="@repo" aria-label="GitHub">
+            <i class="bi bi-github" />
+        </a>
+        <a class="btn btn-outline-secondary btn-sm rounded-circle" href="@discord" aria-label="Discord">
+            <i class="bi bi-discord" />
+        </a>
+    </p>
+</footer>
+
+@code {
+    private static string repo = "https://github.com/Pandora1337/ucc";
+    private static string featureReqUrl = $"{repo}/issues/new?labels=enhancement&template=feature-request---.md";
+    private static string reportBugUrl = $"{repo}/issues/new?labels=bug&template=bug-report---.md";
+    private static string discord = "https://discord.com/users/280299811310272513";
+}
