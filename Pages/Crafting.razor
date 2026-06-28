@@ -33,7 +33,7 @@
     @for (int i = 0; i < plannedCrafts.Count; i++)
     {
         int index = i;
-        <ItemCard @key="@plannedCrafts[index].ItemId" ItemId="@plannedCrafts[index].ItemId" IconSize="128px"
+        <ItemCard ItemId="@plannedCrafts[index].ItemId" IconSize="128px"
                   style="max-width: 128px;" OnItemClicked="@(() => CS.OnItemDeleted(index))">
             <InputNumber TValue="float" class="form-control mt-2 border" Value="plannedCrafts[index].Amount"
                          ValueExpression="@(()=> plannedCrafts[index].Amount)"
