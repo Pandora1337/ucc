@@ -8,13 +8,16 @@ window.focusElement = (elementId) => {
 };
 
 window.getStorageEstimate = async () => {
-  const estimate = await navigator.storage.estimate();
-  console.log(estimate);
-  return estimate;
+    if (!navigator.storage || !navigator.storage.estimate) {
+        return null;
+    }
+
+    const estimate = await navigator.storage.estimate();
+    return estimate;
 };
 
 window.downloadFileBytes = async (filename, fileBytes) => {
-    const url = createBlobUrl(fileBytes, { type: "application/json"});
+    const url = createBlobUrl(fileBytes, { type: "application/json" });
 
     const a = document.createElement("a");
     a.href = url;
