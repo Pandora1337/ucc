@@ -46,6 +46,12 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         await LS.Set("craftingData", craftingData!);
     }
 
+    public async Task SetPlannedCrafts(List<Ingredient>? list)
+    {
+        PlannedCrafts = list ?? [];
+        await UpdatePlannedCrafts();
+    }
+
     public async Task DoListCrafting()
     {
         Dictionary<Recipe, int> recipeGuide = [];

@@ -407,7 +407,7 @@
         await IS.SetItems(config.Items);
         await IS.SetRecipes(config.Recipes);
         await CS.SetCraftingData(config.CraftingData);
-        CS.PlannedCrafts = config.PlannedCrafts ?? [];
+        await CS.SetPlannedCrafts(config.PlannedCrafts);
 
         if (IsDeletingIcons)
         {
