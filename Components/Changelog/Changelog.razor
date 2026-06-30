@@ -1,3 +1,4 @@
+@using System.Reflection;
 @using System.Text
 @using System.Text.Json
 
@@ -9,7 +10,17 @@
             <div>
                 <h5 class="mb-1">Latest Release Notes</h5>
             </div>
-            <span class="badge text-bg-info">@ReleaseTag</span>
+            @if (!string.IsNullOrEmpty(ReleaseTag))
+            {
+                <span class="badge text-bg-info">
+                    @if (!IsVersionsMatch())
+                    {
+                        <span class="bi bi-patch-exclamation-fill me-1" title="Update available!"
+                              aria-label="Update available!"></span>
+                    }
+                    @ReleaseTag
+                </span>
+            }
         </div>
 
         @if (IsLoading)
@@ -105,6 +116,14 @@
         {
             IsLoading = false;
         }
+    }
+
+    private bool IsVersionsMatch()
+    {
+        string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+        string[]? parts = version.Split('.');
+        version = string.Join(".", parts.Take(3));
+        return $"v{version}" == ReleaseTag;
     }
 
     private sealed class GitHubRelease
