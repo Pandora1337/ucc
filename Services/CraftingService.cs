@@ -16,9 +16,9 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
 
     public List<Ingredient> PlannedCrafts { get; set; } = new();
 
-    public async Task OnItemDeleted(int index)
+    public async Task OnItemDeleted(Ingredient ing)
     {
-        PlannedCrafts.RemoveAt(index);
+        PlannedCrafts.Remove(ing);
         await UpdatePlannedCrafts();
     }
 

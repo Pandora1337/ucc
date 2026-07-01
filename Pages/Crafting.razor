@@ -30,14 +30,13 @@
         <BtnAdd OnClicked="@(() => OpenItemPicker())" style="width: 128px; min-height: 200px; height: 100%;" />
     </div>
 
-    @for (int i = 0; i < plannedCrafts.Count; i++)
+    @foreach (Ingredient ing in plannedCrafts)
     {
-        int index = i;
-        <ItemCard ItemId="@plannedCrafts[index].ItemId" IconSize="128px"
-                  style="max-width: 128px;" OnItemClicked="@(() => CS.OnItemDeleted(index))">
-            <InputNumber TValue="float" class="form-control mt-2 border" Value="plannedCrafts[index].Amount"
-                         ValueExpression="@(()=> plannedCrafts[index].Amount)"
-                         ValueChanged="@(async (float v) => { plannedCrafts[index].Amount = v; await CS.UpdatePlannedCrafts(); })"
+        <ItemCard @key="ing.ItemId" ItemId="@ing.ItemId" IconSize="128px" style="max-width: 128px;"
+                  OnItemClicked="@(() => CS.OnItemDeleted(ing))">
+            <InputNumber TValue="float" class="form-control mt-2 border" Value="ing.Amount"
+                         ValueExpression="@(()=> ing.Amount)"
+                         ValueChanged="@(async (float v) => { ing.Amount = v; ValidateCraftAmount(v); await CS.UpdatePlannedCrafts(); })"
                          min="@float.Epsilon" max="@float.MaxValue" placeholder="Amount" title="Amount of an item"
                          @onclick:stopPropagation />
         </ItemCard>
@@ -49,7 +48,7 @@
         Item Amount must be more than 0!
     </div>
 
-    <button type="button" class="btn btn-lg btn-primary" @onclick="Craft" disabled="@IsCrafting">
+    <button type="button" class="btn btn-lg btn-primary" @onclick="Craft" disabled="@(IsCrafting || !IsValid)">
         @if (IsCrafting)
         {
             <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
@@ -220,22 +219,21 @@
     }
 
     private Modal modalItemPick = null!;
-    private int pickerIndex;
-    private async Task OpenItemPicker(int index = -1)
+    private async Task OpenItemPicker()
     {
-        pickerIndex = index;
         await modalItemPick.OpenAsync();
     }
 
     private async Task OnItemPicked(string itemId)
     {
-        if (pickerIndex < 0)
+        Ingredient? ing = plannedCrafts.FirstOrDefault(i => i.ItemId == itemId);
+        if (ing == null)
         {
             plannedCrafts.Add(new(itemId));
         }
         else
         {
-            plannedCrafts[pickerIndex].ItemId = itemId;
+            ing.Amount += 1f;
         }
 
         await CS.UpdatePlannedCrafts();
@@ -243,24 +241,21 @@
     }
 
     private bool IsValid = true;
+    private void ValidateCraftAmount(float amount)
+    {
+        IsValid = amount > 0;
+    }
+
     private bool IsCrafting = false;
     private async Task Craft()
     {
         if (plannedCrafts.Count == 0)
-            return;
-
-        foreach (Ingredient i in plannedCrafts)
         {
-            if (i.Amount > 0)
-                continue;
-
-            IsValid = false;
+            await CS.SetCraftingData(null);
             return;
         }
 
         IsCrafting = true;
-        IsValid = true;
-
         await CS.DoListCrafting();
         IsCrafting = false;
     }
