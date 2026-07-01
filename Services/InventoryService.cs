@@ -76,6 +76,9 @@ public class InventoryService(IndexedDBManager db)
 
     public bool TryAddItem(Item newItem)
     {
+        if (string.IsNullOrEmpty(newItem.Id))
+            return false;
+
         bool resp = items.TryAdd(newItem.Id, newItem);
         if (resp)
         {

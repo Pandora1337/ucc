@@ -43,7 +43,7 @@ public partial class Item(string name) : IValidatableObject
         return $"#{r:X2}{g:X2}{b:X2}";
     }
 
-    [GeneratedRegex(@"[^a-z0-9]", RegexOptions.None)]
+    [GeneratedRegex(@"[^\p{L}\p{N}]+", RegexOptions.None)]
     private static partial Regex RegexSymbols();
 
     [GeneratedRegex(@"-+", RegexOptions.None)]
@@ -52,7 +52,7 @@ public partial class Item(string name) : IValidatableObject
     // ID-ify Name
     public static string NameToId(string str)
     {
-        string dashed = RegexSymbols().Replace(str.ToLower(), "-");
+        string dashed = RegexSymbols().Replace(str.ToLowerInvariant(), "-");
         return RegexDashes().Replace(dashed.Trim('-'), "-");
     }
 
