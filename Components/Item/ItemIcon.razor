@@ -47,7 +47,8 @@
         _ = FetchIcon();
     }
 
-    private async Task FetchIcon(){
+    private async Task FetchIcon()
+    {
         imageUrl = await IconService.GetIconUrl(Item.Id);
         StateHasChanged();
     }
@@ -59,20 +60,18 @@
             return "?";
         }
 
-        return useFullName ? Item.Name.ToUpper() : GetStringInitials(Item.Name);
+        return useFullName ? Item.Name.ToUpper() : GetStringInitials(Item.Id);
     }
 
     private string GetStringInitials(string str)
     {
-        string[]? words = str.Trim().Split(" ", StringSplitOptions.RemoveEmptyEntries);
-        string initials = string.Join("", words.Select(w => w[0].ToString().ToUpper()));
+        str = str.ToUpperInvariant();
+        string[]? parts = str.Split('-', StringSplitOptions.RemoveEmptyEntries);
+        string? initials = string.Concat(parts.Select(p => p[0]));
 
-        if (initials.Length == 1 && str.Length > 2)
-        {
-            initials += str[1].ToString().ToUpper();
-            initials += str[2].ToString().ToUpper();
-        }
+        if (initials.Length == 1)
+            return initials + str[..Math.Min(3, str.Length)].Substring(1);
 
-        return initials;
+        return initials.Length > 3 ? initials[..3] : initials;
     }
 }
