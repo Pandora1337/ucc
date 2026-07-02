@@ -17,25 +17,32 @@
 
 <!-- PROJECT LOGO -->
 <br />
-<div align="center">
-  <a href="https://github.com/Pandora1337/ucc">
-    <img src="wwwroot/favicon.png" alt="Logo" width="64" height="64">
-  </a>
 
-  <h3 align="center">Universal Crafting Calculator</h3>
-  <p align="center">
-    Fully client-side, feature-rich, and user configurable crafting calculator for any game. Define items, add them to recipes, and calculate the resources needed, all without editing files or creating accounts!
-    <br />
-    <br />
-    <a href="https://github.com/Pandora1337/ucc/issues/new?labels=bug&template=bug-report---.md">
-      Report Bug
-    </a>
-    &middot;
-    <a href="https://github.com/Pandora1337/ucc/issues/new?labels=enhancement&template=feature-request---.md">
-      Request Feature
-    </a>
-  </p>
-</div>
+<p align="center">
+  <a href="https://github.com/Pandora1337/ucc">
+    <img src="https://github.com/Pandora1337/ucc/raw/main/wwwroot/favicon.png" alt="Logo" width="64" height="64">
+  </a>
+</p>
+
+<h3 align="center">Universal Crafting Calculator</h3>
+
+<p align="center">
+  Fully client-side, feature-rich, and user configurable crafting calculator for any game. Define items, add them to recipes, and calculate the resources needed, all without editing files or creating accounts!
+  <br />
+  <br />
+  <a href="https://pandora1337.github.io/ucc">
+    Check it out!
+  </a>
+  <br />
+  <br />
+  <a href="https://github.com/Pandora1337/ucc/issues/new?labels=bug&template=bug-report---.md">
+    Report Bug
+  </a>
+  &middot;
+  <a href="https://github.com/Pandora1337/ucc/issues/new?labels=enhancement&template=feature-request---.md">
+    Request Feature
+  </a>
+</p>
 
 
 
@@ -94,8 +101,8 @@ Or, if you want to run it yourself, see <a href="#self-hosting">Self-Hosting</a>
 
 3. To calculate resource totals, go to the [Crafting](http://pandora1337.github.io/ucc/crafting) tab
 
-<img width="1902" height="854" alt="Preview-1" src="https://github.com/user-attachments/assets/50ed206b-badb-4b74-8c3b-df3e7d21f1f0" />
-<img width="1895" height="847" alt="Preview-2" src="https://github.com/user-attachments/assets/c2cba6a9-e3c9-480a-872b-4d6afe4b71d3" />
+<img alt="Preview-1" src="https://github.com/user-attachments/assets/50ed206b-badb-4b74-8c3b-df3e7d21f1f0" />
+<img alt="Preview-2" src="https://github.com/user-attachments/assets/c2cba6a9-e3c9-480a-872b-4d6afe4b71d3" />
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -262,5 +269,3 @@ Discord - [Pandora1337](https://discord.com/users/280299811310272513)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-<img width="1902" height="854" alt="Preview-1" src="https://github.com/user-attachments/assets/6c0d2f4c-ab9c-4651-9a24-b7a184fd8ab1" />
-<img width="1895" height="847" alt="Preview-2" src="https://github.com/user-attachments/assets/87b55061-79ca-4ea9-96b6-f370dabc54bc" />
