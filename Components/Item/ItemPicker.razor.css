@@ -8,6 +8,11 @@
     padding-left: 0.9375rem;
 }
 
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  display: none;
+}
+
 #search-bar {
     padding-left: 2rem;
     padding-right: 2rem;
