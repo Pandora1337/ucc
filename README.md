@@ -138,6 +138,8 @@ services:
     restart: unless-stopped
     ports:
       - 80:80 # CAN CHANGE : dont change
+    environment:
+      BASE_HREF: / # Optional, sets base href path
 ```
 
 or docker run:
@@ -145,6 +147,7 @@ or docker run:
 ```bash
 docker run --name ucc \
   -p 80:80 \ 
+  -e BASE_HREF=/ \
   --restart unless-stopped \
   pandora1337/ucc:latest
 ```
