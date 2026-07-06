@@ -65,17 +65,46 @@
 
 @if (cd != null)
 {
+    <div class="d-flex justify-content-between pb-1 mb-2 border border-0 border-3 border-bottom">
+        <h3 class="mb-0">Crafting Result:</h3>
+
+        <div>
+            <div class="btn-group d-none d-lg-inline-flex" role="group">
+                <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
+                       checked="@(IsGridView)" />
+                <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
+                    <i class="bi bi-grid" aria-label="Grid View" />
+                </label>
+
+                <input type="radio" class="btn-check btn-sm" id="viewList" name="viewMode" @onchange="ToggleRecipeGrid"
+                       checked="@(!IsGridView)" />
+                <label class="btn btn-outline-secondary" for="viewList" title="List View">
+                    <i class="bi bi-view-stacked" aria-label="List View" />
+                </label>
+            </div>
+
+            <button class="btn btn-sm btn-danger h-100" @onclick="@(() => CS.SetCraftingData(null))"
+                    title="Clear Crafting Data">
+                <i class="bi bi-trash3" aria-label="Clear Crafting Data" />
+            </button>
+        </div>
+    </div>
+
     <Accordion cClass="mb-3">
         <AccordionItem Icon="bi-list" Title="Item List" OpenOnStart="true">
-            <strong>
-                <i class="bi bi-gem me-2" aria-hidden="true" />Products:
-            </strong>
-            <div class="d-flex flex-wrap gap-1 my-2">
-                @foreach ((string itemId, float amount) in cd.ItemsProd)
-                {
-                    <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
-                }
-            </div>
+
+            @if (cd.ItemsProd.Count > 0)
+            {
+                <strong>
+                    <i class="bi bi-gem me-2" aria-hidden="true" />Products:
+                </strong>
+                <div class="d-flex flex-wrap gap-1 my-2">
+                    @foreach ((string itemId, float amount) in cd.ItemsProd)
+                    {
+                        <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
+                    }
+                </div>
+            }
 
             @if (cd.ItemsInt.Count > 0)
             {
@@ -101,32 +130,6 @@
             </div>
         </AccordionItem>
     </Accordion>
-
-
-    <div class="d-flex justify-content-between pb-1 mb-2 border border-0 border-3 border-bottom">
-        <h3 class="mb-0">Crafting Guide:</h3>
-
-        <div>
-            <div class="btn-group d-none d-lg-inline-flex" role="group">
-                <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
-                       checked="@(IsGridView)" />
-                <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
-                    <i class="bi bi-grid" aria-label="Grid View" />
-                </label>
-
-                <input type="radio" class="btn-check btn-sm" id="viewList" name="viewMode" @onchange="ToggleRecipeGrid"
-                       checked="@(!IsGridView)" />
-                <label class="btn btn-outline-secondary" for="viewList" title="List View">
-                    <i class="bi bi-view-stacked" aria-label="List View" />
-                </label>
-            </div>
-
-            <button class="btn btn-sm btn-danger h-100" @onclick="@(() => CS.SetCraftingData(null))"
-                    title="Clear Crafting Data" style="width: 38px;">
-                <i class="bi bi-trash3" aria-label="Clear Crafting Data" />
-            </button>
-        </div>
-    </div>
 
     @if (cd.CraftingTime > 0)
     {
