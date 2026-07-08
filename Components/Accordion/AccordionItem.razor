@@ -3,7 +3,7 @@
 <div class="accordion-item" style="@style">
     <h2 class="accordion-header">
         <button type="button" class="accordion-button @(isShowing ? "" : "collapsed") @ClassBtn"
-                aria-expanded="@isShowing" aria-controls="flush-collapseOne" @onclick="ToggleAsync">
+                aria-expanded="@isShowing" aria-controls="flush-collapseOne" @onclick="Toggle">
             @if (!string.IsNullOrEmpty(Icon))
             {
                 <i class="bi @Icon me-2" aria-hidden="true" />
@@ -29,28 +29,28 @@
     [Parameter] public string style { get; set; } = "";
     [Parameter] public bool OpenOnStart { get; set; } = false;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnAfterRender(bool firstRender)
     {
         if (OpenOnStart && firstRender)
         {
-            await OpenAsync();
+            Open();
             StateHasChanged();
         }
     }
 
     private bool isShowing { get; set; } = false;
 
-    public async Task ToggleAsync()
+    public void Toggle()
     {
         isShowing = !isShowing;
     }
 
-    public async Task OpenAsync()
+    public void Open()
     {
         isShowing = true;
     }
 
-    public async Task CloseAsync()
+    public void Close()
     {
         isShowing = false;
     }
