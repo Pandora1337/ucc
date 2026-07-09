@@ -9,7 +9,7 @@ public partial class Item(string name) : IValidatableObject
 {
     public static readonly string DefaultName = "New Item";
 
-    public string Id { get; set; } = NameToId(name);
+    public string Id { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Name can't be empty!")]
     [StringLength(200, ErrorMessage = "Name is too long!")]
@@ -70,6 +70,7 @@ public partial class Item(string name) : IValidatableObject
     {
         return new(itemId)
         {
+            Id = itemId,
             IsUnknown = true,
             ColorHex = "#dc3545",
         };

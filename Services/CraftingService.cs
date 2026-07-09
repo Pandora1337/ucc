@@ -96,7 +96,7 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
 
             if (!selectedRecipes.TryGetValue(itemId, out Recipe? recipe))
             {
-                List<Recipe> recipes = IS.GetRecipesByResultId(itemId);
+                List<Recipe> recipes = IS.GetRecipesByResultId(itemId).ToList();
                 if (recipes.Count == 0)
                 {
                     deadEndItems.Add(itemId);
@@ -179,8 +179,8 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
 
     public event Action<string>? OnChoiceRequest;
     public event Action? OnChoiceSelect;
-    public List<Recipe>? RecipeOptions { get; private set; }
-    private async Task<Recipe> RequestUserResolve(string itemId, List<Recipe> options)
+    public IEnumerable<Recipe>? RecipeOptions { get; private set; }
+    private async Task<Recipe> RequestUserResolve(string itemId, IEnumerable<Recipe> options)
     {
         RecipeOptions = options;
         _choiceTask = new();

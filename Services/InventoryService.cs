@@ -22,6 +22,11 @@ public class InventoryService(IndexedDBManager db)
         List<Recipe> recipeList = await DB.GetRecords<Recipe>(IndexedDB.Recipes);
         recipes = recipeList.ToDictionary(x => x.Guid);
         OnRecipeListChange?.Invoke();
+
+        foreach (Recipe recipe in recipeList)
+        {
+            ChangeIndex(recipe);
+        }
     }
 
     public void GenerateStuff()
@@ -58,6 +63,37 @@ public class InventoryService(IndexedDBManager db)
         });
     }
 
+    public Dictionary<string, HashSet<Guid>> itemToRecipes = [];
+    private void ChangeIndex(Recipe? recipe, bool isRemove = false)
+    {
+        if (recipe == null)
+            return;
+
+        foreach (Ingredient prod in recipe.Products)
+        {
+            ChangeGuid(prod.ItemId);
+        }
+
+        foreach (Ingredient ingr in recipe.Ingredients)
+        {
+            ChangeGuid(ingr.ItemId);
+        }
+
+        if (!string.IsNullOrEmpty(recipe.StationId))
+        {
+            ChangeGuid(recipe.StationId);
+        }
+
+        void ChangeGuid(string itemId)
+        {
+            HashSet<Guid> guids = itemToRecipes.GetValueOrDefault(itemId, []);
+            _ = isRemove ? guids.Remove(recipe.Guid) : guids.Add(recipe.Guid);
+            itemToRecipes[itemId] = guids;
+        }
+    }
+
+    #region Items
+
     private Dictionary<string, Item> items = [];
 
     public event Action? OnItemListChange;
@@ -89,6 +125,7 @@ public class InventoryService(IndexedDBManager db)
             });
 
             OnItemListChange?.Invoke();
+            OnItemUpdate?.Invoke(newItem.Id);
         }
 
         // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW ITEM: {newItem.Name} ID: {newItem.Id}");
@@ -119,6 +156,7 @@ public class InventoryService(IndexedDBManager db)
         if (resp)
         {
             DB.DeleteRecord<string>(IndexedDB.Items, itemId);
+            OnItemUpdate?.Invoke(itemId);
             OnItemListChange?.Invoke();
         }
 
@@ -173,10 +211,25 @@ public class InventoryService(IndexedDBManager db)
         OnItemListChange?.Invoke();
     }
 
+    public IEnumerable<Item> SearchItems(string search)
+    {
+        IEnumerable<Item> itemObjs = items.Values;
+        if (string.IsNullOrEmpty(search))
+            return itemObjs;
+
+        return itemObjs.Where(item => item.Name.Contains(search,
+            StringComparison.OrdinalIgnoreCase)
+        );
+    }
+
     public Dictionary<string, Item> GetItems()
     {
         return items;
     }
+
+    #endregion
+
+    #region Recipes
 
     private Dictionary<Guid, Recipe> recipes = [];
 
@@ -193,6 +246,7 @@ public class InventoryService(IndexedDBManager db)
             Data = recipe
         });
 
+        ChangeIndex(recipe);
         // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW Recipe for: {recipe.ResultId} ID: {2}");
 
         OnRecipeListChange?.Invoke();
@@ -211,15 +265,18 @@ public class InventoryService(IndexedDBManager db)
             Data = recipe
         });
 
+        ChangeIndex(recipe, true);
+        ChangeIndex(recipe);
         OnRecipeUpdate?.Invoke(guid);
         return true;
     }
 
     public bool TryRemoveRecipe(Guid id)
     {
-        bool resp = recipes.Remove(id);
+        bool resp = recipes.Remove(id, out Recipe? recipe);
         if (resp)
         {
+            ChangeIndex(recipe, true);
             DB.DeleteRecord(IndexedDB.Recipes, id);
             OnRecipeListChange?.Invoke();
         }
@@ -239,32 +296,28 @@ public class InventoryService(IndexedDBManager db)
         return recipes.GetValueOrDefault(guid)!;
     }
 
-    public List<Recipe> GetRecipesWithItem(string itemId)
+    public IEnumerable<Recipe> GetRecipesWithItem(string itemId)
     {
-        List<Recipe> list = new();
-        foreach (Recipe recipe in recipes.Values)
-        {
-            if (!recipe.ContainsItemId(itemId))
-                continue;
+        List<Recipe> list = [];
+        if (!itemToRecipes.TryGetValue(itemId, out HashSet<Guid>? guids))
+            return list;
 
-            list.Add(recipe);
+        foreach (Guid guid in guids)
+        {
+            list.Add(GetRecipeById(guid));
         }
 
         return list;
     }
 
-    public List<Recipe> GetRecipesByResultId(string resultId)
+    public IEnumerable<Recipe> GetRecipesByResultId(string resultId)
     {
-        List<Recipe> list = [];
-        foreach (Recipe recipe in recipes.Values)
+        HashSet<Recipe> list = [];
+        foreach (Recipe recipe in GetRecipesWithItem(resultId))
         {
-            foreach (Ingredient prod in recipe.Products)
+            if (recipe.ContainsProductId(resultId))
             {
-                if (prod.ItemId != resultId)
-                    continue;
-
                 list.Add(recipe);
-                break;
             }
         }
         return list;
@@ -290,6 +343,8 @@ public class InventoryService(IndexedDBManager db)
     {
         return recipes;
     }
+
+    #endregion
 
     public async Task ClearDB()
     {

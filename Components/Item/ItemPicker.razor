@@ -1,76 +1,64 @@
 @using System.Threading.Tasks
 @using ucc.Components.Modal
 @using ucc.Components.BtnAdd
+@using ucc.Components.Searchbar
 @using ucc.Models
-@using System.Linq
 
 @namespace ucc.Components.Item
 
 @inject ucc.Services.InventoryService IS
-@inject IJSRuntime JS;
 
-<div class="input-group px-3">
-    <input type="search" id="search-bar" value="@searchString" autofocus="true"
-           class="input-group form-control form-control-lg rounded-1" @oninput="OnSearchChanged"
-           placeholder="Search..." />
-
-    <label for="search-bar" aria-hidden="true">
-        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y mx-3 px-2" style="z-index: 10;"/>
-    </label>
-
-    @if (!string.IsNullOrEmpty(searchString))
-    {
-        <button type="button" class="position-absolute top-50 end-0 translate-middle-y mx-3 px-2 py-0 h-100 btn btn-close btn-clear"
-                @onclick="@(async () => { searchString = ""; await GrabFocus(); })"/>
-    }
+<div class="px-3">
+    <Searchbar @ref="searchbar" OnSearch="DoSearch"></Searchbar>
 </div>
 
 <div class="d-grid gap-2 py-3 overflow-auto h-100 item-list">
     <div>
-        <BtnAdd OnClicked="@(async () => { await modalItemAdd.OpenAsync(); })" style="max-height: 160px; height: 100%; width: 100%;" />
+        <BtnAdd OnClicked="OpenItemAddModal" style="max-height: 160px; height: 100%; width: 100%;" />
     </div>
 
     @foreach (Item item in filteredItems)
     {
-        <ItemCard @key="item.Id" IconSize="80px" Item="item" OnItemClicked="@(async () => await ItemPicked(item.Id))" style="max-height: 160px;"/>
+        <ItemCard @key="item.Id" IconSize="80px" Item="item" style="max-height: 160px;"
+                  OnItemClicked="@(async () => await ItemPicked(item.Id))" />
     }
 </div>
 
 <Modal @ref="modalItemAdd" Title="Add New Item">
     <div class="modal-body">
-        <ItemForm OnItemAdded="OnNewItemAdded" />
+        <ItemForm OnItemAdded="OnNewItemAdded" Item="modalItem" />
     </div>
 </Modal>
 
 @code {
     [Parameter] public EventCallback<string> OnItemPicked { get; set; }
 
-    private Modal modalItemAdd = null!;
-
-    private string searchString { get; set; } = "";
-
-    private List<Item> items = [];
-    private IEnumerable<Item> filteredItems => items.Where(i => string.IsNullOrEmpty(searchString) ||
-            i.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+    protected override void OnInitialized()
+    {
+        DoSearch("");
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            items = IS.GetItems().Values.ToList();
-            await GrabFocus();
-            StateHasChanged();
+            await searchbar.GrabFocus();
         }
     }
 
-    private async Task GrabFocus()
+    private Searchbar searchbar = null!;
+    private Modal modalItemAdd = null!;
+    private Item modalItem = null!;
+    private async Task OpenItemAddModal()
     {
-        await JS.InvokeAsync<string>("focusElement", "search-bar");
+        modalItem = new Item(searchbar.SearchString);
+        await modalItemAdd.OpenAsync();
     }
 
-    private void OnSearchChanged(ChangeEventArgs e)
+    private IEnumerable<Item> filteredItems = [];
+    private void DoSearch(string search)
     {
-        searchString = e.Value?.ToString() ?? string.Empty;
+        filteredItems = IS.SearchItems(search);
     }
 
     private async Task ItemPicked(string itemId)

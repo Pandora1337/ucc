@@ -41,6 +41,22 @@ public partial class Recipe : IValidatableObject
 
     public bool ContainsItemId(string itemId)
     {
+        if (ContainsProductId(itemId))
+            return true;
+
+        if (StationId == itemId)
+        {
+            return true;
+        }
+
+        if (ContainsIngredientId(itemId))
+            return true;
+
+        return false;
+    }
+
+    public bool ContainsProductId(string itemId)
+    {
         foreach (Ingredient prod in Products)
         {
             if (prod.ItemId == itemId)
@@ -49,11 +65,11 @@ public partial class Recipe : IValidatableObject
             }
         }
 
-        if (StationId == itemId)
-        {
-            return true;
-        }
+        return false;
+    }
 
+    public bool ContainsIngredientId(string itemId)
+    {
         foreach (Ingredient ingr in Ingredients)
         {
             if (ingr.ItemId == itemId)

@@ -1,0 +1,90 @@
+@namespace ucc.Components.Searchbar
+
+@using System.Timers;
+
+<div class="input-group">
+    <label for="search-bar" aria-hidden="true">
+        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y px-3 z-1" />
+    </label>
+
+    <input @ref="InputElement" type="search" id="search-bar" value="@SearchString" style="max-width: 100%;"
+           class="input-group form-control form-control-lg rounded-1 px-5 z-0" @oninput="OnInput" placeholder="Search..." />
+
+    @if (!string.IsNullOrEmpty(SearchString))
+    {
+        <button class="position-absolute top-50 end-0 translate-middle-y px-3 py-0 h-100 btn btn-close z-1" type="button"
+                @onclick="ClearSearch" />
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnSearch { get; set; }
+    [Parameter] public double DebounceTime { get; set; } = 300;
+
+    public string SearchString { get; private set; } = "";
+    public bool IsEmpty => string.IsNullOrEmpty(SearchString);
+    public ElementReference InputElement { get; private set; }
+
+    public async Task GrabFocus()
+    {
+        await InputElement.FocusAsync();
+    }
+
+    private Timer? timer = null;
+    private void StartTimer()
+    {
+        TimerDispose();
+
+        timer = new(DebounceTime)
+        {
+            AutoReset = false,
+            Enabled = true,
+        };
+
+        timer.Elapsed += OnTimeout;
+    }
+
+    private void OnTimeout(object? sender, ElapsedEventArgs e)
+    {
+        OnSearchChanged();
+    }
+
+    private void TimerDispose()
+    {
+        if (timer == null)
+            return;
+
+        timer.Elapsed -= OnTimeout;
+        timer.Dispose();
+        timer = null;
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        SearchString = e.Value?.ToString() ?? string.Empty;
+        if (string.IsNullOrEmpty(SearchString))
+        {
+            OnSearchChanged();
+        }
+        else
+        {
+            StartTimer();
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchString = "";
+        OnSearchChanged();
+        await GrabFocus();
+    }
+
+    private void OnSearchChanged()
+    {
+        TimerDispose();
+        if (OnSearch.HasDelegate)
+        {
+            OnSearch.InvokeAsync(SearchString);
+        }
+    }
+}
