@@ -2,8 +2,10 @@
 
 @using ucc.Components.Accordion
 @using ucc.Components.BtnAdd
+@using ucc.Components.BtnDelete
 @using ucc.Components.Crafting
 @using ucc.Components.Item
+@using ucc.Components.Recipe
 @using ucc.Components.Modal
 @using ucc.Models
 
@@ -33,12 +35,14 @@
     @foreach (Ingredient ing in plannedCrafts)
     {
         <ItemCard @key="ing.ItemId" ItemId="@ing.ItemId" IconSize="128px" style="max-width: 128px;"
-                  OnItemClicked="@(() => CS.OnItemDeleted(ing))">
+                  OnItemClicked="@(() => CS.OnItemDeleted(ing))" cClass="position-relative">
             <InputNumber TValue="float" class="form-control mt-2 border" Value="ing.Amount"
                          ValueExpression="@(()=> ing.Amount)"
                          ValueChanged="@(async (float v) => { ing.Amount = v; ValidateCraftAmount(v); await CS.UpdatePlannedCrafts(); })"
                          min="@float.Epsilon" max="@float.MaxValue" placeholder="Amount" title="Amount of an item"
                          @onclick:stopPropagation />
+            <BtnDelete OnDelete="@(() => OpenAddRecipeModal(ing.ItemId))" ImgSrc="bi-journal-plus" cClass="btn-outline-warning" Title="Create recipe for this item"
+                       style="top: 88px;" />
         </ItemCard>
     }
 </div>
@@ -170,6 +174,12 @@
     </div>
 </Modal>
 
+<Modal @ref="modalAddRecipe" Title="Add New Recipe">
+    <div class="modal-body">
+        <RecipeForm OnRecipeAdd="@modalAddRecipe.CloseAsync" recipe="modalRecipe" />
+    </div>
+</Modal>
+
 <Modal @ref="modalChoice" IsRequired="true" IsTitleEnabled="false">
     <div class="modal-header justify-content-center">
         <h4 class="modal-title pe-2">
@@ -219,6 +229,17 @@
     {
         IsGridView = !IsGridView;
         await LS.Set("craftingPageIsGridView", IsGridView);
+    }
+
+    private Modal modalAddRecipe = null!;
+    private Recipe modalRecipe = null!;
+    private async Task OpenAddRecipeModal(string itemId)
+    {
+        modalRecipe = new Recipe()
+        {
+            Products = [new(itemId)]
+        };
+        await modalAddRecipe.OpenAsync();
     }
 
     private Modal modalItemPick = null!;
