@@ -49,7 +49,7 @@
     private string IconDark = "bi-moon-fill";
     private string IconAuto = "bi-circle-half";
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         TS.OnThemeChange += UpdateIcon;
         UpdateIcon(TS.Theme);

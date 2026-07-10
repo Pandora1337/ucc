@@ -5,7 +5,7 @@
 @namespace ucc.Components.Item
 
 <button type="button" class="btn-custom w-100 h-100 rounded-2 bg-body-secondary border-0 shadow-sm item-card @cClass"
-        style="@style" title="@Item.Name" @onclick="@(() => ItemClicked(Item.Id))">
+        style="@style" title="@Item.Name" @onclick="ItemClicked">
     <div class="d-flex flex-column w-100 h-100">
         <div class="flex-grow-0">
             <ItemIcon Item="@Item" Size="@IconSize" />
@@ -45,11 +45,11 @@
     [Parameter] public string cClass { get; set; } = "";
     [Parameter] public string style { get; set; } = "";
 
-    private async Task ItemClicked(string itemId)
+    private async Task ItemClicked()
     {
         if (OnItemClicked.HasDelegate)
         {
-            await OnItemClicked.InvokeAsync(itemId);
+            await OnItemClicked.InvokeAsync(Item.Id);
         }
     }
 }
