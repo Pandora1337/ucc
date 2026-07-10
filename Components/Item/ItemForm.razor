@@ -11,8 +11,9 @@
 @inject ucc.Services.IconService IconService;
 @inject IJSRuntime JS;
 
-<div class="additem-container" style="@AdditionalStyle width: 200px">
-    <BtnAdd style="width: 100%; aspect-ratio: 1;" OnClicked="OpenFilePicker" Text="Choose Icon" ImgSrc="bi-image"
+<div @ref="pasteZoneElement" style="@AdditionalStyle width: 200px">
+    <BtnAdd @ref="btnAdd" style="width: 100%; aspect-ratio: 1;" OnClicked="OpenFilePicker" Text="Choose Icon"
+            Subtext="Paste or drag and drop" ImgSrc="bi-image" Class="drop-zone"
             EnableChildContent="!string.IsNullOrEmpty(ImageUrl) || State == IconState.Imported">
 
         <div class="preview-area">
@@ -28,8 +29,8 @@
         <DataAnnotationsValidator />
 
         <div class="input-group pt-3">
-            <InputText @ref="inputText" class="form-control" @bind-Value="@Item.Name" placeholder="New Item" title="Choose Item Name"
-                       aria-required="true" />
+            <InputText @ref="inputText" class="form-control" @bind-Value="@Item.Name" placeholder="New Item"
+                       title="Choose Item Name" aria-label="Item Name input field" aria-required="true" />
 
             <input type="color" class="form-control form-control-color flex-grow-0" style="width: 38px"
                    title="Choose Item Color" @bind-value="@Item.ColorHex" />
@@ -64,6 +65,8 @@
     private bool ImageExists = false;
     protected override async Task OnInitializedAsync()
     {
+        _module = await JS.InvokeAsync<IJSObjectReference>("import", "./module-drop-paste.js");
+
         // Item doesnt exist yet so nothing to fetch
         if (string.IsNullOrEmpty(Item.Id))
             return;
@@ -73,11 +76,36 @@
     }
 
     private InputText? inputText;
+
+    private bool needsRebind = true;
+    private BtnAdd btnAdd = null!;
+    private ElementReference pasteZoneElement;
+
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _pasteZoneInstance;
+    private IJSObjectReference? _dropZoneInstance;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             await inputText!.Element!.Value.FocusAsync();
+        }
+
+        if (needsRebind && _module != null)
+        {
+            needsRebind = false;
+            await DisposeOfZones();
+            _pasteZoneInstance = await _module.InvokeAsync<IJSObjectReference>(
+                "initializeFilePasteZone",
+                pasteZoneElement,
+                inputFile?.Element
+            );
+
+            _dropZoneInstance = await _module.InvokeAsync<IJSObjectReference>(
+                "initializeFileDropZone",
+                btnAdd.ElementReference,
+                inputFile?.Element
+            );
         }
     }
 
@@ -86,6 +114,12 @@
         if (State == IconState.None && ImageExists)
         {
             await IconService.DisposeOfIcon(Item.Id);
+        }
+
+        await DisposeOfZones();
+        if (_module != null)
+        {
+            await _module.DisposeAsync();
         }
 
         icon = null;
@@ -112,7 +146,7 @@
     private ElementReference imgElement;
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
-        IBrowserFile? file = e.File;
+        IBrowserFile? file = e.FileCount > 1 ? e.GetMultipleFiles()[0] : e.File;
         long MaxSize = 5 * 1024 * 1024;
 
         if (file == null || !file.ContentType.StartsWith("image/") || file.Size > MaxSize)
@@ -146,6 +180,7 @@
         // Or else it lingers and haunts the memory stack
         // Why? Because webdev is fun like that
         fileKey = Guid.NewGuid();
+        needsRebind = true;
     }
 
     private async Task OnSubmit()
@@ -195,7 +230,24 @@
             await IconService.DisposeOfIcon(Item.Id);
         }
 
+        await btnAdd.ElementReference.FocusAsync();
+
         ImageUrl = "";
         State = IconState.ToDelete;
+    }
+
+    private async Task DisposeOfZones()
+    {
+        if (_pasteZoneInstance != null)
+        {
+            await _pasteZoneInstance.InvokeVoidAsync("dispose");
+            await _pasteZoneInstance.DisposeAsync();
+        }
+
+        if (_dropZoneInstance != null)
+        {
+            await _dropZoneInstance.InvokeVoidAsync("dispose");
+            await _dropZoneInstance.DisposeAsync();
+        }
     }
 }
