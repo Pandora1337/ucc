@@ -1,0 +1,17 @@
+name: Draft release creation on push to main
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  draftRelease:
+    name: Create draft release
+    needs: test-typescript
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: KoblerS/create-release@49bc6fe409213d41eaa55e6170faabfa66d49943 #v1.0.0
