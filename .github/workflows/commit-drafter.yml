@@ -1,4 +1,4 @@
-name: Draft release creation on push to main
+name: Release Drafter from commit
 
 on:
   push:
@@ -9,7 +9,6 @@ on:
 jobs:
   draftRelease:
     name: Create draft release
-    needs: test-typescript
     runs-on: ubuntu-latest
     permissions:
       contents: write
