@@ -1,0 +1,67 @@
+@namespace ucc.Components.Tab
+
+<CascadingValue Value="this">
+    <ul class="nav nav-tabs" role="tablist">
+        @foreach (Tab tab in Tabs)
+        {
+            bool IsActive = tab == ActiveTab;
+            <button class="nav-link @(IsActive ? "active" : "") btn-outline-primar" id="import-tab" type="button" role="tab"
+                    aria-controls="import-pane" aria-selected="@(IsActive)" @onclick="@(() => ActivateTab(tab))">
+                @if (!string.IsNullOrEmpty(tab.Icon))
+                {
+                    <span class="bi @tab.Icon me-2" aria-hidden="true"></span>
+                }
+                @tab.Title
+            </button>
+        }
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-3 @Class">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string Class { get; set; } = "";
+
+    internal List<Tab> Tabs { get; } = new();
+    internal Tab? ActiveTab { get; set; }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            StateHasChanged();
+        }
+    }
+
+    internal void AddTab(Tab tab)
+    {
+        if (Tabs.Contains(tab))
+            return;
+
+        Tabs.Add(tab);
+        ActiveTab ??= tab;
+        StateHasChanged();
+    }
+
+    internal void RemoveTab(Tab tab)
+    {
+        Tabs.Remove(tab);
+        if (ActiveTab == tab)
+        {
+            ActiveTab = Tabs.FirstOrDefault();
+            StateHasChanged();
+        }
+    }
+
+    internal void ActivateTab(Tab tab)
+    {
+        if (tab == ActiveTab)
+            return;
+
+        ActiveTab = tab;
+        StateHasChanged();
+    }
+}

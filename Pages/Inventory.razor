@@ -8,6 +8,7 @@
 @using ucc.Components.Modal;
 @using ucc.Components.Crafting
 @using ucc.Components.Searchbar
+@using ucc.Components.Tab
 
 @implements IDisposable
 
@@ -18,7 +19,7 @@
 
 <h1 class="text-center">Inventory</h1>
 <div class="w-100 text-center">
-    <button class="btn btn-outline-secondary" type="button" @onclick="IS.GenerateStuff">Create default items</button>
+    <button class="btn btn-outline-secondary" type="button" @onclick="IS.GenerateStuff">Quickstart recipes</button>
     <a class="btn btn-outline-secondary" href="settings#config" title="Go to config Import/Export"
        aria-label="Go to config Import/Export">
         <span class="bi bi-upload me-2" aria-hidden="true" />/<span class="bi bi-download ms-2" aria-hidden="true" />
@@ -29,56 +30,65 @@
     <Searchbar @ref="searchbar" OnSearch="DoSearch" />
 </div>
 
-<div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
-    <h2 class="mb-1">Items:</h2>
-    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteItemList.OpenAsync())"
-            title="Delete All Items">
-        <i class="bi bi-trash3" aria-label="Delete All Items" />
-    </button>
-</div>
+<div class="col-12 col-lg-10 mx-auto">
+    <TabList Class="border-0 px-0 py-3">
+        <Tab Title="Recipes" Icon="bi-journal-text">
+            <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
+                <h2 class="mb-1">Recipes (@filteredRecipes.Count):</h2>
+                <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteRecipeList.OpenAsync())"
+                        title="Delete All Recipes">
+                    <i class="bi bi-trash3" aria-label="Delete All Recipes" />
+                </button>
+            </div>
 
-<div class="d-grid justify-content-sm-start justify-content-center g-3 gap-3 mb-3"
-     style="grid-template-columns: repeat(auto-fit, 128px);">
-    <BtnAdd style="width: 128px; min-height: 200px; height: 100%;"
-            OnClicked="@(async () => await OpenItemAddModal())" />
-
-    @foreach (Item item in filteredItems)
-    {
-        <ItemCard @key="item.Id" Item="item" IconSize="128px" cClass="position-relative"
-                  OnItemClicked="@(async () => await OpenItemAddModal(item))" ShowItemDate="true">
-            <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(item))" ImgSrc="bi-trash3" />
-        </ItemCard>
-    }
-</div>
-
-
-<div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
-    <h2 class="mb-1">Recipes:</h2>
-    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteRecipeList.OpenAsync())"
-            title="Delete All Recipes">
-        <i class="bi bi-trash3" aria-label="Delete All Recipes" />
-    </button>
-</div>
-
-<div class="mb-3">
-    <BtnAdd style="width: 128px; height: 128px;" OnClicked="@(async () => await OpenRecipeAddModal())" />
-</div>
-
-<div class="row g-3 mb-3">
-    @foreach (Recipe recipe in filteredRecipes)
-    {
-        <div @key="recipe.Guid" class="col-12 col-lg-6 col-xxl-4">
-            <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))">
-                <div class="position-absolute bg-body-tertiary" style="top: 8px; right: 6px; height: 38px; width: 80px;">
+            <div class="row g-3">
+                <div class="card col-12 col-md-6 col-xxl-4 delete-target border-0">
+                    <BtnAdd Class="w-100 h-100" style="min-width: 128px; min-height: 128px;"
+                            OnClicked="@(async () => await OpenRecipeAddModal())" />
                 </div>
 
-                <BtnDelete OnDelete="@(async () => await OpenRecipeAddModal(recipe))" style="right: 48px;"
-                           cClass="btn-outline-primary" ImgSrc="bi-pencil-square" Title="Edit" />
+                @foreach (Recipe recipe in filteredRecipes)
+                {
+                    <div @key="recipe.Guid" class="col-12 col-md-6 col-xxl-4">
+                        <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))">
+                            <div class="position-absolute bg-body-tertiary"
+                                 style="top: 8px; right: 6px; height: 38px; width: 80px;">
+                            </div>
 
-                <BtnDelete OnDelete="@(async () => await OpenRecipeDeleteModal(recipe))" ImgSrc="bi-trash3" />
-            </RecipeCard>
-        </div>
-    }
+                            <BtnDelete OnDelete="@(async () => await OpenRecipeAddModal(recipe))" style="right: 48px;"
+                                       cClass="btn-outline-primary" ImgSrc="bi-pencil-square" Title="Edit" />
+
+                            <BtnDelete OnDelete="@(async () => await OpenRecipeDeleteModal(recipe))" ImgSrc="bi-trash3" />
+                        </RecipeCard>
+                    </div>
+                }
+            </div>
+        </Tab>
+
+        <Tab Title="Items" Icon="bi-gem">
+            <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
+                <h2 class="mb-1">Items (@(filteredItems.Count)):</h2>
+                <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteItemList.OpenAsync())"
+                        title="Delete All Items">
+                    <i class="bi bi-trash3" aria-label="Delete All Items" />
+                </button>
+            </div>
+
+            <div class="d-grid justify-content-center g-3 gap-3"
+                 style="grid-template-columns: repeat(auto-fit, 128px);">
+                <BtnAdd style="width: 128px; min-height: 200px; height: 100%;"
+                        OnClicked="@(async () => await OpenItemAddModal())" />
+
+                @foreach (Item item in filteredItems)
+                {
+                    <ItemCard @key="item.Id" Item="item" IconSize="128px" cClass="position-relative"
+                              OnItemClicked="@(async () => await OpenItemAddModal(item))" ShowItemDate="true">
+                        <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(item))" ImgSrc="bi-trash3" />
+                    </ItemCard>
+                }
+            </div>
+        </Tab>
+    </TabList>
 </div>
 
 
@@ -137,11 +147,11 @@
     }
 
     private Searchbar searchbar = null!;
-    private IEnumerable<Item> filteredItems = [];
+    private List<Item> filteredItems = [];
     private HashSet<Recipe> filteredRecipes = [];
     void DoSearch(string search)
     {
-        filteredItems = IS.SearchItems(search);
+        filteredItems = IS.SearchItems(search).ToList();
 
         filteredRecipes.Clear();
         foreach (Item item in filteredItems)

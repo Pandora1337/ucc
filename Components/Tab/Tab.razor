@@ -1,0 +1,27 @@
+@namespace ucc.Components.Tab
+
+<div class="tab-pane @(IsActive ? "show active" : "")" id="export-pane" role="tabpanel"
+     aria-labelledby="export-tab" tabindex="0" aria-selected="@(IsActive)">
+
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter] private TabList? Parent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; } = false;
+
+    private bool IsActive => Parent?.ActiveTab == this;
+
+    protected override void OnInitialized()
+    {
+        Parent?.AddTab(this);
+    }
+
+    public void Dispose()
+    {
+        Parent?.RemoveTab(this);
+    }
+}

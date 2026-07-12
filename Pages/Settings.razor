@@ -2,8 +2,9 @@
 
 @using System.Text
 @using System.Text.Json
-@using ucc.Components.Modal
 @using ucc.Models
+@using ucc.Components.Modal
+@using ucc.Components.Tab
 
 @inject ucc.Data.LocalStorage LS;
 @inject ucc.Services.CraftingService CS;
@@ -23,28 +24,8 @@
         </div>
 
         <div class="card-body">
-            <ul class="nav nav-tabs" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link @(ShowImport ? "active" : "")" id="import-tab" type="button" role="tab"
-                            aria-controls="import-pane" aria-selected="@(ShowImport)" @onclick="@(() => ShowImport = true)">
-                        <span class="bi bi-download me-1" aria-hidden="true"></span>
-                        Import
-                    </button>
-                </li>
-
-                <li class="nav-item">
-                    <button class="nav-link @(!ShowImport ? "active" : "")" id="export-tab" type="button" role="tab"
-                            aria-controls="export-pane" aria-selected="@(!ShowImport)"
-                            @onclick="@(() => ShowImport = false)">
-                        <span class="bi bi-upload me-1" aria-hidden="true"></span>
-                        Export
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content border border-top-0 rounded-bottom p-3">
-                <div class="tab-pane @(ShowImport ? "show active" : "")" id="import-pane" role="tabpanel"
-                     aria-labelledby="import-tab" tabindex="0" aria-selected="@ShowImport">
+            <TabList>
+                <Tab Title="Import" Icon="bi-download">
                     <div class="mb-3">
                         <label for="importFile" class="form-label">
                             Upload config file
@@ -95,11 +76,9 @@
                             <span>Import</span>
                         }
                     </button>
-                </div>
+                </Tab>
 
-                <div class="tab-pane @(!ShowImport ? "show active" : "")" id="export-pane" role="tabpanel"
-                     aria-labelledby="export-tab" tabindex="0" aria-selected="@(!ShowImport)">
-
+                <Tab Title="Export" Icon="bi-upload">
                     <label class="mb-1" for="text-input">
                         Filename
                     </label>
@@ -137,8 +116,8 @@
                         <span class="bi bi-upload me-1" aria-hidden="true"></span>
                         Export
                     </button>
-                </div>
-            </div>
+                </Tab>
+            </TabList>
         </div>
     </div>
 
@@ -343,7 +322,6 @@
 
     private string CssInvalidClass => Import == ImportStage.FileNotValid ? "is-invalid" : "";
     private string CssValidClass => Import == ImportStage.FileValid ? "is-valid" : "";
-    private bool ShowImport { get; set; } = true;
 
     private Config? config = null;
 
