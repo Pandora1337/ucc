@@ -17,4 +17,5 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
 
       - uses: KoblerS/release-drafter@49bc6fe409213d41eaa55e6170faabfa66d49943 #v1.0.0
-        version-prefix: v
+        with:
+          version-prefix: v
