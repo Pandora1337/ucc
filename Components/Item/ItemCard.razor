@@ -1,5 +1,3 @@
-@using System.Threading.Tasks
-
 @inherits ItemBase
 
 @namespace ucc.Components.Item
@@ -23,15 +21,7 @@
                     </span>
                 }
             </h5>
-        
-            @if (ShowItemDate)
-            {
-                <span class="text-wrap text-truncate text-center text-body-secondary fs-6 flex-shrink-1 pt-2"
-                      title="Last Modified">
-                    @Item.DateModified.ToString("hh:mm tt dd/MM/yyyy")
-                </span>
-            }
-            
+
             @ChildContent
         </div>
     </div>
@@ -41,7 +31,6 @@
     [Parameter] public EventCallback<string> OnItemClicked { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public string IconSize { get; set; } = "64px";
-    [Parameter] public bool ShowItemDate { get; set; } = false;
     [Parameter] public string cClass { get; set; } = "";
     [Parameter] public string style { get; set; } = "";
 

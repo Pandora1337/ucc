@@ -9,6 +9,7 @@
 @using ucc.Components.Crafting
 @using ucc.Components.Searchbar
 @using ucc.Components.Tab
+@using ucc.Components.DateRelative
 
 @implements IDisposable
 
@@ -82,8 +83,12 @@
                 @foreach (Item item in filteredItems)
                 {
                     <ItemCard @key="item.Id" Item="item" IconSize="128px" cClass="position-relative"
-                              OnItemClicked="@(async () => await OpenItemAddModal(item))" ShowItemDate="true">
+                              OnItemClicked="@(async () => await OpenItemAddModal(item))">
                         <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(item))" ImgSrc="bi-trash3" />
+
+                        <span class="text-wrap text-truncate text-center text-body-secondary fs-6 flex-shrink-1 pt-2">
+                            <DateRelative dateTime="@item.DateModified" />
+                        </span>
                     </ItemCard>
                 }
             </div>

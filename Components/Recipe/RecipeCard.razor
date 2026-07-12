@@ -1,5 +1,6 @@
 @using ucc.Models
 @using ucc.Components.Item
+@using ucc.Components.DateRelative
 
 @implements IDisposable
 
@@ -68,7 +69,7 @@
         <span class="text-body-secondary">
             <i class="bi bi-calendar-event me-2" aria-hidden="true" />Last Modified:
         </span>
-        <span>@recipe.DateModified.ToString("hh:mm tt, dd/MM/yyyy")</span>
+        <DateRelative dateTime="@recipe.DateModified" />
     </div>
 
     @ChildContent
@@ -90,7 +91,7 @@
         recipe = IS.GetRecipeById(id);
         StateHasChanged();
     }
-    
+
     private void OnClick()
     {
         if (OnRecipeClick.HasDelegate)

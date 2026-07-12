@@ -1,0 +1,70 @@
+@namespace ucc.Components.DateRelative
+
+<span title="@dateTime.ToString("HH:mm dd/MM/yyyy")">
+    @GetRelativeFromDateTime(dateTime)
+</span>
+
+@code {
+    [Parameter] public DateTime dateTime { get; set; }
+
+    private static string GetRelativeFromDateTime(DateTime utcDateTime)
+    {
+        DateTime dt = utcDateTime.Kind == DateTimeKind.Utc ? utcDateTime : utcDateTime.ToUniversalTime();
+        TimeSpan diff = dt - DateTime.UtcNow;
+
+        return GetRelativeSecondsFromNow(diff.TotalSeconds);
+    }
+
+    /// <summary>
+    /// Returns a relative time string out of seconds from now. Negative values means the past
+    /// </summary>
+    /// <param name="seconds"></param>
+    /// <returns></returns>
+    private static string GetRelativeSecondsFromNow(double seconds)
+    {
+        string prefix = seconds > 0 ? "in " : "";
+        string suffix = seconds > 0 ? "" : " ago";
+        seconds = Math.Abs(seconds);
+
+        if (seconds < 5)
+            return "just now";
+
+        if (seconds < 60)
+        {
+            int s = (int)Math.Round(seconds);
+            return $"{prefix}{s} second{(s == 1 ? "" : "s")}{suffix}";
+        }
+
+        double minutes = seconds / 60;
+        if (minutes < 60)
+        {
+            int m = (int)Math.Round(minutes);
+            return $"{prefix}{m} minute{(m == 1 ? "" : "s")}{suffix}";
+        }
+
+        double hours = minutes / 60;
+        if (hours < 24)
+        {
+            int h = (int)Math.Round(hours);
+            return $"{prefix}{h} hour{(h == 1 ? "" : "s")}{suffix}";
+        }
+
+        double days = hours / 24;
+        if (days < 30)
+        {
+            int d = (int)Math.Round(days);
+            return $"{prefix}{d} day{(d == 1 ? "" : "s")}{suffix}";
+        }
+
+        double months = days / 30.44;
+        if (months < 12)
+        {
+            int mo = (int)Math.Round(months);
+            return $"{prefix}{mo} month{(mo == 1 ? "" : "s")}{suffix}";
+        }
+
+        double years = months / 12;
+        int y = (int)Math.Round(years);
+        return $"{prefix}{y} year{(y == 1 ? "" : "s")}{suffix}";
+    }
+}
