@@ -5,8 +5,8 @@
         @foreach (Tab tab in Tabs)
         {
             bool IsActive = tab == ActiveTab;
-            <button class="nav-link @(IsActive ? "active" : "") btn-outline-primar" id="import-tab" type="button" role="tab"
-                    aria-controls="import-pane" aria-selected="@(IsActive)" @onclick="@(() => ActivateTab(tab))">
+            <button class="nav-link @(IsActive ? "active" : "")" aria-selected="@(IsActive)" type="button" role="tab"
+                    id="@tab.TabId" aria-controls="@tab.PanelId" @onclick="@(() => ActivateTab(tab))">
                 @if (!string.IsNullOrEmpty(tab.Icon))
                 {
                     <span class="bi @tab.Icon me-2" aria-hidden="true"></span>

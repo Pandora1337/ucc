@@ -1,7 +1,9 @@
+@implements IDisposable
+
 @namespace ucc.Components.Tab
 
-<div class="tab-pane @(IsActive ? "show active" : "")" id="export-pane" role="tabpanel"
-     aria-labelledby="export-tab" tabindex="0" aria-selected="@(IsActive)">
+<div class="tab-pane @(IsActive ? "show active" : "")" id="@PanelId" role="tabpanel" aria-labelledby="@TabId"
+     tabindex="0" aria-selected="@(IsActive)">
 
     @ChildContent
 </div>
@@ -14,6 +16,8 @@
     [Parameter] public bool Disabled { get; set; } = false;
 
     private bool IsActive => Parent?.ActiveTab == this;
+    public string TabId { get; private set; } = $"tab-{Guid.NewGuid():N}";
+    public string PanelId { get; private set; } = $"panel-{Guid.NewGuid():N}";
 
     protected override void OnInitialized()
     {
