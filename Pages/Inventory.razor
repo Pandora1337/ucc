@@ -190,7 +190,12 @@
 
     private async Task ItemRemove()
     {
-        IS.TryRemoveItem(modalItem.Id);
+        bool resp = await IS.TryRemoveItem(modalItem.Id);
+        if (!resp)
+        {
+            return;
+        }
+
         await IconService.DeleteIcon(modalItem.Id);
 
         modalItem = null!;

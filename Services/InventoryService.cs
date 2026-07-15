@@ -29,11 +29,11 @@ public class InventoryService(IndexedDBManager db)
         }
     }
 
-    public void GenerateStuff()
+    public async void GenerateStuff()
     {
-        TryAddItem("Crafting Table");
-        TryAddItem("Log");
-        TryAddItem("Plank");
+        await TryAddItem("Crafting Table");
+        await TryAddItem("Log");
+        await TryAddItem("Plank");
 
         AddRecipe(new Recipe
         {
@@ -99,7 +99,7 @@ public class InventoryService(IndexedDBManager db)
     public event Action? OnItemListChange;
     public event Action<string>? OnItemUpdate;
 
-    public bool TryAddItem(string name)
+    public async Task<bool> TryAddItem(string name)
     {
         if (name == "")
         {
@@ -107,10 +107,10 @@ public class InventoryService(IndexedDBManager db)
         }
 
         Item newItem = new(name);
-        return TryAddItem(newItem);
+        return await TryAddItem(newItem);
     }
 
-    public bool TryAddItem(Item newItem)
+    public async Task<bool> TryAddItem(Item newItem)
     {
         if (string.IsNullOrEmpty(newItem.Id))
             return false;
@@ -118,7 +118,7 @@ public class InventoryService(IndexedDBManager db)
         bool resp = items.TryAdd(newItem.Id, newItem);
         if (resp)
         {
-            DB.AddRecord(new StoreRecord<Item>()
+            await DB.AddRecord(new StoreRecord<Item>()
             {
                 Storename = IndexedDB.Items,
                 Data = newItem
@@ -133,14 +133,14 @@ public class InventoryService(IndexedDBManager db)
         return resp;
     }
 
-    public bool TryUpdateItem(string id, Item newItem)
+    public async Task<bool> TryUpdateItem(string id, Item newItem)
     {
         if (!items.ContainsKey(id))
             return false;
 
         newItem.DateModified = DateTime.Now;
         items[id] = newItem;
-        DB.UpdateRecord(new StoreRecord<Item>()
+        await DB.UpdateRecord(new StoreRecord<Item>()
         {
             Storename = IndexedDB.Items,
             Data = newItem
@@ -150,12 +150,12 @@ public class InventoryService(IndexedDBManager db)
         return true;
     }
 
-    public bool TryRemoveItem(string itemId)
+    public async Task<bool> TryRemoveItem(string itemId)
     {
         bool resp = items.Remove(itemId);
         if (resp)
         {
-            DB.DeleteRecord<string>(IndexedDB.Items, itemId);
+            await DB.DeleteRecord<string>(IndexedDB.Items, itemId);
             OnItemUpdate?.Invoke(itemId);
             OnItemListChange?.Invoke();
         }

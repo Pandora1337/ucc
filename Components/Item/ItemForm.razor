@@ -192,14 +192,14 @@
                 return;
 
             Item.Id = Item.NameToId(Item.Name);
-            resp = IS.TryAddItem(Item);
+            resp = await IS.TryAddItem(Item);
         }
         else
         {
             if (string.IsNullOrEmpty(Item.Name))
                 return;
 
-            resp = IS.TryUpdateItem(Item.Id, Item);
+            resp = await IS.TryUpdateItem(Item.Id, Item);
         }
 
         if (!resp)
