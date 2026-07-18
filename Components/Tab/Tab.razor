@@ -4,8 +4,10 @@
 
 <div class="tab-pane @(IsActive ? "show active" : "")" id="@PanelId" role="tabpanel" aria-labelledby="@TabId"
      tabindex="0" aria-selected="@(IsActive)">
-
-    @ChildContent
+    @if (IsActive)
+    {
+        @ChildContent
+    }
 </div>
 
 @code {
