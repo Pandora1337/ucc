@@ -7,7 +7,7 @@
 @inject ucc.Services.ThemeService TS;
 
 <div class="dropdown">
-    <button type="button" class="btn dropdown-toggle d-flex align-items-center @cClass"
+    <button type="button" class="btn dropdown-toggle d-flex align-items-center @cClass" @onblur="PanelBlurred"
             aria-expanded="@IsOpen" aria-label="@ariaTheme" title="@ariaTheme" @onclick="Toggle">
         <i class="bi @icon" aria-hidden="true"></i>
     </button>
@@ -15,7 +15,8 @@
     <ul class="dropdown-menu @(IsOpen ? "show" : null)">
         <li>
             <button type="button" class="dropdown-item d-flex align-items-center @(TS.IsLight ? "active" : null)"
-                    @onclick="@(() => ChooseOption(ThemeService.Themes.Light))" aria-pressed="@TS.IsLight">
+                    @onmousedown="@(() => { ChooseOption(ThemeService.Themes.Light); ItemClicked = true; })"
+                    aria-pressed="@TS.IsLight">
                 <i class="bi @IconLight me-2" aria-hidden="true"></i>
                 Light
                 <i class="bi bi-check-lg ms-auto @(TS.IsLight ? "" : "d-none")" aria-hidden="true"></i>
@@ -24,16 +25,18 @@
 
         <li>
             <button type="button" class="dropdown-item d-flex align-items-center @(TS.IsDark ? "active" : null)"
-                    @onclick="@(() => ChooseOption(ThemeService.Themes.Dark))" aria-pressed="@TS.IsDark">
+                    @onmousedown="@(() => { ChooseOption(ThemeService.Themes.Dark); ItemClicked = true; })"
+                    aria-pressed="@TS.IsDark">
                 <i class="bi @IconDark me-2" aria-hidden="true"></i>
                 Dark
                 <i class="bi bi-check-lg ms-auto @(TS.IsDark ? "" : "d-none")" aria-hidden="true"></i>
             </button>
         </li>
-        
+
         <li>
             <button type="button" class="dropdown-item d-flex align-items-center @(TS.IsAuto ? "active" : null)"
-                    @onclick="@(() => ChooseOption(ThemeService.Themes.Auto))" aria-pressed="@TS.IsAuto">
+                    @onmousedown="@(() => { ChooseOption(ThemeService.Themes.Auto); ItemClicked = true; })"
+                    aria-pressed="@TS.IsAuto">
                 <i class="bi @IconAuto me-2" aria-hidden="true"></i>
                 Auto
                 <i class="bi bi-check-lg ms-auto @(TS.IsAuto ? "" : "d-none")" aria-hidden="true"></i>
@@ -91,5 +94,24 @@
                 break;
         }
         StateHasChanged();
+    }
+
+    // Source - https://stackoverflow.com/a/77128003
+    // Posted by mpoust
+    // Retrieved 2026-07-15, License - CC BY-SA 4.0
+
+    private bool ItemClicked { get; set; } = false;
+    private async Task PanelBlurred(FocusEventArgs e)
+    {
+        // Adjust based on use case
+        await Task.Delay(100);
+
+        if (!ItemClicked)
+        {
+            Close();
+        }
+
+        // reset for future clicks
+        ItemClicked = false;
     }
 }
