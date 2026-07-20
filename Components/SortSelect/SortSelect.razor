@@ -1,0 +1,88 @@
+@namespace ucc.Components.SortSelect
+
+@typeparam TValue
+
+@inject ucc.Data.LocalStorage LS;
+
+<div class="input-group input-group-sm me-3">
+    <button class="btn btn-secondary" title="@AscendingText" aria-label="@AscendingText"
+            @onclick="OnAscSet">
+        @if (IsAscending)
+        {
+            <i class="bi bi-sort-up-alt" aria-hidden="true" />
+        }
+        else
+        {
+            <i class="bi bi-sort-down" aria-hidden="true" />
+        }
+    </button>
+
+    <select class="form-select text-bg-secondary border-0" @bind="Value" @bind:after="OnEnumSet">
+        @foreach (var i in Value!.GetType().GetEnumValues())
+        {
+            <option value="@i">@i.ToString()</option>
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    [Parameter] public TValue Value { get; set; } = default!;
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+
+    [Parameter] public bool IsAscending { get; set; }
+    [Parameter] public EventCallback<bool> IsAscendingChanged { get; set; }
+    private string AscendingText => IsAscending ? "Ascending order" : "Descending order";
+
+    private string IdEnum = "";
+    private string IdAsc = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(Id))
+            return;
+
+        IdAsc = Id + "Asc";
+        IdEnum = Id + "Sort";
+        
+        IsAscending = await LS.Get<bool>(IdAsc, IsAscending);
+        await IsAscendingChanged.InvokeAsync(IsAscending);
+
+        Value = await LS.Get<TValue>(IdEnum, Value);
+        await ValueChanged.InvokeAsync(Value);
+        await OnChange();
+    }
+
+    async Task OnAscSet()
+    {
+        IsAscending = !IsAscending;
+        if (!string.IsNullOrEmpty(Id))
+        {
+            await LS.Set(IdAsc, IsAscending);
+        }
+
+        await IsAscendingChanged.InvokeAsync(IsAscending);
+        await OnChange();
+    }
+
+    async Task OnEnumSet()
+    {
+        if (!string.IsNullOrEmpty(Id))
+        {
+            await LS.Set(IdEnum, Value!);
+        }
+
+        await ValueChanged.InvokeAsync(Value);
+        await OnChange();
+    }
+
+    async Task OnChange()
+    {
+        if (OnChanged.HasDelegate)
+        {
+            await OnChanged.InvokeAsync();
+        }
+    }
+}

@@ -10,6 +10,7 @@
 @using ucc.Components.Searchbar
 @using ucc.Components.Tab
 @using ucc.Components.DateRelative
+@using ucc.Components.SortSelect
 
 @implements IDisposable
 
@@ -36,10 +37,16 @@
         <Tab Title="Recipes" Icon="bi-journal-text">
             <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
                 <h2 class="mb-1">Recipes (@filteredRecipes.Count):</h2>
-                <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteRecipeList.OpenAsync())"
-                        title="Delete All Recipes">
-                    <i class="bi bi-trash3" aria-label="Delete All Recipes" />
-                </button>
+
+                <div class="d-flex" style="max-height: 32px;">
+                    <SortSelect Id="inventoryRecipe" @bind-Value="recipeSort" @bind-IsAscending="IsAscendingRecipes"
+                                OnChanged="DoRecipeSort" />
+
+                    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteRecipeList.OpenAsync())"
+                            title="Delete All Recipes">
+                        <i class="bi bi-trash3" aria-label="Delete All Recipes" />
+                    </button>
+                </div>
             </div>
 
             <div class="row g-3">
@@ -69,10 +76,16 @@
         <Tab Title="Items" Icon="bi-gem">
             <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
                 <h2 class="mb-1">Items (@(filteredItems.Count)):</h2>
-                <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteItemList.OpenAsync())"
-                        title="Delete All Items">
-                    <i class="bi bi-trash3" aria-label="Delete All Items" />
-                </button>
+
+                <div class="d-flex" style="max-height: 32px;">
+                    <SortSelect Id="inventoryItem" @bind-Value="itemSort" @bind-IsAscending="IsAscendingItems"
+                                OnChanged="DoItemSort" />
+
+                    <button class="btn btn-sm btn-danger h-100" @onclick="@(() => modalDeleteItemList.OpenAsync())"
+                            title="Delete All Items">
+                        <i class="bi bi-trash3" aria-label="Delete All Items" />
+                    </button>
+                </div>
             </div>
 
             <div class="d-grid justify-content-center g-3 gap-3"
@@ -153,19 +166,72 @@
 
     private Searchbar searchbar = null!;
     private List<Item> filteredItems = [];
-    private HashSet<Recipe> filteredRecipes = [];
+    private List<Recipe> filteredRecipes = [];
     void DoSearch(string search)
     {
         filteredItems = IS.SearchItems(search).ToList();
+        DoItemSort();
 
         filteredRecipes.Clear();
+        HashSet<Guid> guids = [];
         foreach (Item item in filteredItems)
         {
             foreach (Recipe recipe in IS.GetRecipesWithItem(item.Id))
             {
+                if (!guids.Add(recipe.Guid))
+                    continue;
+
                 filteredRecipes.Add(recipe);
             }
         }
+        DoRecipeSort();
+    }
+
+    private bool IsAscendingItems = true;
+    private ItemSort itemSort = ItemSort.Name;
+    private enum ItemSort
+    {
+        Name,
+        Date,
+    }
+
+    private void DoItemSort()
+    {
+        filteredItems = itemSort switch
+        {
+            ItemSort.Name => SortByDirection(filteredItems, x => x.Name, IsAscendingItems),
+            ItemSort.Date => SortByDirection(filteredItems, x => x.DateModified, IsAscendingItems),
+            _ => filteredItems
+        };
+    }
+
+    private bool IsAscendingRecipes = true;
+    private RecipeSort recipeSort = RecipeSort.Date;
+    private enum RecipeSort
+    {
+        Date,
+        Station,
+        BatchSize,
+        CraftingTime,
+    }
+
+    private void DoRecipeSort()
+    {
+        filteredRecipes = recipeSort switch
+        {
+            RecipeSort.Date => SortByDirection(filteredRecipes, x => x.DateModified, IsAscendingRecipes),
+            RecipeSort.Station => SortByDirection(filteredRecipes, x => x.StationId, IsAscendingRecipes),
+            RecipeSort.BatchSize => SortByDirection(filteredRecipes, x => x.BatchSize, IsAscendingRecipes),
+            RecipeSort.CraftingTime => SortByDirection(filteredRecipes, x => x.CraftingTime, IsAscendingRecipes),
+            _ => filteredRecipes
+        };
+    }
+
+    private List<T> SortByDirection<T, TKey>(List<T> source, Func<T, TKey> selector, bool ascending)
+    {
+        return ascending ?
+            source.OrderBy(selector).ToList() :
+            source.OrderByDescending(selector).ToList();
     }
 
     private ModalDelete modalDeleteItemList = null!;
