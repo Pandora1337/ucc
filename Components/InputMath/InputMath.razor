@@ -1,0 +1,68 @@
+@using NCalc;
+
+@namespace ucc.Components.InputMath
+
+<input type="text" id="search-bar" class="form-control border rounded-2 z-0 @(IsValid ? "" : "is-invalid") @Class"
+       @bind="inputText" @onfocusin="ShowToken" @onfocusout="ShowParsed" @onclick:stopPropagation @onkeyup:preventDefault
+       @onkeyup="@(_ => { })" placeholder="Amount" title="Amount of an item. Can be a math expression" />
+
+@code {
+    [Parameter] public string Class { get; set; } = "";
+    [Parameter] public float Value { get; set; } = 0;
+    [Parameter] public EventCallback<float> ValueChanged { get; set; }
+
+    private string inputText = "";
+    private string token = "";
+
+    protected override void OnInitialized()
+    {
+        inputText = Value.ToString();
+        token = inputText;
+    }
+
+    void ShowToken()
+    {
+        inputText = token;
+    }
+
+    void ShowParsed()
+    {
+        if (string.IsNullOrEmpty(inputText))
+            return;
+
+        if (token != inputText)
+        {
+            token = inputText;
+            Value = Evaluate(token);
+            ValueChanged.InvokeAsync(Value);
+        }
+
+        inputText = Value.ToString();
+    }
+
+    private bool IsValid = true;
+    private float Evaluate(string expr)
+    {
+        float result = 0;
+        try
+        {
+            Expression? i = new Expression(expr, ExpressionOptions.ArithmeticNullOrEmptyStringAsZero |
+                ExpressionOptions.AllowNullOrEmptyExpressions | ExpressionOptions.AllowNullParameter);
+
+            i.EvaluateParameter += (name, args) =>
+                {
+                    args.Result = 0;
+                };
+
+            result = Convert.ToSingle(i.Evaluate());
+            IsValid = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"PARSING ERROR [{expr}]: {ex.Message}");
+            IsValid = false;
+        }
+
+        return float.IsNormal(result) ? result : 0;
+    }
+}

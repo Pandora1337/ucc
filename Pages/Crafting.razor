@@ -7,6 +7,7 @@
 @using ucc.Components.Item
 @using ucc.Components.Recipe
 @using ucc.Components.Modal
+@using ucc.Components.InputMath
 @using ucc.Models
 
 @implements IDisposable
@@ -36,13 +37,9 @@
     {
         <ItemCard @key="ing.ItemId" ItemId="@ing.ItemId" IconSize="128px" style="max-width: 128px;"
                   OnItemClicked="@(() => CS.OnItemDeleted(ing))" cClass="position-relative">
-            <InputNumber TValue="float" class="form-control mt-2 border" Value="ing.Amount"
-                         ValueExpression="@(()=> ing.Amount)"
-                         ValueChanged="@(async (float v) => { ing.Amount = v; ValidateCraftAmount(v); await CS.UpdatePlannedCrafts(); })"
-                         min="@float.Epsilon" max="@float.MaxValue" placeholder="Amount" title="Amount of an item"
-                         @onclick:stopPropagation />
             <BtnDelete OnDelete="@(() => OpenAddRecipeModal(ing.ItemId))" ImgSrc="bi-journal-plus" cClass="btn-outline-warning" Title="Create recipe for this item"
                        style="top: 88px;" />
+            <InputMath Class="mt-3" Value="@ing.Amount" ValueChanged="@(async (v) => { ing.Amount = v; ValidateCraftAmount(v); await CS.UpdatePlannedCrafts(); })"/>
         </ItemCard>
     }
 </div>
