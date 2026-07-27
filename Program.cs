@@ -16,6 +16,7 @@ builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<IconService>();
 builder.Services.AddScoped<CraftingService>();
+builder.Services.AddScoped<ModalService>();
 
 var app = builder.Build();
 

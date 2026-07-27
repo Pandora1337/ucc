@@ -2,12 +2,14 @@
 
 @namespace ucc.Components.Modal
 
+@inject ucc.Services.ModalService MS;
+
 @if (isVisible)
 {
     <div class="modal modal-overlay" @onclick="OnBgClick" tabindex="-1">
         <div class="modal-container bg-body rounded-3 @(CanScroll ? "overflow-auto" : "")" tabindex="0"
              @onkeydown="HandleKeyDown" @onkeydown:stopPropagation @onclick:stopPropagation @ref="reference">
-            
+
             @if (IsTitleEnabled)
             {
                 <div class="modal-header">
@@ -55,6 +57,7 @@
         }
 
         isVisible = true;
+        MS.AddModal();
         if (OnOpen.HasDelegate)
         {
             await OnOpen.InvokeAsync();
@@ -67,6 +70,7 @@
             return;
 
         isVisible = false;
+        MS.RemoveModal();
         if (OnClose.HasDelegate)
         {
             await OnClose.InvokeAsync();
