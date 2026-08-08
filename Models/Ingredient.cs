@@ -12,4 +12,10 @@ public class Ingredient(
     {
         return new(this.ItemId, this.Amount);
     }
+
+    internal void Deconstruct(out string itemId, out float amount)
+    {
+        itemId = this.ItemId;
+        amount = this.Amount;
+    }
 }

@@ -42,6 +42,17 @@
         <Accordion cClass="mt-3" style="min-width: 330px;">
             <AccordionItem Icon="bi-gear-fill" Title="Options">
                 <div class="row g-3">
+                    <div class="col-sm-6 col-lg-4" title="Name of the recipe (Optional)">
+                        <label class="form-label">
+                            <i class="bi bi-tag-fill me-2" aria-hidden="true" />Recipe Name:
+                        </label>
+
+                        <InputText class="form-control" @bind-Value="@recipe.Name" placeholder="Recipe Name"
+                                   title="Choose recipe name" aria-label="Recipe name input field" aria-required="false" />
+
+                        <ValidationMessage For="@(() => recipe.Name)" />
+                    </div>
+
                     <div class="col-sm-6 col-lg-4" title="Where the product is made in">
                         <label class="form-label">
                             <i class="bi bi-tools me-2" aria-hidden="true" />Crafting Station:

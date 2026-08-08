@@ -8,6 +8,10 @@ public partial class Recipe : IValidatableObject
     public List<Ingredient> Products { get; set; } = [];
 
     public List<Ingredient> Ingredients { get; set; } = [];
+
+    [StringLength(200, ErrorMessage = "Name is too long!")]
+    public string Name { get; set; } = string.Empty;
+
     public string StationId { get; set; } = string.Empty;
 
     [Range(1, int.MaxValue)]
@@ -31,6 +35,7 @@ public partial class Recipe : IValidatableObject
         {
             Products = this.Products.Select(x => x.Copy()).ToList(),
             Ingredients = this.Ingredients.Select(x => x.Copy()).ToList(),
+            Name = this.Name,
             StationId = this.StationId,
             BatchSize = this.BatchSize,
             CraftingTime = this.CraftingTime,

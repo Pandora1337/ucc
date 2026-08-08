@@ -34,6 +34,13 @@
         </span>
     }
 
+    @if (!string.IsNullOrEmpty(Recipe.Name))
+    {
+        <span class="text-center text-truncate fw-bold card-title" title="@Recipe.Name">
+            @Recipe.Name
+        </span>
+    }
+
     <div class="d-flex flex-wrap gap-1 justify-content-center">
         @for (int i = 0; i < Recipe.Ingredients.Count; i++)
         {
