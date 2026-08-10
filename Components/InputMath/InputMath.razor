@@ -11,13 +11,28 @@
     [Parameter] public float Value { get; set; } = 0;
     [Parameter] public EventCallback<float> ValueChanged { get; set; }
 
+    /// <summary>
+    /// Currently shown text
+    /// </summary>
     private string inputText = "";
     private string token = "";
+    private float _value;
 
     protected override void OnInitialized()
     {
+        _value = Value;
         inputText = Value.ToString();
         token = inputText;
+    }
+
+    protected override void OnParametersSet()
+    {
+        float diff = Value - _value;
+        if (diff == 0) return;
+
+        _value = Value;
+        inputText = Value.ToString();
+        token += (diff > 0 ? "+" : "") + diff.ToString();
     }
 
     void ShowToken()
@@ -35,6 +50,7 @@
             token = inputText;
             Value = Evaluate(token);
             ValueChanged.InvokeAsync(Value);
+            _value = Value;
         }
 
         inputText = Value.ToString();
