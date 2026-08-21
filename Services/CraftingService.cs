@@ -1,5 +1,6 @@
 using ucc.Data;
 using ucc.Models;
+using ucc.Solver;
 
 namespace ucc.Services;
 
@@ -52,120 +53,160 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         await UpdatePlannedCrafts();
     }
 
-    public async Task DoListCrafting()
+    #region Craft
+    public async Task Craft()
     {
-        Dictionary<Recipe, int> recipeGuide = [];
-        Dictionary<string, Recipe> selectedRecipes = [];
-
-        Dictionary<string, float> totalIngs = [];
-        Dictionary<string, float> itemDeltas = [];
-        HashSet<string> deadEndItems = [];
+        var graph = new Graph();
+        var recipesList = new HashSet<Recipe>();
 
         Dictionary<string, float> targetDict = CollapseList(PlannedCrafts);
-        foreach (KeyValuePair<string, float> item in targetDict)
+        foreach ((string itemId, float amount) in targetDict)
         {
-            await Recurse(item.Key, item.Value, []);
+            ExploreItem(itemId);
         }
 
-        CraftingData craftingData = new();
-        foreach ((Recipe recipe, int ops) in recipeGuide)
+        void ExploreItem(string itemId, Guid? parentRecipe = null)
         {
-            craftingData.CraftingTime += recipe.GetTotalCraftingTime(ops);
-            craftingData.RecipeGuide.Add(recipe.Guid, ops);
+            var recipes = IS.GetRecipesByResultId(itemId);
+            foreach (Recipe recipe in recipes)
+            {
+                if (graph.AddNode(recipe.Guid, parentRecipe))
+                    continue;
+
+                recipesList.Add(recipe);
+                foreach ((string ingId, float ingAmount) in CollapseList(recipe.Ingredients))
+                {
+                    ExploreItem(ingId, recipe.Guid);
+                }
+            }
         }
 
-        // Console.WriteLine("totalIngs:");
-        // IS.SerialiseToJSON(totalIngs);
+        Dictionary<string, float> costs = new()
+        {
+            { "crude-oil", 1000},
+            // { "plank", 2000},
+            // { "water", 100},
+        };
+
+        var solution = Simplex.Solve(recipesList.ToList(), targetDict, costs);
+        var cd = new CraftingData();
+
+        // cumulative amount of ingredients used
+        var ingCumulative = new Dictionary<string, float>();
+
+        // overall change in item amounts
+        var itemDeltas = new Dictionary<string, float>();
+
+        // Console.WriteLine("Solution:");
+        foreach (List<Guid> scc in graph.GetSCCs())
+        {
+            foreach (Guid guid in scc)
+            {
+                if (!solution.TryGetValue(guid, out float num))
+                    continue;
+
+                ApplyRecipeDeltas(guid, num, cd, itemDeltas, ingCumulative);
+            }
+        }
+
+        // Console.WriteLine("ingCumulative:");
+        // InventoryService.SerialiseToJSON(ingCumulative);
 
         // Console.WriteLine("deltas:");
-        // IS.SerialiseToJSON(itemDeltas);
+        // InventoryService.SerialiseToJSON(itemDeltas);
 
-        SortItemCategories();
-        await SetCraftingData(craftingData);
+        (cd.ItemsProd, cd.ItemsInt, cd.ItemsRaw) = SortItemCategories(itemDeltas, ingCumulative);
+        await SetCraftingData(cd);
+    }
+    #endregion
 
-        async Task Recurse(string itemId, float amount, HashSet<string> visited)
+    #region Recipe Deltas
+    private void ApplyRecipeDeltas(Guid guid, float num, CraftingData cd, Dictionary<string, float> itemDeltas, Dictionary<string, float> ingCumulative)
+    {
+        var recipe = IS.GetRecipeById(guid);
+
+        int ops = (int)Math.Ceiling(num);
+        cd.RecipeGuideList.Add(new(guid, ops));
+        cd.CraftingTime += recipe.GetTotalCraftingTime(ops);
+
+        // Console.WriteLine($"    {guid.ToString().Split("-")[0]}: {float.Round(num, 3)} ({ops})");
+
+        foreach ((string prodId, float prodAmount) in recipe.Products)
         {
-            if (deadEndItems.Contains(itemId))
-                return;
-
-            if (!visited.Add(itemId))
-            {
-                deadEndItems.Add(itemId);
-                return;
-            }
-
-            if (!selectedRecipes.TryGetValue(itemId, out Recipe? recipe))
-            {
-                List<Recipe> recipes = IS.GetRecipesByResultId(itemId).ToList();
-                if (recipes.Count == 0)
-                {
-                    deadEndItems.Add(itemId);
-                    return;
-                }
-
-                if (recipes.Count == 1)
-                {
-                    recipe = recipes[0];
-                }
-                else
-                {
-                    recipe = await RequestUserResolve(itemId, recipes);
-                    // TODO optional add to selectedRecipes?
-                }
-
-                selectedRecipes.Add(itemId, recipe);
-            }
-
-            Dictionary<string, float> totalProd = CollapseList(recipe.Products);
-
-            int ops = (int)Math.Ceiling(amount / totalProd[itemId]);
-            recipeGuide[recipe] = recipeGuide.GetValueOrDefault(recipe, 0) + ops;
-            itemDeltas[itemId] = itemDeltas.GetValueOrDefault(itemId, 0) + (ops * totalProd[itemId]);
-
-            Dictionary<string, float> totalIng = CollapseList(recipe.Ingredients);
-            foreach ((string ingId, float ingAmount) in totalIng)
-            {
-                float ingNeed = ingAmount * ops;
-                totalIngs[ingId] = totalIngs.GetValueOrDefault(ingId, 0) + ingNeed;
-
-                float ingDelta = itemDeltas.GetValueOrDefault(ingId, 0) - ingNeed;
-                itemDeltas[ingId] = ingDelta;
-                if (ingDelta < 0)
-                {
-                    await Recurse(ingId, ingNeed, visited);
-                }
-            }
-
-            visited.Remove(itemId);
+            float prodMade = prodAmount * num; // ops;
+            itemDeltas[prodId] = itemDeltas.GetValueOrDefault(prodId, 0) + prodMade;
         }
 
-        void SortItemCategories()
+        foreach ((string ingId, float ingAmount) in recipe.Ingredients)
         {
-            foreach ((string itemId, float amount) in itemDeltas)
-            {
-                switch (amount)
-                {
-                    case > 0:
-                        if (!targetDict.ContainsKey(itemId))
-                        {
-                            craftingData.ItemsInt.Add(itemId, totalIngs[itemId]);
-                        }
-
-                        craftingData.ItemsProd.Add(itemId, amount);
-                        continue;
-
-                    case 0:
-                        craftingData.ItemsInt.Add(itemId, totalIngs[itemId]);
-                        continue;
-
-                    case < 0:
-                        craftingData.ItemsRaw.Add(itemId, amount * -1);
-                        continue;
-
-                }
-            }
+            float ingNeed = ingAmount * num; // ops;
+            ingCumulative[ingId] = ingCumulative.GetValueOrDefault(ingId, 0) + ingNeed;
+            itemDeltas[ingId] = itemDeltas.GetValueOrDefault(ingId, 0) - ingNeed;
         }
     }
+    #endregion
+
+    #region Sort
+    static (Dictionary<string, float>,
+            Dictionary<string, float>,
+            Dictionary<string, float>) SortItemCategories(Dictionary<string, float> itemDeltas, Dictionary<string, float> ingCumulative)
+    {
+        var prods = new Dictionary<string, float>();
+        var inter = new Dictionary<string, float>();
+        var raws = new Dictionary<string, float>();
+
+        foreach ((string itemId, float amount) in itemDeltas)
+        {
+            switch (amount)
+            {
+                // Made more than needed - product
+                case > 0:
+                    // some part of product that is used as intermediate resource
+                    if (ingCumulative.TryGetValue(itemId, out float need))
+                    {
+                        inter.Add(itemId, need);
+                    }
+
+                    if (WithinError(amount))
+                        continue;
+
+                    prods.Add(itemId, amount);
+                    continue;
+
+                // Made just enough - intermediate resource
+                case 0:
+                    inter.Add(itemId, ingCumulative[itemId]);
+                    continue;
+
+                // Didnt make enough - raw resource
+                case < 0:
+                    // some part of raw that is used as intermediate resource
+                    // this really shouldnt be happening as all inters should've 
+                    // been satisfied
+                    // FIXME
+                    if (ingCumulative.TryGetValue(itemId, out float has))
+                    {
+                        if (has != -amount)
+                            inter.Add(itemId, has);
+                    }
+
+                    if (WithinError(amount))
+                        continue;
+
+                    raws.Add(itemId, -amount);
+                    continue;
+            }
+        }
+
+        static bool WithinError(float num)
+        {
+            float epsilon = 1e-5f;
+            return float.Abs(num) < epsilon;
+        }
+
+        return (prods, inter, raws);
+    }
+    #endregion
 
     public static Dictionary<string, float> CollapseList(List<Ingredient> ingredients)
     {

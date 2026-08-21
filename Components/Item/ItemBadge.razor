@@ -16,7 +16,9 @@
 
         @if (Amount != null)
         {
-            <span class="text-xs fw-medium"> (@(Amount)x)</span>
+            <span class="text-xs fw-medium" title="@Amount">
+                (@(float.Round(Amount.Value, 1))x)
+            </span>
         }
 
         @if (Item.IsUnknown == true)

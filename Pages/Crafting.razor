@@ -37,9 +37,10 @@
     {
         <ItemCard @key="ing.ItemId" ItemId="@ing.ItemId" IconSize="128px" style="max-width: 128px;"
                   OnItemClicked="@(() => CS.OnItemDeleted(ing))" cClass="position-relative">
-            <BtnDelete OnDelete="@(() => OpenAddRecipeModal(ing.ItemId))" ImgSrc="bi-journal-plus" cClass="btn-outline-warning" Title="Create recipe for this item"
-                       style="top: 88px;" />
-            <InputMath Class="mt-3" Value="@ing.Amount" ValueChanged="@(async (v) => { ing.Amount = v; ValidateCraftAmount(v); await CS.UpdatePlannedCrafts(); })"/>
+            <BtnDelete OnDelete="@(() => OpenAddRecipeModal(ing.ItemId))" ImgSrc="bi-journal-plus"
+                       cClass="btn-outline-warning" Title="Create recipe for this item" style="top: 88px;" />
+            <InputMath Class="mt-3" Value="@ing.Amount"
+                       ValueChanged="@(async (v) => { ing.Amount = v; ValidateCraftAmount(v); await CS.UpdatePlannedCrafts(); })" />
         </ItemCard>
     }
 </div>
@@ -142,18 +143,18 @@
     }
 
     <div class="row">
-        @for (int i = 0; i < cd.RecipeGuide.Count(); i++)
+        @for (int i = 0; i < cd.RecipeGuideList.Count(); i++)
         {
-            (Guid guid, int ops) = cd.RecipeGuide.Reverse().ElementAt(i);
+            (Guid guid, float ops) = cd.RecipeGuideList.ElementAt(i);
             Recipe recipe = IS.GetRecipeById(guid);
 
             <div @key="@guid" class="col-12 
-                @(IsGridView && cd.RecipeGuide.Count() > 1 ? "col-lg-6" : "")
-                @(IsGridView && cd.RecipeGuide.Count() > 2 ? "col-xxl-4" : "")">
+                @(IsGridView && cd.RecipeGuideList.Count() > 1 ? "col-lg-6" : "")
+                @(IsGridView && cd.RecipeGuideList.Count() > 2 ? "col-xxl-4" : "")">
 
                 @if (recipe != null)
                 {
-                    <CraftingStep Recipe="recipe" Operations="ops" OrderNum="i + 1" cClass="mb-3"
+                    <CraftingStep Recipe="recipe" Operations="(int)ops" OrderNum="i + 1" cClass="mb-3"
                                   IsInvalid="@(!recipe.IsOutdated(cd.DateCrafted))" />
                 }
                 else
@@ -277,7 +278,7 @@
         }
 
         IsCrafting = true;
-        await CS.DoListCrafting();
+        await CS.Craft();
         IsCrafting = false;
     }
 
