@@ -245,21 +245,18 @@
 
     private async Task AddRecipe()
     {
+        bool resp = false;
         if (recipe.Guid == Guid.Empty)
         {
-            IS.AddRecipe(recipe);
+            recipe.Guid = Guid.NewGuid();
+            resp = await IS.TryAddRecipe(recipe);
         }
         else
         {
-            IS.TryUpdateRecipe(recipe.Guid, recipe);
+            resp = await IS.TryUpdateRecipe(recipe.Guid, recipe);
         }
 
-        await RecipeAdded();
-    }
-
-    private async Task RecipeAdded()
-    {
-        if (OnRecipeAdd.HasDelegate)
+        if (resp && OnRecipeAdd.HasDelegate)
         {
             await OnRecipeAdd.InvokeAsync();
         }

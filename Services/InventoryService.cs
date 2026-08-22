@@ -35,7 +35,7 @@ public class InventoryService(IndexedDBManager db)
         await TryAddItem("Log");
         await TryAddItem("Plank");
 
-        AddRecipe(new Recipe
+        await TryAddRecipe(new Recipe
         {
             Products = [
               new("plank", 2),
@@ -47,7 +47,7 @@ public class InventoryService(IndexedDBManager db)
             BatchSize = 16,
         });
 
-        AddRecipe(new Recipe
+        await TryAddRecipe(new Recipe
         {
             Products = [
               new("crafting-table", 1),
@@ -115,22 +115,21 @@ public class InventoryService(IndexedDBManager db)
         if (string.IsNullOrEmpty(newItem.Id))
             return false;
 
-        bool resp = items.TryAdd(newItem.Id, newItem);
-        if (resp)
-        {
-            await DB.AddRecord(new StoreRecord<Item>()
-            {
-                Storename = IndexedDB.Items,
-                Data = newItem
-            });
+        if (!items.TryAdd(newItem.Id, newItem))
+            return false;
 
-            OnItemListChange?.Invoke();
-            OnItemUpdate?.Invoke(newItem.Id);
-        }
+        await DB.AddRecord(new StoreRecord<Item>()
+        {
+            Storename = IndexedDB.Items,
+            Data = newItem
+        });
+
+        OnItemListChange?.Invoke();
+        OnItemUpdate?.Invoke(newItem.Id);
 
         // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW ITEM: {newItem.Name} ID: {newItem.Id}");
 
-        return resp;
+        return true;
     }
 
     public async Task<bool> TryUpdateItem(string id, Item newItem)
@@ -197,18 +196,11 @@ public class InventoryService(IndexedDBManager db)
 
     public async Task SetItems(Dictionary<string, Item> newItems)
     {
-        await DB.ClearStore(IndexedDB.Items);
+        await ClearAllItems();
         foreach ((string id, Item item) in newItems)
         {
-            await DB.AddRecord<Item>(new()
-            {
-                Storename = IndexedDB.Items,
-                Data = item
-            });
+            await TryAddItem(item);
         }
-
-        items = newItems;
-        OnItemListChange?.Invoke();
     }
 
     public IEnumerable<Item> SearchItems(string search)
@@ -236,11 +228,15 @@ public class InventoryService(IndexedDBManager db)
     public event Action? OnRecipeListChange;
     public event Action<Guid>? OnRecipeUpdate;
 
-    public void AddRecipe(Recipe recipe)
+    public async Task<bool> TryAddRecipe(Recipe recipe)
     {
-        recipe.Guid = Guid.NewGuid();
-        recipes.Add(recipe.Guid, recipe);
-        DB.AddRecord(new StoreRecord<Recipe>()
+        if (recipe.Guid == Guid.Empty)
+            return false;
+
+        if (!recipes.TryAdd(recipe.Guid, recipe))
+            return false;
+
+        await DB.AddRecord(new StoreRecord<Recipe>()
         {
             Storename = IndexedDB.Recipes,
             Data = recipe
@@ -250,16 +246,19 @@ public class InventoryService(IndexedDBManager db)
         // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW Recipe for: {recipe.ResultId} ID: {2}");
 
         OnRecipeListChange?.Invoke();
+        OnRecipeUpdate?.Invoke(recipe.Guid);
+
+        return true;
     }
 
-    public bool TryUpdateRecipe(Guid guid, Recipe recipe)
+    public async Task<bool> TryUpdateRecipe(Guid guid, Recipe recipe)
     {
         if (!recipes.ContainsKey(guid))
             return false;
 
         recipe.DateModified = DateTime.Now;
         recipes[guid] = recipe;
-        DB.UpdateRecord(new StoreRecord<Recipe>()
+        await DB.UpdateRecord(new StoreRecord<Recipe>()
         {
             Storename = IndexedDB.Recipes,
             Data = recipe
@@ -286,6 +285,7 @@ public class InventoryService(IndexedDBManager db)
 
     public async Task ClearAllRecipes()
     {
+        itemToRecipes.Clear();
         recipes.Clear();
         await DB.ClearStore(IndexedDB.Recipes);
         OnRecipeListChange?.Invoke();
@@ -325,18 +325,11 @@ public class InventoryService(IndexedDBManager db)
 
     public async Task SetRecipes(Dictionary<Guid, Recipe> newRecipes)
     {
-        await DB.ClearStore(IndexedDB.Recipes);
+        await ClearAllRecipes();
         foreach ((Guid id, Recipe recipe) in newRecipes)
         {
-            await DB.AddRecord<Recipe>(new()
-            {
-                Storename = IndexedDB.Recipes,
-                Data = recipe
-            });
+            await TryAddRecipe(recipe);
         }
-
-        recipes = newRecipes;
-        OnRecipeListChange?.Invoke();
     }
 
     public Dictionary<Guid, Recipe> GetRecipes()
