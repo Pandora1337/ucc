@@ -1,0 +1,33 @@
+@using ucc.Models
+
+@implements IDisposable
+
+@namespace ucc.Components.Recipe
+
+@inject ucc.Services.InventoryService IS
+
+@code {
+    [Parameter] public Recipe Recipe { get; set; } = null!;
+    [Parameter] public Guid RecipeId { get; set; } = Guid.Empty;
+
+    protected override void OnInitialized()
+    {
+        IS.OnRecipeUpdate += OnRecipeUpdated;
+
+        if (RecipeId != Guid.Empty && (Recipe == null || Recipe.Guid != RecipeId))
+        {
+            Recipe = IS.GetRecipeById(RecipeId);
+        }
+    }
+
+    public void Dispose() => IS.OnRecipeUpdate -= OnRecipeUpdated;
+
+    private void OnRecipeUpdated(Guid id)
+    {
+        if (id != Recipe.Guid)
+            return;
+
+        Recipe = IS.GetRecipeById(id);
+        StateHasChanged();
+    }
+}

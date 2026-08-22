@@ -2,7 +2,7 @@
 @using ucc.Components.Item
 @using ucc.Components.DateRelative
 
-@implements IDisposable
+@inherits RecipeBase
 
 @namespace ucc.Components.Recipe
 
@@ -11,23 +11,23 @@
 <div class="card delete-target recipe-card bg-body-tertiary shadow">
     <div class="d-flex bg-body-secondary rounded-top-2 py-2 px-3 align-items-center"
          style="padding-right: 80px !important; height: 48px;">
-        <div class="w-100 m-0 h6 text-center text-truncate fw-bold" title="@recipe.Name">
-            @recipe.Name
+        <div class="w-100 m-0 h6 text-center text-truncate fw-bold" title="@Recipe.Name">
+            @Recipe.Name
         </div>
     </div>
 
     <div class="d-flex flex-column p-3">
         <div>
             <RecipeIngredient cClass="border-0 bg-body-tertiary" style="padding: 0 !important;"
-                              ItemId="@recipe.Products[0].ItemId" Quantity="@recipe.Products[0].Amount" DisableInput=true
+                              ItemId="@Recipe.Products[0].ItemId" Quantity="@Recipe.Products[0].Amount" DisableInput=true
                               OnIconClicked="@(() => OnClick())" />
 
-            @if (recipe.Products.Count > 1)
+            @if (Recipe.Products.Count > 1)
             {
                 <div class="d-flex flex-wrap gap-1 mt-2">
-                    @for (int i = 1; i < recipe.Products.Count; i++)
+                    @for (int i = 1; i < Recipe.Products.Count; i++)
                     {
-                        (string itemId, float amount) = recipe.Products[i];
+                        (string itemId, float amount) = Recipe.Products[i];
                         <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
                     }
                 </div>
@@ -36,40 +36,40 @@
 
         <span class="mt-3">Ingredients:</span>
         <div class="d-flex flex-wrap gap-1 mt-1 mb-3">
-            @for (int i = 0; i < recipe.Ingredients.Count; i++)
+            @for (int i = 0; i < Recipe.Ingredients.Count; i++)
             {
-                (string itemId, float amount) = recipe.Ingredients[i];
+                (string itemId, float amount) = Recipe.Ingredients[i];
                 <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
             }
         </div>
 
-        @if (recipe.CraftingTime > 0)
+        @if (Recipe.CraftingTime > 0)
         {
             <div class="d-flex justify-content-between mb-2">
                 <span class="text-body-secondary">
                     <i class="bi bi-clock me-2" aria-hidden="true" />Time to craft:
                 </span>
-                <span>@(recipe.CraftingTime + "s")</span>
+                <span>@(Recipe.CraftingTime + "s")</span>
             </div>
         }
 
-        @if (recipe.BatchSize > 0)
+        @if (Recipe.BatchSize > 0)
         {
             <div class="d-flex justify-content-between mb-2">
                 <span class="text-body-secondary">
                     <i class="bi bi-stack me-2" aria-hidden="true" />Crafts per batch:
                 </span>
-                <span>@recipe.BatchSize</span>
+                <span>@Recipe.BatchSize</span>
             </div>
         }
 
-        @if (!string.IsNullOrEmpty(recipe.StationId))
+        @if (!string.IsNullOrEmpty(Recipe.StationId))
         {
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="text-body-secondary">
                     <i class="bi bi-tools me-2" aria-hidden="true" />Crafted in:
                 </span>
-                <ItemBadge ItemId="@recipe.StationId" style="max-width: 50%;" />
+                <ItemBadge ItemId="@Recipe.StationId" style="max-width: 50%;" />
             </div>
         }
 
@@ -77,7 +77,7 @@
             <span class="text-body-secondary">
                 <i class="bi bi-calendar-event me-2" aria-hidden="true" />Last Modified:
             </span>
-            <DateRelative dateTime="@recipe.DateModified" />
+            <DateRelative dateTime="@Recipe.DateModified" />
         </div>
 
         @ChildContent
@@ -85,27 +85,14 @@
 </div>
 
 @code {
-    [Parameter] public Recipe recipe { get; set; } = null!;
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback<Recipe> OnRecipeClick { get; set; }
-
-    protected override void OnInitialized() => IS.OnRecipeUpdate += OnRecipeUpdated;
-    public void Dispose() => IS.OnRecipeUpdate -= OnRecipeUpdated;
-
-    private void OnRecipeUpdated(Guid id)
-    {
-        if (id != recipe.Guid)
-            return;
-
-        recipe = IS.GetRecipeById(id);
-        StateHasChanged();
-    }
 
     private void OnClick()
     {
         if (OnRecipeClick.HasDelegate)
         {
-            OnRecipeClick.InvokeAsync(recipe);
+            OnRecipeClick.InvokeAsync(Recipe);
         }
     }
 }
