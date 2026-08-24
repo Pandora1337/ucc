@@ -1,3 +1,5 @@
+@using ucc.Components.DateRelative
+
 @inherits ItemBase
 
 @namespace ucc.Components.Item
@@ -22,6 +24,13 @@
                 }
             </h5>
 
+            @if (EnableDate)
+            {
+                <span class="text-wrap text-truncate text-center text-body-secondary fs-6 flex-shrink-1 pt-2">
+                    <DateRelative dateTime="@Item.DateModified" />
+                </span>
+            }
+
             @ChildContent
         </div>
     </div>
@@ -33,6 +42,7 @@
     [Parameter] public string IconSize { get; set; } = "64px";
     [Parameter] public string cClass { get; set; } = "";
     [Parameter] public string style { get; set; } = "";
+    [Parameter] public bool EnableDate { get; set; } = false;
 
     private async Task ItemClicked()
     {

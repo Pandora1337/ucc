@@ -203,6 +203,12 @@ public class InventoryService(IndexedDBManager db)
         }
     }
 
+    #region Search
+    public IEnumerable<string> SearchItemIds(string search)
+    {
+        return SearchItems(search).Select(x => x.Id);
+    }
+
     public IEnumerable<Item> SearchItems(string search)
     {
         IEnumerable<Item> itemObjs = items.Values;
@@ -213,16 +219,41 @@ public class InventoryService(IndexedDBManager db)
             StringComparison.OrdinalIgnoreCase)
         );
     }
+    #endregion
 
     public Dictionary<string, Item> GetItems()
     {
         return items;
     }
 
+    #region Sort
+    public enum ItemSort
+    {
+        Name,
+        Date,
+    }
+
+    public IEnumerable<string> DoItemIdSort(IEnumerable<string> toFilter, ItemSort itemSort, bool IsAscending = true)
+    {
+        IEnumerable<Item> items = toFilter.Select(GetItem);
+        return DoItemIdSort(items, itemSort, IsAscending);
+    }
+
+    public IEnumerable<string> DoItemIdSort(IEnumerable<Item> toFilter, ItemSort itemSort, bool IsAscending = true)
+    {
+        IEnumerable<Item> filteredItems = itemSort switch
+        {
+            ItemSort.Name => SortByDirection(toFilter, x => x.Name, IsAscending),
+            ItemSort.Date => SortByDirection(toFilter, x => x.DateModified, IsAscending),
+            _ => toFilter
+        };
+
+        return filteredItems.Select(x => x.Id);
+    }
+    #endregion
     #endregion
 
     #region Recipes
-
     private Dictionary<Guid, Recipe> recipes = [];
 
     public event Action? OnRecipeListChange;
@@ -296,31 +327,40 @@ public class InventoryService(IndexedDBManager db)
         return recipes.GetValueOrDefault(guid)!;
     }
 
+    #region Get/Set
+    public IEnumerable<Guid> GetRecipesWithItems(IEnumerable<string> items)
+    {
+        var guids = new HashSet<Guid>();
+        foreach (string item in items)
+        {
+            foreach (Recipe recipe in GetRecipesWithItem(item))
+            {
+                if (guids.Add(recipe.Guid))
+                    yield return recipe.Guid;
+            }
+        }
+    }
+
     public IEnumerable<Recipe> GetRecipesWithItem(string itemId)
     {
-        List<Recipe> list = [];
         if (!itemToRecipes.TryGetValue(itemId, out HashSet<Guid>? guids))
-            return list;
+            yield break;
 
         foreach (Guid guid in guids)
         {
-            list.Add(GetRecipeById(guid));
+            yield return GetRecipeById(guid);
         }
-
-        return list;
     }
 
     public IEnumerable<Recipe> GetRecipesByResultId(string resultId)
     {
-        HashSet<Recipe> list = [];
         foreach (Recipe recipe in GetRecipesWithItem(resultId))
         {
             if (recipe.ContainsProductId(resultId))
             {
-                list.Add(recipe);
+                yield return recipe;
             }
         }
-        return list;
     }
 
     public async Task SetRecipes(Dictionary<Guid, Recipe> newRecipes)
@@ -336,7 +376,39 @@ public class InventoryService(IndexedDBManager db)
     {
         return recipes;
     }
+    #endregion
 
+    #region Sort
+    public enum RecipeSort
+    {
+        Name,
+        Date,
+        Station,
+        BatchSize,
+        CraftingTime,
+    }
+
+    public IEnumerable<Guid> DoRecipeIdSort(IEnumerable<Guid> toFilter, RecipeSort recipeSort, bool IsAscending = true)
+    {
+        IEnumerable<Recipe> recipes = toFilter.Select(GetRecipeById);
+        return DoRecipeIdSort(recipes, recipeSort, IsAscending);
+    }
+
+    public IEnumerable<Guid> DoRecipeIdSort(IEnumerable<Recipe> toFilter, RecipeSort recipeSort, bool IsAscending = true)
+    {
+        IEnumerable<Recipe> filteredRecipes = recipeSort switch
+        {
+            RecipeSort.Name => SortByDirection(toFilter, x => x.Name, IsAscending),
+            RecipeSort.Date => SortByDirection(toFilter, x => x.DateModified, IsAscending),
+            RecipeSort.Station => SortByDirection(toFilter, x => x.StationId, IsAscending),
+            RecipeSort.BatchSize => SortByDirection(toFilter, x => x.BatchSize, IsAscending),
+            RecipeSort.CraftingTime => SortByDirection(toFilter, x => x.CraftingTime, IsAscending),
+            _ => toFilter
+        };
+
+        return filteredRecipes.Select(x => x.Guid);
+    }
+    #endregion
     #endregion
 
     public async Task ClearDB()
@@ -346,6 +418,11 @@ public class InventoryService(IndexedDBManager db)
         items.Clear();
         OnItemListChange?.Invoke();
         OnRecipeListChange?.Invoke();
+    }
+
+    private static IOrderedEnumerable<T> SortByDirection<T, TKey>(IEnumerable<T> source, Func<T, TKey> selector, bool ascending)
+    {
+        return ascending ? source.OrderBy(selector) : source.OrderByDescending(selector);
     }
 
     public void SerialiseToJSON(object data)

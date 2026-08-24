@@ -9,7 +9,6 @@
 @using ucc.Components.Crafting
 @using ucc.Components.Searchbar
 @using ucc.Components.Tab
-@using ucc.Components.DateRelative
 @using ucc.Components.SortSelect
 
 @implements IDisposable
@@ -55,10 +54,10 @@
                             OnClicked="@(async () => await OpenRecipeAddModal())" />
                 </div>
 
-                @foreach (Recipe recipe in filteredRecipes)
+                @foreach (Guid recipe in filteredRecipes)
                 {
-                    <div @key="recipe.Guid" class="col-12 col-md-6 col-xxl-4">
-                        <RecipeCard recipe="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))">
+                    <div @key="recipe" class="col-12 col-md-6 col-xxl-4">
+                        <RecipeCard RecipeId="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))">
                             <BtnDelete OnDelete="@(async () => await OpenRecipeAddModal(recipe))" style="right: 48px;"
                                        cClass="btn-primary" ImgSrc="bi-pencil-square" Title="Edit" />
 
@@ -90,15 +89,11 @@
                 <BtnAdd style="width: 128px; min-height: 200px; height: 100%;"
                         OnClicked="@(async () => await OpenItemAddModal())" />
 
-                @foreach (Item item in filteredItems)
+                @foreach (string itemId in filteredItems)
                 {
-                    <ItemCard @key="item.Id" Item="item" IconSize="128px" cClass="position-relative"
-                              OnItemClicked="@(async () => await OpenItemAddModal(item))">
-                        <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(item))" ImgSrc="bi-trash3" />
-
-                        <span class="text-wrap text-truncate text-center text-body-secondary fs-6 flex-shrink-1 pt-2">
-                            <DateRelative dateTime="@item.DateModified" />
-                        </span>
+                    <ItemCard @key="itemId" ItemId="@itemId" IconSize="128px" cClass="position-relative"
+                                EnableDate="true" OnItemClicked="@(async () => await OpenItemAddModal(itemId))">
+                        <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(itemId))" ImgSrc="bi-trash3" />
                     </ItemCard>
                 }
             </div>
@@ -162,75 +157,31 @@
     }
 
     private Searchbar searchbar = null!;
-    private List<Item> filteredItems = [];
-    private List<Recipe> filteredRecipes = [];
+    private List<string> searchItems = [];
+    private List<Guid> searchRecipes = [];
     void DoSearch(string search)
     {
-        filteredItems = IS.SearchItems(search).ToList();
+        searchItems = IS.SearchItemIds(search).ToList();
         DoItemSort();
 
-        filteredRecipes.Clear();
-        HashSet<Guid> guids = [];
-        foreach (Item item in filteredItems)
-        {
-            foreach (Recipe recipe in IS.GetRecipesWithItem(item.Id))
-            {
-                if (!guids.Add(recipe.Guid))
-                    continue;
-
-                filteredRecipes.Add(recipe);
-            }
-        }
+        searchRecipes = IS.GetRecipesWithItems(searchItems).ToList();
         DoRecipeSort();
     }
 
     private bool IsAscendingItems = true;
-    private ItemSort itemSort = ItemSort.Name;
-    private enum ItemSort
-    {
-        Name,
-        Date,
-    }
-
+    private Services.InventoryService.ItemSort itemSort = Services.InventoryService.ItemSort.Name;
+    private List<string> filteredItems = [];
     private void DoItemSort()
     {
-        filteredItems = itemSort switch
-        {
-            ItemSort.Name => SortByDirection(filteredItems, x => x.Name, IsAscendingItems),
-            ItemSort.Date => SortByDirection(filteredItems, x => x.DateModified, IsAscendingItems),
-            _ => filteredItems
-        };
+        filteredItems = IS.DoItemIdSort(searchItems, itemSort, IsAscendingItems).ToList();
     }
 
     private bool IsAscendingRecipes = true;
-    private RecipeSort recipeSort = RecipeSort.Date;
-    private enum RecipeSort
-    {
-        Name,
-        Date,
-        Station,
-        BatchSize,
-        CraftingTime,
-    }
-
+    private Services.InventoryService.RecipeSort recipeSort = Services.InventoryService.RecipeSort.Date;
+    private List<Guid> filteredRecipes = [];
     private void DoRecipeSort()
     {
-        filteredRecipes = recipeSort switch
-        {
-            RecipeSort.Name => SortByDirection(filteredRecipes, x => x.Name, IsAscendingRecipes),
-            RecipeSort.Date => SortByDirection(filteredRecipes, x => x.DateModified, IsAscendingRecipes),
-            RecipeSort.Station => SortByDirection(filteredRecipes, x => x.StationId, IsAscendingRecipes),
-            RecipeSort.BatchSize => SortByDirection(filteredRecipes, x => x.BatchSize, IsAscendingRecipes),
-            RecipeSort.CraftingTime => SortByDirection(filteredRecipes, x => x.CraftingTime, IsAscendingRecipes),
-            _ => filteredRecipes
-        };
-    }
-
-    private List<T> SortByDirection<T, TKey>(List<T> source, Func<T, TKey> selector, bool ascending)
-    {
-        return ascending ?
-            source.OrderBy(selector).ToList() :
-            source.OrderByDescending(selector).ToList();
+        filteredRecipes = IS.DoRecipeIdSort(searchRecipes, recipeSort, IsAscendingRecipes).ToList();
     }
 
     private ModalDelete modalDeleteItemList = null!;
@@ -240,16 +191,15 @@
     private Modal modalAddItem = null!;
     private ModalDelete modalDeleteItem = null!;
     private List<Recipe> deleteRecipes = [];
-    private async Task OpenItemAddModal(Item item = null!)
+    private async Task OpenItemAddModal(string item = "")
     {
-        modalItem = item == null ? new(searchbar.SearchString) : IS.GetItem(item.Id).Copy();
+        modalItem = string.IsNullOrEmpty(item) ? new(searchbar.SearchString) : IS.GetItem(item).Copy();
         await modalAddItem.OpenAsync();
     }
 
-    private async Task OpenItemDeleteModal(Item item)
+    private async Task OpenItemDeleteModal(string item)
     {
-        deleteRecipes = IS.GetRecipesWithItem(item.Id).ToList();
-        modalItem = item;
+        modalItem = IS.GetItem(item);
         await modalDeleteItem.OpenAsync();
     }
 
@@ -267,19 +217,18 @@
         deleteRecipes = [];
     }
 
-
     private Recipe modalRecipe = null!;
     private Modal modalAddRecipe = null!;
     private ModalDelete modalDeleteRecipe = null!;
-    private async Task OpenRecipeAddModal(Recipe recipe = null!)
+    private async Task OpenRecipeAddModal(Guid? guid = null!)
     {
-        modalRecipe = recipe == null ? Recipe.GetNew() : IS.GetRecipeById(recipe.Guid).Copy();
+        modalRecipe = guid == null ? Recipe.GetNew() : IS.GetRecipeById(guid.Value).Copy();
         await modalAddRecipe.OpenAsync();
     }
 
-    private async Task OpenRecipeDeleteModal(Recipe recipe)
+    private async Task OpenRecipeDeleteModal(Guid guid)
     {
-        modalRecipe = recipe;
+        modalRecipe = IS.GetRecipeById(guid);
         await modalDeleteRecipe.OpenAsync();
     }
 
