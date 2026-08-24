@@ -115,6 +115,13 @@
 </Modal>
 
 <ModalDelete @ref="modalDeleteItem" Subject="this item" OnDelete="ItemRemove">
+    <div class="text-center pt-2">
+        <ItemBadge @key="modalItem.Id" Item="modalItem" />
+    </div>
+
+    @{
+        List<Recipe> deleteRecipes = IS.GetRecipesWithItem(modalItem.Id).ToList();
+    }
     @if (deleteRecipes.Count > 0)
     {
         <p class="mt-2 text-danger m-0">
@@ -132,7 +139,10 @@
     }
 </ModalDelete>
 
-<ModalDelete @ref="modalDeleteRecipe" Subject="this recipe" OnDelete="RecipeRemove" />
+<ModalDelete @ref="modalDeleteRecipe" Subject="this recipe" OnDelete="RecipeRemove">
+    <CraftingStep Recipe="modalRecipe"/>
+</ModalDelete>
+
 <ModalDelete @ref="modalDeleteItemList" Subject="all items" OnDelete="@(async () => { await IS.ClearAllItems(); await IconService.ClearIcons(); })" />
 <ModalDelete @ref="modalDeleteRecipeList" Subject="all recipes" OnDelete="@(async () => await IS.ClearAllRecipes())" />
 
@@ -189,14 +199,13 @@
 
     private Item modalItem = null!;
     private Modal modalAddItem = null!;
-    private ModalDelete modalDeleteItem = null!;
-    private List<Recipe> deleteRecipes = [];
     private async Task OpenItemAddModal(string item = "")
     {
         modalItem = string.IsNullOrEmpty(item) ? new(searchbar.SearchString) : IS.GetItem(item).Copy();
         await modalAddItem.OpenAsync();
     }
 
+    private ModalDelete modalDeleteItem = null!;
     private async Task OpenItemDeleteModal(string item)
     {
         modalItem = IS.GetItem(item);
@@ -214,18 +223,17 @@
         await IconService.DeleteIcon(modalItem.Id);
 
         modalItem = null!;
-        deleteRecipes = [];
     }
 
     private Recipe modalRecipe = null!;
     private Modal modalAddRecipe = null!;
-    private ModalDelete modalDeleteRecipe = null!;
     private async Task OpenRecipeAddModal(Guid? guid = null!)
     {
         modalRecipe = guid == null ? Recipe.GetNew() : IS.GetRecipeById(guid.Value).Copy();
         await modalAddRecipe.OpenAsync();
     }
 
+    private ModalDelete modalDeleteRecipe = null!;
     private async Task OpenRecipeDeleteModal(Guid guid)
     {
         modalRecipe = IS.GetRecipeById(guid);
