@@ -174,24 +174,9 @@ public class InventoryService(IndexedDBManager db)
         return items.ContainsKey(id);
     }
 
-    public string GetItemIdByName(string itemName)
-    {
-        return items.FirstOrDefault(x => x.Value.Name == itemName).Key;
-    }
-
-    public string GetItemNameById(string itemId)
-    {
-        return items.TryGetValue(itemId, out Item? item) ? item.Name : "???";
-    }
-
     public Item GetItem(string itemId)
     {
         return items.GetValueOrDefault(itemId, Item.GetUnknown(itemId));
-    }
-
-    public bool TryGetItem(string itemId, out Item item)
-    {
-        return items.TryGetValue(itemId, out item!);
     }
 
     public async Task SetItems(Dictionary<string, Item> newItems)
