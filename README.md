@@ -113,8 +113,8 @@ Or, if you want to run it yourself, see <a href="#self-hosting">Self-Hosting</a>
 ### Roadmap
 
 - [x] Storage usage stats
+- [x] Item amount expression parsing
 - [ ] Add Crafting Chance
-- [ ] Item amount expression parsing
 - [ ] Checklist page
 - [ ] Sync Server
 
