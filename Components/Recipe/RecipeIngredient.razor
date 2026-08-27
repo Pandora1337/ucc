@@ -26,7 +26,7 @@
         {
             <div class="input-group input-group-sm">
                 <InputNumber TValue="float" class="form-control" @bind-Value="Quantity" min="0" max="@float.MaxValue"
-                             placeholder="Amount" title="Amount of an item" Disabled="@DisableInput" />
+                             placeholder="@InputTitle" title="@(InputTitle + " of an item")" Disabled="@DisableInput" />
             </div>
         }
     </div>
@@ -42,6 +42,7 @@
     [Parameter] public EventCallback<float> QuantityChanged { get; set; }
     [Parameter] public EventCallback OnIconClicked { get; set; }
     [Parameter] public EventCallback OnBtnClicked { get; set; }
+    [Parameter] public string InputTitle { get; set; } = "Amount";
     [Parameter] public bool EnableInput { get; set; } = true;
     [Parameter] public bool DisableInput { get; set; } = false;
     [Parameter] public bool EnableBtn { get; set; } = false;

@@ -8,6 +8,7 @@
 @using ucc.Components.Recipe
 @using ucc.Components.Modal
 @using ucc.Components.InputMath
+@using ucc.Components.Tab
 @using ucc.Models
 
 @implements IDisposable
@@ -65,107 +66,6 @@
 </div>
 
 
-@if (cd != null)
-{
-    <div class="d-flex justify-content-between pb-1 mb-2 border border-0 border-3 border-bottom">
-        <h3 class="mb-0">Crafting Result:</h3>
-
-        <div>
-            <div class="btn-group d-none d-lg-inline-flex" role="group">
-                <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
-                       checked="@(IsGridView)" />
-                <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
-                    <i class="bi bi-grid" aria-label="Grid View" />
-                </label>
-
-                <input type="radio" class="btn-check btn-sm" id="viewList" name="viewMode" @onchange="ToggleRecipeGrid"
-                       checked="@(!IsGridView)" />
-                <label class="btn btn-outline-secondary" for="viewList" title="List View">
-                    <i class="bi bi-view-stacked" aria-label="List View" />
-                </label>
-            </div>
-
-            <button class="btn btn-sm btn-danger h-100" @onclick="@(() => CS.SetCraftingData(null))"
-                    title="Clear Crafting Data">
-                <i class="bi bi-trash3" aria-label="Clear Crafting Data" />
-            </button>
-        </div>
-    </div>
-
-    <Accordion cClass="mb-3">
-        <AccordionItem Icon="bi-list" Title="Item List" OpenOnStart="true">
-
-            @if (cd.ItemsProd.Count > 0)
-            {
-                <strong>
-                    <i class="bi bi-gem me-2" aria-hidden="true" />Products:
-                </strong>
-                <div class="d-flex flex-wrap gap-1 my-2">
-                    @foreach ((string itemId, float amount) in cd.ItemsProd)
-                    {
-                        <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
-                    }
-                </div>
-            }
-
-            @if (cd.ItemsInt.Count > 0)
-            {
-                <strong>
-                    <i class="bi bi-layers-half me-2" aria-hidden="true" />Intermediate:
-                </strong>
-                <div class="d-flex flex-wrap gap-1 my-2">
-                    @foreach ((string itemId, float amount) in cd.ItemsInt)
-                    {
-                        <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
-                    }
-                </div>
-            }
-
-            <strong>
-                <i class="bi bi-minecart-loaded me-2" aria-hidden="true" />Raw:
-            </strong>
-            <div class="d-flex flex-wrap gap-1 my-2">
-                @foreach ((string itemId, float amount) in cd.ItemsRaw)
-                {
-                    <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="amount" style="max-width: 49%;" />
-                }
-            </div>
-        </AccordionItem>
-    </Accordion>
-
-    @if (cd.CraftingTime > 0)
-    {
-        <h5>
-            Total Crafting Time:
-            <i class="bi bi-clock ms-2 me-1" aria-hidden="true" />
-            @(cd.CraftingTime)s
-        </h5>
-    }
-
-    <div class="row">
-        @for (int i = 0; i < cd.RecipeGuideList.Count(); i++)
-        {
-            (Guid guid, float ops) = cd.RecipeGuideList.ElementAt(i);
-            Recipe recipe = IS.GetRecipeById(guid);
-
-            <div @key="@guid" class="col-12 
-                @(IsGridView && cd.RecipeGuideList.Count() > 1 ? "col-lg-6" : "")
-                @(IsGridView && cd.RecipeGuideList.Count() > 2 ? "col-xxl-4" : "")">
-
-                @if (recipe != null)
-                {
-                    <CraftingStep Recipe="recipe" Operations="(int)ops" OrderNum="i + 1" cClass="mb-3"
-                                  IsInvalid="@(!recipe.IsOutdated(cd.DateCrafted))" />
-                }
-                else
-                {
-                    <CraftingStep IsInvalid="true" cClass="mb-3" />
-                }
-            </div>
-        }
-    </div>
-}
-
 <Modal @ref="modalItemPick" Title="Choose an Item to craft" CanScroll="false">
     <div class="modal-body pb-0 px-0">
         <ItemPicker OnItemPicked="OnItemPicked" />
@@ -200,10 +100,136 @@
     </div>
 </Modal>
 
+@if (cd == null)
+    return;
+
+<TabList Class="mb-0 mb-3">
+    <Tab Title="Crafting" Icon="bi-tools" Class="overflow-visible">
+        <div class="d-flex justify-content-between pb-1 mb-2 border border-0 border-3 border-bottom">
+            <h3 class="mb-0">Crafting Result:</h3>
+
+            <div>
+                <div class="btn-group d-none d-lg-inline-flex" role="group">
+                    <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode"
+                           @onchange="ToggleRecipeGrid" checked="@(IsGridView)" />
+                    <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
+                        <i class="bi bi-grid" aria-label="Grid View" />
+                    </label>
+
+                    <input type="radio" class="btn-check btn-sm" id="viewList" name="viewMode"
+                           @onchange="ToggleRecipeGrid" checked="@(!IsGridView)" />
+                    <label class="btn btn-outline-secondary" for="viewList" title="List View">
+                        <i class="bi bi-view-stacked" aria-label="List View" />
+                    </label>
+                </div>
+
+                <button class="btn btn-sm btn-danger h-100" @onclick="@(() => CS.SetCraftingData(null))"
+                        title="Clear Crafting Data">
+                    <i class="bi bi-trash3" aria-label="Clear Crafting Data" />
+                </button>
+            </div>
+        </div>
+
+        <Accordion cClass="mb-3">
+            <AccordionItem Icon="bi-list" Title="Item List" OpenOnStart="true">
+
+                @if (cd.ItemsProd.Count > 0)
+                {
+                    <strong>
+                        <i class="bi bi-gem me-2" aria-hidden="true" />Products:
+                    </strong>
+                    <div class="d-flex flex-wrap gap-1 my-2">
+                        @foreach ((string itemId, float amount) in cd.ItemsProd)
+                        {
+                            <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
+                        }
+                    </div>
+                }
+
+                @if (cd.ItemsInt.Count > 0)
+                {
+                    <strong>
+                        <i class="bi bi-layers-half me-2" aria-hidden="true" />Intermediate:
+                    </strong>
+                    <div class="d-flex flex-wrap gap-1 my-2">
+                        @foreach ((string itemId, float amount) in cd.ItemsInt)
+                        {
+                            <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
+                        }
+                    </div>
+                }
+
+                <strong>
+                    <i class="bi bi-minecart-loaded me-2" aria-hidden="true" />Raw:
+                </strong>
+                <div class="d-flex flex-wrap gap-1 my-2">
+                    @foreach ((string itemId, float amount) in cd.ItemsRaw)
+                    {
+                        <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="amount" style="max-width: 49%;" />
+                    }
+                </div>
+            </AccordionItem>
+        </Accordion>
+
+        @if (cd.CraftingTime > 0)
+        {
+            <h5 class="mb-0">
+                Total Crafting Time:
+                <i class="bi bi-clock ms-2 me-1" aria-hidden="true" />
+                @(cd.CraftingTime)s
+            </h5>
+        }
+
+        <div class="row">
+            @for (int i = 0; i < cd.RecipeGuideList.Count(); i++)
+            {
+                (Guid guid, float ops) = cd.RecipeGuideList.ElementAt(i);
+                Recipe recipe = IS.GetRecipeById(guid);
+
+                <div @key="@guid" class="mt-3 col-12 
+                    @(IsGridView && cd.RecipeGuideList.Count() > 1 ? "col-lg-6" : "")
+                    @(IsGridView && cd.RecipeGuideList.Count() > 2 ? "col-xxl-4" : "")">
+
+                    @if (recipe != null)
+                    {
+                        int opsInt = (int)float.Ceiling(ops);
+                        <CraftingStep Recipe="recipe" Operations="opsInt" OrderNum="i + 1"
+                                      IsInvalid="@(!recipe.IsOutdated(cd.DateCrafted))" />
+                    }
+                    else
+                    {
+                        <CraftingStep IsInvalid="true" />
+                    }
+                </div>
+            }
+        </div>
+    </Tab>
+
+    <Tab Title="Settings" Icon="bi-gear" Class="overflow-visible">
+        <h5>Raw item costs:</h5>
+        <span class="text-muted">
+            Higher cost means the calculator will try to use that item less.
+        </span>
+
+        <div class="row g-2">
+            @foreach ((string itemId, float cost) in cp.Costs)
+            {
+                <div @key="itemId" class="col-12 
+                    @(cp.Costs.Count > 1 ? "col-lg-6" : "")
+                    @(cp.Costs.Count > 2 ? "col-xxl-4" : "")">
+                    <RecipeIngredient ItemId="@itemId" @bind-Quantity="@cp.Costs[itemId]" InputTitle="Cost" />
+                </div>
+            }
+        </div>
+    </Tab>
+</TabList>
+
 @code {
     private List<Ingredient> plannedCrafts => CS.PlannedCrafts;
 
     private CraftingData? cd => CS.GetCraftingData();
+
+    private CraftingParams? cp => CS.cp;
 
     protected override async Task OnInitializedAsync()
     {

@@ -4,11 +4,11 @@ namespace ucc.Solver;
 
 public sealed class Simplex
 {
-    public static Dictionary<Guid, float> Solve(List<Recipe> recipes, Dictionary<string, float> targets, Dictionary<string, float> costs)
+    public static (Dictionary<Guid, float>, Dictionary<string, float>) Solve(List<Recipe> recipes, Dictionary<string, float> targets, Dictionary<string, float> costs)
     {
         var m = new Matrix(recipes, targets, costs);
         SolveMatrix(m);
-        return m.GetSolution();
+        return (m.GetSolution(), m.GetCosts());
     }
 
     private static void SolveMatrix(Matrix m)

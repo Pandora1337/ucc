@@ -10,6 +10,7 @@ public sealed class Matrix
     private Fraction[,] _matrix;
 
     private Dictionary<string, int> _raws = [];
+    private Dictionary<string, float> _costs = [];
     private List<string> _itemIndex = [];
     private List<Guid> _recipeIndex = [];
 
@@ -94,9 +95,7 @@ public sealed class Matrix
         int r = 0;
         foreach (Recipe recipe in recipes)
         {
-            // TODO fix time
             float time = recipe.CraftingTime ?? 1;
-            // float time = 1;
 
             // add ingredient columns
             foreach (var ing in recipe.Ingredients)
@@ -121,7 +120,12 @@ public sealed class Matrix
         // add raw resource rows and their cost
         foreach ((string itemId, float cost) in costs)
         {
-            if (!_itemIndex.Contains(itemId)) continue;
+            if (!_itemIndex.Contains(itemId))
+            {
+                Cols -= 1;
+                Rows -= 1;
+                continue;
+            }
 
             // set raw item input
             _matrix[r, itemIndex[itemId]] = Fraction.One;
@@ -131,6 +135,7 @@ public sealed class Matrix
 
             // set cost
             _matrix[r, Cols - 1] = Fraction.FromDouble(cost);
+            _costs[itemId] = cost;
             r++;
         }
 
@@ -172,6 +177,11 @@ public sealed class Matrix
             Console.WriteLine($"{itemId}: {OutputOfCol(index).ToFloat()}");
         }
         return _raws;
+    }
+
+    public Dictionary<string, float> GetCosts()
+    {
+        return _costs;
     }
 
     public void MultiplyRow(int row, Fraction value)

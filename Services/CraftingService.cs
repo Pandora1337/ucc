@@ -16,6 +16,7 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
     }
 
     public List<Ingredient> PlannedCrafts { get; set; } = new();
+    public CraftingParams cp { get; private set; } = new();
 
     public async Task OnItemDeleted(Ingredient ing)
     {
@@ -81,14 +82,7 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
             }
         }
 
-        Dictionary<string, float> costs = new()
-        {
-            { "crude-oil", 1000},
-            // { "plank", 2000},
-            // { "water", 100},
-        };
-
-        var solution = Simplex.Solve(recipesList.ToList(), targetDict, costs);
+        (var solution, cp.Costs) = Simplex.Solve(recipesList.ToList(), targetDict, cp.Costs);
         var cd = new CraftingData();
 
         // cumulative amount of ingredients used
@@ -126,20 +120,21 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         var recipe = IS.GetRecipeById(guid);
 
         int ops = (int)Math.Ceiling(num);
-        cd.RecipeGuideList.Add(new(guid, ops));
+        cd.RecipeGuideList.Add(new(guid, num));
         cd.CraftingTime += recipe.GetTotalCraftingTime(ops);
 
         // Console.WriteLine($"    {guid.ToString().Split("-")[0]}: {float.Round(num, 3)} ({ops})");
 
+        float time = recipe.CraftingTime ?? 1;
         foreach ((string prodId, float prodAmount) in recipe.Products)
         {
-            float prodMade = prodAmount * num; // ops;
+            float prodMade = prodAmount * num / time;
             itemDeltas[prodId] = itemDeltas.GetValueOrDefault(prodId, 0) + prodMade;
         }
 
         foreach ((string ingId, float ingAmount) in recipe.Ingredients)
         {
-            float ingNeed = ingAmount * num; // ops;
+            float ingNeed = ingAmount * num / time;
             ingCumulative[ingId] = ingCumulative.GetValueOrDefault(ingId, 0) + ingNeed;
             itemDeltas[ingId] = itemDeltas.GetValueOrDefault(ingId, 0) - ingNeed;
         }
