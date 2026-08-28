@@ -2,7 +2,7 @@
 
 @namespace ucc.Components.Tab
 
-<div class="tab-pane @(IsActive ? "show active" : "") overflow-auto @Class" id="@PanelId" role="tabpanel" aria-labelledby="@TabId"
+<div class="tab-pane @(IsActive ? "show active" : "") @Class" id="@PanelId" role="tabpanel" aria-labelledby="@TabId"
      tabindex="0" aria-selected="@(IsActive)">
     @if (IsActive)
     {
