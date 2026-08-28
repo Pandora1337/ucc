@@ -44,8 +44,8 @@
     <div class="d-flex flex-wrap gap-1 justify-content-center">
         @for (int i = 0; i < Recipe.Ingredients.Count; i++)
         {
-            <ItemBadge ItemId="@Recipe.Ingredients[i].ItemId" Amount="@(Recipe.Ingredients[i].Amount * Operations)"
-                       style="max-width: 49%;" />
+            (string itemId, float amount) = Recipe.Ingredients[i];
+            <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount * Operations)" style="max-width: 49%;" />
         }
     </div>
 
@@ -79,7 +79,7 @@
             {
                 <i class="bi bi-caret-down-fill d-block text-center" aria-hidden="true" />
                 <div class="text-center position-relative d-block mx-auto" style="width: 32px;">
-                    <ItemIcon ItemId="@Recipe.StationId" Size="32px" />
+                    <ItemIcon @key="Recipe.StationId" ItemId="@Recipe.StationId" Size="32px" />
                 </div>
                 <i class="bi bi-caret-down-fill d-block text-center" aria-hidden="true" />
             }
@@ -104,7 +104,8 @@
     <div class="d-flex flex-wrap gap-1 justify-content-center">
         @for (int i = 0; i < Recipe.Products.Count; i++)
         {
-            <ItemBadge ItemId="@Recipe.Products[i].ItemId" Amount="@(Recipe.Products[i].Amount * Operations)"
+            (string itemId, float amount) = Recipe.Products[i];
+            <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount * Operations)"
                        style="max-width: 100%;" />
         }
     </div>
