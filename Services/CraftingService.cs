@@ -9,49 +9,14 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
     protected InventoryService IS { get; set; } = inventoryService;
     protected LocalStorage LS { get; set; } = localStorage;
 
+    public List<Ingredient> PlannedCrafts { get; set; } = new();
+    public CraftingParams cp { get; private set; } = new();
+    private CraftingData? craftingData = null;
+
     public async Task InitializeAsync()
     {
         PlannedCrafts = await LS.Get<List<Ingredient>>("plannedCrafts", []);
         craftingData = await LS.Get<CraftingData>("craftingData", null);
-    }
-
-    public List<Ingredient> PlannedCrafts { get; set; } = new();
-    public CraftingParams cp { get; private set; } = new();
-
-    public async Task OnItemDeleted(Ingredient ing)
-    {
-        PlannedCrafts.Remove(ing);
-        await UpdatePlannedCrafts();
-    }
-
-    public async Task DeletePlannedCrafts()
-    {
-        PlannedCrafts.Clear();
-        await LS.Remove("plannedCrafts");
-    }
-
-    public async Task UpdatePlannedCrafts()
-    {
-        await LS.Set("plannedCrafts", PlannedCrafts);
-    }
-
-    private CraftingData? craftingData = null;
-
-    public CraftingData? GetCraftingData()
-    {
-        return craftingData;
-    }
-
-    public async Task SetCraftingData(CraftingData? newData)
-    {
-        craftingData = newData;
-        await LS.Set("craftingData", craftingData!);
-    }
-
-    public async Task SetPlannedCrafts(List<Ingredient>? list)
-    {
-        PlannedCrafts = list ?? [];
-        await UpdatePlannedCrafts();
     }
 
     #region Craft
@@ -213,6 +178,43 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         return collapsed;
     }
 
+    #region Get/Set
+    public async Task OnItemDeleted(Ingredient ing)
+    {
+        PlannedCrafts.Remove(ing);
+        await UpdatePlannedCrafts();
+    }
+
+    public async Task DeletePlannedCrafts()
+    {
+        PlannedCrafts.Clear();
+        await LS.Remove("plannedCrafts");
+    }
+
+    public async Task UpdatePlannedCrafts()
+    {
+        await LS.Set("plannedCrafts", PlannedCrafts);
+    }
+
+    public CraftingData? GetCraftingData()
+    {
+        return craftingData;
+    }
+
+    public async Task SetCraftingData(CraftingData? newData)
+    {
+        craftingData = newData;
+        await LS.Set("craftingData", craftingData!);
+    }
+
+    public async Task SetPlannedCrafts(List<Ingredient>? list)
+    {
+        PlannedCrafts = list ?? [];
+        await UpdatePlannedCrafts();
+    }
+    #endregion
+
+    #region User Request
     public event Action<string>? OnChoiceRequest;
     public event Action? OnChoiceSelect;
     public IEnumerable<Recipe>? RecipeOptions { get; private set; }
@@ -231,4 +233,5 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         OnChoiceSelect?.Invoke();
         _choiceTask.TrySetResult(recipe);
     }
+    #endregion
 }
