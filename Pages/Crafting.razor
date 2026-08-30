@@ -105,30 +105,6 @@
 
 <TabList Class="mb-0 mb-3">
     <Tab Title="Crafting" Icon="bi-tools" IsAlwaysRendered="true">
-        <div class="d-flex justify-content-between pb-1 mb-2 border border-0 border-3 border-bottom">
-            <h3 class="mb-0">Crafting Result:</h3>
-
-            <div>
-                <div class="btn-group d-none d-lg-inline-flex" role="group">
-                    <input type="radio" class="btn-check btn-sm" id="viewGrid" name="viewMode"
-                           @onchange="ToggleRecipeGrid" checked="@(IsGridView)" />
-                    <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
-                        <i class="bi bi-grid" aria-label="Grid View" />
-                    </label>
-
-                    <input type="radio" class="btn-check btn-sm" id="viewList" name="viewMode"
-                           @onchange="ToggleRecipeGrid" checked="@(!IsGridView)" />
-                    <label class="btn btn-outline-secondary" for="viewList" title="List View">
-                        <i class="bi bi-view-stacked" aria-label="List View" />
-                    </label>
-                </div>
-
-                <button class="btn btn-sm btn-danger h-100" @onclick="@(() => CS.SetCraftingData(null))"
-                        title="Clear Crafting Data">
-                    <i class="bi bi-trash3" aria-label="Clear Crafting Data" />
-                </button>
-            </div>
-        </div>
 
         <Accordion cClass="mb-3">
             <AccordionItem Icon="bi-list" Title="Item List" OpenOnStart="true">
@@ -171,24 +147,44 @@
             </AccordionItem>
         </Accordion>
 
-        @if (cd.CraftingTime > 0)
-        {
-            <h5 class="mb-0">
-                Total Crafting Time:
-                <i class="bi bi-clock ms-2 me-1" aria-hidden="true" />
-                @(cd.CraftingTime)s
-            </h5>
-        }
+        <div class="d-flex justify-content-between">
+            @if (cd.CraftingTime > 0)
+            {
+                <h5 class="mb-0 align-self-center">
+                    Total Crafting Time:
+                    <i class="bi bi-clock ms-2 me-1" aria-hidden="true" />
+                    @(cd.CraftingTime)s
+                </h5>
+            }
+            else
+            {
+                <div />
+            }
+
+            <div class="btn-group d-none d-lg-inline-flex" role="group">
+                <input type="radio" class="btn-check" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
+                       checked="@(IsGridView)" />
+                <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
+                    <i class="bi bi-grid" aria-label="Grid View" />
+                </label>
+
+                <input type="radio" class="btn-check" id="viewList" name="viewMode" @onchange="ToggleRecipeGrid"
+                       checked="@(!IsGridView)" />
+                <label class="btn btn-outline-secondary" for="viewList" title="List View">
+                    <i class="bi bi-view-stacked" aria-label="List View" />
+                </label>
+            </div>
+        </div>
 
         <div class="row">
-            @for (int i = 0; i < cd.RecipeGuideList.Count(); i++)
+            @for (int i = 0; i < cd.RecipeGuideList.Count; i++)
             {
                 (Guid guid, float ops) = cd.RecipeGuideList.ElementAt(i);
                 Recipe recipe = IS.GetRecipeById(guid);
 
                 <div @key="@guid" class="mt-3 col-12 
-                    @(IsGridView && cd.RecipeGuideList.Count() > 1 ? "col-lg-6" : "")
-                    @(IsGridView && cd.RecipeGuideList.Count() > 2 ? "col-xxl-4" : "")">
+                    @(IsGridView && cd.RecipeGuideList.Count > 1 ? "col-lg-6" : "")
+                    @(IsGridView && cd.RecipeGuideList.Count > 2 ? "col-xxl-4" : "")">
 
                     @if (recipe != null)
                     {
@@ -228,8 +224,8 @@
         <p class="mb-2 text-muted">
             Select what recipes are used in the calculator.
         </p>
-        
-        <RecipeFilter Blacklist="cp.Blacklist"/>
+
+        <RecipeFilter Blacklist="cp.Blacklist" />
     </Tab>
 </TabList>
 
