@@ -12,11 +12,11 @@
             <ItemIcon Item="@Item" Size="24px" />
         </div>
         
-        <span class="text-xs fw-medium text-truncate">@Item.Name</span>
+        <span class="text-xs fw-medium text-truncate text-white">@Item.Name</span>
 
         @if (Amount != null)
         {
-            <span class="text-xs fw-medium" title="@Amount">
+            <span class="text-xs fw-medium text-white" title="@Amount">
                 (@(float.Round(Amount.Value, 1))x)
             </span>
         }

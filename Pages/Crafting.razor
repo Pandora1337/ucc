@@ -205,11 +205,11 @@
         </div>
     </Tab>
 
-    <Tab Title="Settings" Icon="bi-gear">
-        <h5>Raw item costs:</h5>
-        <span class="text-muted">
+    <Tab Title="Cost" Icon="bi-coin">
+        <h5 class="mb-1">Raw item costs</h5>
+        <p class="mb-2 text-muted">
             Higher cost means the calculator will try to use that item less.
-        </span>
+        </p>
 
         <div class="row g-2">
             @foreach ((string itemId, float cost) in cp.Costs)
@@ -221,6 +221,15 @@
                 </div>
             }
         </div>
+    </Tab>
+
+    <Tab Title="Filter" Icon="bi-funnel-fill">
+        <h5 class="mb-1">Recipe filter</h5>
+        <p class="mb-2 text-muted">
+            Select what recipes are used in the calculator.
+        </p>
+        
+        <RecipeFilter Blacklist="cp.Blacklist"/>
     </Tab>
 </TabList>
 

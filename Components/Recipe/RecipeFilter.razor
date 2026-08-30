@@ -1,0 +1,67 @@
+@using ucc.Models
+@using ucc.Components.Crafting
+@using ucc.Components.Searchbar
+
+@inject Services.InventoryService IS;
+
+@namespace ucc.Components.Recipe
+
+<Searchbar OnSearch="DoSearch" />
+
+<div class="row">
+    @foreach (Guid guid in recipes)
+    {
+        Recipe recipe = IS.GetRecipeById(guid);
+        <div @key="@guid" class="mt-3 col-12 
+            @(recipes.Count > 1 ? "col-lg-6" : "")
+            @(recipes.Count > 2 ? "col-xxl-4" : "")">
+            <button type="button" class="w-100 btn
+                @(IsActive(guid) ? "btn-success" : "btn-outline-secondary")" @onclick="@(() => ToggleEntry(guid))">
+
+                <CraftingStep Recipe="recipe" Class="bg-transparent border-0" />
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public HashSet<Guid> Blacklist { get; set; } = [];
+
+    private List<Guid> recipes = [];
+
+    private bool IsActive(Guid guid) => !Blacklist.Contains(guid);
+
+    protected override void OnInitialized()
+    {
+        DoSearch("");
+    }
+
+    private void DoSearch(string search)
+    {
+        IEnumerable<Item> filteredItems = IS.SearchItems(search);
+        recipes = GetRecipesWithItems(filteredItems).ToList();
+    }
+
+    private void ToggleEntry(Guid guid)
+    {
+        if (!Blacklist.Add(guid))
+        {
+            Blacklist.Remove(guid);
+        }
+        IS.SerialiseToJSON(Blacklist);
+    }
+
+    // TODO: remove when PR is merged
+    public IEnumerable<Guid> GetRecipesWithItems(IEnumerable<Item> items)
+    {
+        var guids = new HashSet<Guid>();
+        foreach (Item item in items)
+        {
+            foreach (Recipe recipe in IS.GetRecipesWithItem(item.Id))
+            {
+                if (guids.Add(recipe.Guid))
+                    yield return recipe.Guid;
+            }
+        }
+    }
+}

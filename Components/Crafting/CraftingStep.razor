@@ -5,7 +5,7 @@
 
 @if (Recipe == null)
 {
-    <div class="card bg-body-tertiary p-3 position-relative border-danger @cClass">
+    <div class="card p-3 position-relative border-danger @Class">
         <span class="text-danger text-center">
             <span class="visually-hidden">Error: </span>
             Recipe is no longer available :(
@@ -14,7 +14,7 @@
     return;
 }
 
-<div class="card bg-body-tertiary p-3 position-relative @(IsInvalid ? "border-danger" : "") @cClass">
+<div class="card p-3 position-relative @(IsInvalid ? "border-danger" : "") @Class">
     @if (OrderNum > -1)
     {
         <span
@@ -114,7 +114,7 @@
 @code {
     [Parameter] public Recipe Recipe { get; set; } = default!;
     [Parameter] public int Operations { get; set; } = 1;
-    [Parameter] public string cClass { get; set; } = "";
+    [Parameter] public string Class { get; set; } = "bg-body-tertiary";
     [Parameter] public int OrderNum { get; set; } = -1;
 
     [Parameter] public bool IsInvalid { get; set; } = false;

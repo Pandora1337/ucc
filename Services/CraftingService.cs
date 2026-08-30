@@ -36,6 +36,9 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
             var recipes = IS.GetRecipesByResultId(itemId);
             foreach (Recipe recipe in recipes)
             {
+                if (cp.Blacklist.Contains(recipe.Guid))
+                    continue;
+
                 if (graph.AddNode(recipe.Guid, parentRecipe))
                     continue;
 
