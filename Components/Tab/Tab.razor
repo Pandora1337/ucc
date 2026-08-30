@@ -4,7 +4,7 @@
 
 <div class="tab-pane @(IsActive ? "show active" : "") @Class" id="@PanelId" role="tabpanel" aria-labelledby="@TabId"
      tabindex="0" aria-selected="@(IsActive)">
-    @if (IsActive)
+    @if (IsActive || IsAlwaysRendered)
     {
         @ChildContent
     }
@@ -16,6 +16,7 @@
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string Icon { get; set; } = "";
     [Parameter] public string Class { get; set; } = "";
+    [Parameter] public bool IsAlwaysRendered { get; set; } = false;
 
     private bool IsActive => Parent?.ActiveTab == this;
     public string TabId { get; private set; } = $"tab-{Guid.NewGuid():N}";

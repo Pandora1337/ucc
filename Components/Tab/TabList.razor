@@ -28,13 +28,6 @@
     internal List<Tab> Tabs { get; } = new();
     internal Tab? ActiveTab { get; set; }
 
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            StateHasChanged();
-        }
-    }
 
     internal void AddTab(Tab tab)
     {
