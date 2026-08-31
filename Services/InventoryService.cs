@@ -363,6 +363,32 @@ public class InventoryService(IndexedDBManager db)
     }
     #endregion
 
+    #region Search
+    public IEnumerable<Recipe> SearchRecipesByItemsAndName(string search)
+    {
+        var items = SearchItemIds(search);
+        var byItem = GetRecipesWithItems(items).Select(GetRecipeById);
+        var byName = SearchRecipesByName(search);
+        return byName.Concat(byItem).DistinctBy(r => r.Guid);
+    }
+
+    public IEnumerable<Guid> SearchRecipeIdsByName(string search)
+    {
+        return SearchRecipesByName(search).Select(x => x.Guid);
+    }
+
+    public IEnumerable<Recipe> SearchRecipesByName(string search)
+    {
+        IEnumerable<Recipe> recipeValues = recipes.Values;
+        if (string.IsNullOrEmpty(search))
+            return recipeValues;
+
+        return recipeValues.Where(recipe => recipe.Name.Contains(search,
+            StringComparison.OrdinalIgnoreCase)
+        );
+    }
+    #endregion
+
     #region Sort
     public enum RecipeSort
     {

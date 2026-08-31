@@ -174,7 +174,9 @@
         searchItems = IS.SearchItemIds(search).ToList();
         DoItemSort();
 
-        searchRecipes = IS.GetRecipesWithItems(searchItems).ToList();
+        IEnumerable<Guid> byItem = IS.GetRecipesWithItems(searchItems);
+        IEnumerable<Guid> byName = IS.SearchRecipeIdsByName(search);
+        searchRecipes = byItem.Concat(byName).Distinct().ToList();
         DoRecipeSort();
     }
 
