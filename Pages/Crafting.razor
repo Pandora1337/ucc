@@ -11,8 +11,6 @@
 @using ucc.Components.Tab
 @using ucc.Models
 
-@implements IDisposable
-
 @inject ucc.Services.CraftingService CS
 @inject ucc.Services.InventoryService IS
 @inject ucc.Data.LocalStorage LS;
@@ -75,28 +73,6 @@
 <Modal @ref="modalAddRecipe" Title="Add New Recipe">
     <div class="modal-body">
         <RecipeForm OnRecipeAdd="@modalAddRecipe.CloseAsync" recipe="modalRecipe" />
-    </div>
-</Modal>
-
-<Modal @ref="modalChoice" IsRequired="true" IsTitleEnabled="false">
-    <div class="modal-header justify-content-center">
-        <h4 class="modal-title pe-2">
-            Choose the recipe for
-        </h4>
-        <ItemBadge @key="@problemItem" ItemId="@problemItem" />
-    </div>
-
-    <div class="modal-body overflow-hidden pb-0">
-        <ul class="list-group">
-            @foreach (Recipe recipe in CS.RecipeOptions!)
-            {
-                <li class="list-group-item border-0 p-0 pb-3" @key="recipe.Guid">
-                    <button type="button" class="btn btn-light p-0 w-100" @onclick="@(async () => CS.SelectRecipe(recipe))">
-                        <CraftingStep Recipe="recipe" />
-                    </button>
-                </li>
-            }
-        </ul>
     </div>
 </Modal>
 
@@ -241,18 +217,6 @@
         IsGridView = await LS.Get<bool>("craftingPageIsGridView");
     }
 
-    protected override void OnInitialized()
-    {
-        CS.OnChoiceRequest += OnNeedChoice;
-        CS.OnChoiceSelect += OnMadeChoice;
-    }
-
-    public void Dispose()
-    {
-        CS.OnChoiceRequest -= OnNeedChoice;
-        CS.OnChoiceSelect -= OnMadeChoice;
-    }
-
     private bool IsGridView { get; set; }
     private async Task ToggleRecipeGrid()
     {
@@ -311,21 +275,5 @@
         IsCrafting = true;
         await CS.Craft();
         IsCrafting = false;
-    }
-
-    private string problemItem = "";
-    private Modal modalChoice = null!;
-    private async void OnNeedChoice(string itemId)
-    {
-        if (CS.RecipeOptions != null)
-        {
-            problemItem = itemId;
-            await modalChoice.OpenAsync();
-        }
-    }
-
-    private async void OnMadeChoice()
-    {
-        await modalChoice.CloseAsync();
     }
 }

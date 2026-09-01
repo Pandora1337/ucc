@@ -216,25 +216,4 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         await UpdatePlannedCrafts();
     }
     #endregion
-
-    #region User Request
-    public event Action<string>? OnChoiceRequest;
-    public event Action? OnChoiceSelect;
-    public IEnumerable<Recipe>? RecipeOptions { get; private set; }
-    private async Task<Recipe> RequestUserResolve(string itemId, IEnumerable<Recipe> options)
-    {
-        RecipeOptions = options;
-        _choiceTask = new();
-        OnChoiceRequest?.Invoke(itemId);
-        return await _choiceTask.Task;
-    }
-
-    private TaskCompletionSource<Recipe> _choiceTask = new();
-    public void SelectRecipe(Recipe recipe)
-    {
-        RecipeOptions = null;
-        OnChoiceSelect?.Invoke();
-        _choiceTask.TrySetResult(recipe);
-    }
-    #endregion
 }
