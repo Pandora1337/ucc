@@ -10,12 +10,13 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
     protected LocalStorage LS { get; set; } = localStorage;
 
     public List<Ingredient> PlannedCrafts { get; set; } = new();
-    public CraftingParams cp { get; private set; } = new();
+    public CraftingParams CraftingParams { get; set; } = new();
     private CraftingData? craftingData = null;
 
     public async Task InitializeAsync()
     {
         PlannedCrafts = await LS.Get<List<Ingredient>>("plannedCrafts", []);
+        CraftingParams = await LS.Get("craftingParams", CraftingParams);
         craftingData = await LS.Get<CraftingData>("craftingData", null);
     }
 
@@ -36,7 +37,7 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
             var recipes = IS.GetRecipesByResultId(itemId);
             foreach (Recipe recipe in recipes)
             {
-                if (cp.Blacklist.Contains(recipe.Guid))
+                if (CraftingParams.Blacklist.Contains(recipe.Guid))
                     continue;
 
                 if (graph.AddNode(recipe.Guid, parentRecipe))
@@ -50,7 +51,7 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
             }
         }
 
-        (var solution, cp.Costs) = Simplex.Solve(recipesList.ToList(), targetDict, cp.Costs);
+        (var solution, CraftingParams.Costs) = Simplex.Solve(recipesList.ToList(), targetDict, CraftingParams.Costs);
         var cd = new CraftingData();
 
         // cumulative amount of ingredients used
@@ -79,6 +80,7 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
 
         (cd.ItemsProd, cd.ItemsInt, cd.ItemsRaw) = SortItemCategories(itemDeltas, ingCumulative);
         await SetCraftingData(cd);
+        await UpdateCraftingParams();
     }
     #endregion
 
@@ -197,6 +199,17 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
     public async Task UpdatePlannedCrafts()
     {
         await LS.Set("plannedCrafts", PlannedCrafts);
+    }
+
+    public async Task SetCraftingParams(CraftingParams? craftingParams)
+    {
+        CraftingParams = craftingParams ?? new();
+        await UpdateCraftingParams();
+    }
+
+    public async Task UpdateCraftingParams()
+    {
+        await LS.Set("craftingParams", CraftingParams);
     }
 
     public CraftingData? GetCraftingData()

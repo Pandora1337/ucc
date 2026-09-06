@@ -189,7 +189,8 @@
                 <div @key="itemId" class="col-12 
                     @(cp.Costs.Count > 1 ? "col-lg-6" : "")
                     @(cp.Costs.Count > 2 ? "col-xxl-4" : "")">
-                    <RecipeIngredient ItemId="@itemId" @bind-Quantity="@cp.Costs[itemId]" InputTitle="Cost" />
+                    <RecipeIngredient ItemId="@itemId" Quantity="@cp.Costs[itemId]" InputTitle="Cost"
+                                      QuantityChanged="@(async (v) => { cp.Costs[itemId] = v; await CS.UpdateCraftingParams(); })" />
                 </div>
             }
         </div>
@@ -201,7 +202,7 @@
             Select what recipes are used in the calculator.
         </p>
 
-        <RecipeFilter Blacklist="cp.Blacklist" />
+        <RecipeFilter Blacklist="cp.Blacklist" OnBlacklistChanged="CS.UpdateCraftingParams" />
     </Tab>
 </TabList>
 
@@ -210,7 +211,7 @@
 
     private CraftingData? cd => CS.GetCraftingData();
 
-    private CraftingParams? cp => CS.cp;
+    private CraftingParams cp => CS.CraftingParams;
 
     protected override async Task OnInitializedAsync()
     {
