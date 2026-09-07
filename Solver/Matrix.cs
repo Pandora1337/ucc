@@ -4,6 +4,8 @@ namespace ucc.Solver;
 
 public sealed class Matrix
 {
+    public static readonly float DefaultCost = 100f;
+
     public int Rows { get; private set; } = 0;
     public int Cols { get; private set; } = 0;
 
@@ -57,14 +59,9 @@ public sealed class Matrix
         foreach (string itemId in raws)
         {
             _raws[itemId] = itemCount + recipeCount + rawCol;
-            if (!costs.ContainsKey(itemId))
-            {
-                costs[itemId] = 100;
-                if (seen.Add(itemId))
-                {
-                    _itemIndex.Add(itemId);
-                }
-            }
+            var cost = costs.GetValueOrDefault(itemId, DefaultCost);
+            _costs[itemId] = cost;
+            costs[itemId] = cost;
             rawCol++;
         }
 
@@ -88,8 +85,8 @@ public sealed class Matrix
 
 
         // Cols = itemCount + recipeCount + 1;
-        Cols = itemCount + recipeCount + costs.Count + 1;
-        Rows = recipeCount + costs.Count + 1;
+        Cols = itemCount + recipeCount + _costs.Count + 1;
+        Rows = recipeCount + _costs.Count + 1;
         _matrix = Fraction.Matrix(Rows, Cols, Fraction.Zero);
 
         int r = 0;
@@ -118,7 +115,7 @@ public sealed class Matrix
         }
 
         // add raw resource rows and their cost
-        foreach ((string itemId, float cost) in costs)
+        foreach ((string itemId, float cost) in _costs)
         {
             if (!_itemIndex.Contains(itemId))
             {
@@ -135,7 +132,6 @@ public sealed class Matrix
 
             // set cost
             _matrix[r, Cols - 1] = Fraction.FromDouble(cost);
-            _costs[itemId] = cost;
             r++;
         }
 
@@ -210,6 +206,22 @@ public sealed class Matrix
     public Fraction OutputOfCol(int col)
     {
         return _matrix[Rows - 1, col];
+    }
+
+    /// <summary>
+    /// Returns Costs that are either used in the matrix, or have non-default values
+    /// </summary>
+    /// <param name="costs"></param>
+    /// <returns></returns>
+    public Dictionary<string, float> FilterOutUnusedCosts(Dictionary<string, float> costs)
+    {
+        var newCosts = new Dictionary<string, float>();
+        foreach ((string itemId, float cost) in costs)
+        {
+            if (_costs.ContainsKey(itemId) || cost != DefaultCost)
+                newCosts[itemId] = cost;
+        }
+        return newCosts;
     }
 
     public void Print(bool isMixedFractions = false)

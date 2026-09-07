@@ -178,10 +178,19 @@
     </Tab>
 
     <Tab Title="Cost" Icon="bi-coin">
-        <h5 class="mb-1">Raw item costs</h5>
-        <p class="mb-2 text-muted">
-            Higher cost means the calculator will try to use that item less.
-        </p>
+        <div class="d-flex justify-content-between mb-2">
+            <div>
+                <h5 class="mb-1">Raw item costs</h5>
+                <p class="mb-0 text-muted">
+                    Higher cost means the calculator will try to use that item less.
+                </p>
+            </div>
+
+            <button class="btn btn-sm btn-danger h-100 align-self-center" title="Clear All Costs"
+                    @onclick="@(async () => { cp.Costs.Clear(); await CS.UpdateCraftingParams(); })">
+                <i class="bi bi-trash3" aria-label="Clear All Costs" />
+            </button>
+        </div>
 
         <div class="row g-2">
             @foreach ((string itemId, float cost) in cp.Costs)
@@ -189,8 +198,9 @@
                 <div @key="itemId" class="col-12 
                     @(cp.Costs.Count > 1 ? "col-lg-6" : "")
                     @(cp.Costs.Count > 2 ? "col-xxl-4" : "")">
-                    <RecipeIngredient ItemId="@itemId" Quantity="@cp.Costs[itemId]" InputTitle="Cost"
-                                      QuantityChanged="@(async (v) => { cp.Costs[itemId] = v; await CS.UpdateCraftingParams(); })" />
+                    <RecipeIngredient ItemId="@itemId" Quantity="@cp.Costs[itemId]" InputTitle="Cost" EnableBtn="true"
+                                      QuantityChanged="@(async (v) => { cp.Costs[itemId] = v; await CS.UpdateCraftingParams(); })"
+                                      OnBtnClicked="@(async () => { cp.Costs.Remove(itemId); await CS.UpdateCraftingParams(); })" />
                 </div>
             }
         </div>

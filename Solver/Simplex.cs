@@ -8,7 +8,7 @@ public sealed class Simplex
     {
         var m = new Matrix(recipes, targets, costs);
         SolveMatrix(m);
-        return (m.GetSolution(), m.GetCosts());
+        return (m.GetSolution(), m.FilterOutUnusedCosts(costs));
     }
 
     private static void SolveMatrix(Matrix m)
