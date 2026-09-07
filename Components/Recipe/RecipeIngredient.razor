@@ -58,7 +58,11 @@
         if (prevQuantity != Quantity)
         {
             prevQuantity = Quantity;
-            QuantityChanged.InvokeAsync(Quantity);
+            if (QuantityChanged.HasDelegate)
+            {
+                QuantityChanged.InvokeAsync(Quantity);
+            }
+
             return true;
         }
 
