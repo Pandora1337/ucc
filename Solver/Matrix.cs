@@ -11,7 +11,6 @@ public sealed class Matrix
 
     private Fraction[,] _matrix;
 
-    private Dictionary<string, int> _raws = [];
     private Dictionary<string, float> _costs = [];
     private List<string> _itemIndex = [];
     private List<Guid> _recipeIndex = [];
@@ -52,17 +51,12 @@ public sealed class Matrix
             }
         }
 
-        int itemCount = _itemIndex.Count;
-        int recipeCount = recipes.Count;
-
-        int rawCol = 0;
+        // Set cost dict for raw items
         foreach (string itemId in raws)
         {
-            _raws[itemId] = itemCount + recipeCount + rawCol;
             var cost = costs.GetValueOrDefault(itemId, DefaultCost);
             _costs[itemId] = cost;
             costs[itemId] = cost;
-            rawCol++;
         }
 
         // Console.WriteLine("COSTS:");
@@ -83,10 +77,8 @@ public sealed class Matrix
         // [   raws   ]
         // [target out]
 
-
-        // Cols = itemCount + recipeCount + 1;
-        Cols = itemCount + recipeCount + _costs.Count + 1;
-        Rows = recipeCount + _costs.Count + 1;
+        Cols = _itemIndex.Count + recipes.Count + 1;
+        Rows = recipes.Count + _costs.Count + 1;
         _matrix = Fraction.Matrix(Rows, Cols, Fraction.Zero);
 
         int r = 0;
@@ -107,7 +99,7 @@ public sealed class Matrix
             }
 
             // set recipe-recipe value to 1
-            _matrix[r, r + itemCount] = Fraction.One;
+            _matrix[r, r + _itemIndex.Count] = Fraction.One;
 
             // set cost of recipe to 1
             _matrix[r, Cols - 1] = Fraction.One;
@@ -126,9 +118,6 @@ public sealed class Matrix
 
             // set raw item input
             _matrix[r, itemIndex[itemId]] = Fraction.One;
-
-            // set raw item delta
-            _matrix[r, _raws[itemId]] = Fraction.One;
 
             // set cost
             _matrix[r, Cols - 1] = Fraction.FromDouble(cost);
@@ -163,16 +152,6 @@ public sealed class Matrix
         }
 
         return recipeGuide;
-    }
-
-    public Dictionary<string, int> GetRawDelta()
-    {
-        Console.WriteLine("RAW NEEDED:");
-        foreach ((string itemId, int index) in _raws)
-        {
-            Console.WriteLine($"{itemId}: {OutputOfCol(index).ToFloat()}");
-        }
-        return _raws;
     }
 
     public Dictionary<string, float> GetCosts()
@@ -228,9 +207,9 @@ public sealed class Matrix
     {
         string items = string.Join(", ", _itemIndex);
         string recipes = string.Join(", ", _recipeIndex);
-        string raws = string.Join(", ", _raws.Keys);
+        string raws = string.Join(", ", _costs.Keys);
 
-        Console.WriteLine($"Cols: {items}, {recipes}, {raws}, cost");
+        Console.WriteLine($"Cols: {items}, {recipes}, cost");
         Console.WriteLine($"Rows: {recipes}, {raws}, output");
 
         for (int i = 0; i < Rows; i++)
