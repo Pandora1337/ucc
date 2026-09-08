@@ -23,10 +23,20 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
     #region Craft
     public async Task Craft()
     {
+        Dictionary<string, float> targetDict = [];
+        foreach ((string itemId, float amount) in PlannedCrafts)
+        {
+            if (amount <= 0)
+                continue;
+
+            targetDict[itemId] = targetDict.GetValueOrDefault(itemId, 0) + amount;
+        }
+
+        if (targetDict.Count == 0)
+            return;
+
         var graph = new Graph();
         var recipesList = new HashSet<Recipe>();
-
-        Dictionary<string, float> targetDict = CollapseList(PlannedCrafts);
         foreach ((string itemId, float amount) in targetDict)
         {
             ExploreItem(itemId);
@@ -34,20 +44,28 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
 
         void ExploreItem(string itemId, Guid? parentRecipe = null)
         {
+            bool hasRecipe = false;
             var recipes = IS.GetRecipesByResultId(itemId);
             foreach (Recipe recipe in recipes)
             {
                 if (CraftingParams.Blacklist.Contains(recipe.Guid))
                     continue;
 
+                hasRecipe = true;
+                // skip if already in the graph
                 if (graph.AddNode(recipe.Guid, parentRecipe))
                     continue;
 
                 recipesList.Add(recipe);
-                foreach ((string ingId, float ingAmount) in CollapseList(recipe.Ingredients))
+                foreach ((string ingId, float ingAmount) in recipe.Ingredients.DistinctBy(x => x.ItemId))
                 {
                     ExploreItem(ingId, recipe.Guid);
                 }
+            }
+
+            if (!hasRecipe)
+            {
+                targetDict.Remove(itemId);
             }
         }
 
@@ -172,16 +190,6 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         return (prods, inter, raws);
     }
     #endregion
-
-    public static Dictionary<string, float> CollapseList(List<Ingredient> ingredients)
-    {
-        Dictionary<string, float> collapsed = [];
-        foreach (Ingredient ing in ingredients)
-        {
-            collapsed[ing.ItemId] = collapsed.GetValueOrDefault(ing.ItemId, 0) + ing.Amount;
-        }
-        return collapsed;
-    }
 
     #region Get/Set
     public async Task OnItemDeleted(Ingredient ing)

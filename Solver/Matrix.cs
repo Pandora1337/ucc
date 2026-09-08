@@ -42,15 +42,6 @@ public sealed class Matrix
             }
         }
 
-        foreach ((string itemId, float amount) in targets)
-        {
-            // if (amount >= 0) continue;
-            if (seen.Add(itemId))
-            {
-                _itemIndex.Add(itemId);
-            }
-        }
-
         // Set cost dict for raw items
         foreach (string itemId in raws)
         {
@@ -127,8 +118,7 @@ public sealed class Matrix
         // add Output row
         foreach ((string itemId, float amount) in targets)
         {
-            // if (amount >= 0) continue;
-            _matrix[Rows - 1, itemIndex[itemId]] = Fraction.FromDouble(-float.Abs(amount));
+            _matrix[Rows - 1, itemIndex[itemId]] = Fraction.FromDouble(-amount);
         }
     }
     #endregion

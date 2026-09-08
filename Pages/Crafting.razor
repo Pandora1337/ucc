@@ -277,12 +277,6 @@
     private bool IsCrafting = false;
     private async Task Craft()
     {
-        if (plannedCrafts.Count == 0)
-        {
-            await CS.SetCraftingData(null);
-            return;
-        }
-
         IsCrafting = true;
         await CS.Craft();
         IsCrafting = false;
