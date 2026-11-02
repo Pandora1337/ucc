@@ -35,7 +35,7 @@ public class InventoryService(IndexedDBManager db)
         await TryAddItem("Log");
         await TryAddItem("Plank");
 
-        AddRecipe(new Recipe
+        await TryAddRecipe(new Recipe
         {
             Products = [
               new("plank", 2),
@@ -47,7 +47,7 @@ public class InventoryService(IndexedDBManager db)
             BatchSize = 16,
         });
 
-        AddRecipe(new Recipe
+        await TryAddRecipe(new Recipe
         {
             Products = [
               new("crafting-table", 1),
@@ -115,22 +115,21 @@ public class InventoryService(IndexedDBManager db)
         if (string.IsNullOrEmpty(newItem.Id))
             return false;
 
-        bool resp = items.TryAdd(newItem.Id, newItem);
-        if (resp)
-        {
-            await DB.AddRecord(new StoreRecord<Item>()
-            {
-                Storename = IndexedDB.Items,
-                Data = newItem
-            });
+        if (!items.TryAdd(newItem.Id, newItem))
+            return false;
 
-            OnItemListChange?.Invoke();
-            OnItemUpdate?.Invoke(newItem.Id);
-        }
+        await DB.AddRecord(new StoreRecord<Item>()
+        {
+            Storename = IndexedDB.Items,
+            Data = newItem
+        });
+
+        OnItemListChange?.Invoke();
+        OnItemUpdate?.Invoke(newItem.Id);
 
         // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW ITEM: {newItem.Name} ID: {newItem.Id}");
 
-        return resp;
+        return true;
     }
 
     public async Task<bool> TryUpdateItem(string id, Item newItem)
@@ -175,40 +174,24 @@ public class InventoryService(IndexedDBManager db)
         return items.ContainsKey(id);
     }
 
-    public string GetItemIdByName(string itemName)
-    {
-        return items.FirstOrDefault(x => x.Value.Name == itemName).Key;
-    }
-
-    public string GetItemNameById(string itemId)
-    {
-        return items.TryGetValue(itemId, out Item? item) ? item.Name : "???";
-    }
-
     public Item GetItem(string itemId)
     {
         return items.GetValueOrDefault(itemId, Item.GetUnknown(itemId));
     }
 
-    public bool TryGetItem(string itemId, out Item item)
-    {
-        return items.TryGetValue(itemId, out item!);
-    }
-
     public async Task SetItems(Dictionary<string, Item> newItems)
     {
-        await DB.ClearStore(IndexedDB.Items);
+        await ClearAllItems();
         foreach ((string id, Item item) in newItems)
         {
-            await DB.AddRecord<Item>(new()
-            {
-                Storename = IndexedDB.Items,
-                Data = item
-            });
+            await TryAddItem(item);
         }
+    }
 
-        items = newItems;
-        OnItemListChange?.Invoke();
+    #region Search
+    public IEnumerable<string> SearchItemIds(string search)
+    {
+        return SearchItems(search).Select(x => x.Id);
     }
 
     public IEnumerable<Item> SearchItems(string search)
@@ -221,26 +204,55 @@ public class InventoryService(IndexedDBManager db)
             StringComparison.OrdinalIgnoreCase)
         );
     }
+    #endregion
 
     public Dictionary<string, Item> GetItems()
     {
         return items;
     }
 
+    #region Sort
+    public enum ItemSort
+    {
+        Name,
+        Date,
+    }
+
+    public IEnumerable<string> DoItemIdSort(IEnumerable<string> toFilter, ItemSort itemSort, bool IsAscending = true)
+    {
+        IEnumerable<Item> items = toFilter.Select(GetItem);
+        return DoItemIdSort(items, itemSort, IsAscending);
+    }
+
+    public IEnumerable<string> DoItemIdSort(IEnumerable<Item> toFilter, ItemSort itemSort, bool IsAscending = true)
+    {
+        IEnumerable<Item> filteredItems = itemSort switch
+        {
+            ItemSort.Name => SortByDirection(toFilter, x => x.Name, IsAscending),
+            ItemSort.Date => SortByDirection(toFilter, x => x.DateModified, IsAscending),
+            _ => toFilter
+        };
+
+        return filteredItems.Select(x => x.Id);
+    }
+    #endregion
     #endregion
 
     #region Recipes
-
     private Dictionary<Guid, Recipe> recipes = [];
 
     public event Action? OnRecipeListChange;
     public event Action<Guid>? OnRecipeUpdate;
 
-    public void AddRecipe(Recipe recipe)
+    public async Task<bool> TryAddRecipe(Recipe recipe)
     {
-        recipe.Guid = Guid.NewGuid();
-        recipes.Add(recipe.Guid, recipe);
-        DB.AddRecord(new StoreRecord<Recipe>()
+        if (recipe.Guid == Guid.Empty)
+            return false;
+
+        if (!recipes.TryAdd(recipe.Guid, recipe))
+            return false;
+
+        await DB.AddRecord(new StoreRecord<Recipe>()
         {
             Storename = IndexedDB.Recipes,
             Data = recipe
@@ -250,16 +262,19 @@ public class InventoryService(IndexedDBManager db)
         // Console.WriteLine($"{(resp ? "Added" : "Failed to add")} NEW Recipe for: {recipe.ResultId} ID: {2}");
 
         OnRecipeListChange?.Invoke();
+        OnRecipeUpdate?.Invoke(recipe.Guid);
+
+        return true;
     }
 
-    public bool TryUpdateRecipe(Guid guid, Recipe recipe)
+    public async Task<bool> TryUpdateRecipe(Guid guid, Recipe recipe)
     {
         if (!recipes.ContainsKey(guid))
             return false;
 
         recipe.DateModified = DateTime.Now;
         recipes[guid] = recipe;
-        DB.UpdateRecord(new StoreRecord<Recipe>()
+        await DB.UpdateRecord(new StoreRecord<Recipe>()
         {
             Storename = IndexedDB.Recipes,
             Data = recipe
@@ -286,6 +301,7 @@ public class InventoryService(IndexedDBManager db)
 
     public async Task ClearAllRecipes()
     {
+        itemToRecipes.Clear();
         recipes.Clear();
         await DB.ClearStore(IndexedDB.Recipes);
         OnRecipeListChange?.Invoke();
@@ -296,54 +312,114 @@ public class InventoryService(IndexedDBManager db)
         return recipes.GetValueOrDefault(guid)!;
     }
 
+    #region Get/Set
+    public IEnumerable<Guid> GetRecipesWithItems(IEnumerable<string> items)
+    {
+        var guids = new HashSet<Guid>();
+        foreach (string item in items)
+        {
+            foreach (Recipe recipe in GetRecipesWithItem(item))
+            {
+                if (guids.Add(recipe.Guid))
+                    yield return recipe.Guid;
+            }
+        }
+    }
+
     public IEnumerable<Recipe> GetRecipesWithItem(string itemId)
     {
-        List<Recipe> list = [];
         if (!itemToRecipes.TryGetValue(itemId, out HashSet<Guid>? guids))
-            return list;
+            yield break;
 
         foreach (Guid guid in guids)
         {
-            list.Add(GetRecipeById(guid));
+            yield return GetRecipeById(guid);
         }
-
-        return list;
     }
 
     public IEnumerable<Recipe> GetRecipesByResultId(string resultId)
     {
-        HashSet<Recipe> list = [];
         foreach (Recipe recipe in GetRecipesWithItem(resultId))
         {
             if (recipe.ContainsProductId(resultId))
             {
-                list.Add(recipe);
+                yield return recipe;
             }
         }
-        return list;
     }
 
     public async Task SetRecipes(Dictionary<Guid, Recipe> newRecipes)
     {
-        await DB.ClearStore(IndexedDB.Recipes);
+        await ClearAllRecipes();
         foreach ((Guid id, Recipe recipe) in newRecipes)
         {
-            await DB.AddRecord<Recipe>(new()
-            {
-                Storename = IndexedDB.Recipes,
-                Data = recipe
-            });
+            await TryAddRecipe(recipe);
         }
-
-        recipes = newRecipes;
-        OnRecipeListChange?.Invoke();
     }
 
     public Dictionary<Guid, Recipe> GetRecipes()
     {
         return recipes;
     }
+    #endregion
 
+    #region Search
+    public IEnumerable<Recipe> SearchRecipesByItemsAndName(string search)
+    {
+        var items = SearchItemIds(search);
+        var byItem = GetRecipesWithItems(items).Select(GetRecipeById);
+        var byName = SearchRecipesByName(search);
+        return byName.Concat(byItem).DistinctBy(r => r.Guid);
+    }
+
+    public IEnumerable<Guid> SearchRecipeIdsByName(string search)
+    {
+        return SearchRecipesByName(search).Select(x => x.Guid);
+    }
+
+    public IEnumerable<Recipe> SearchRecipesByName(string search)
+    {
+        IEnumerable<Recipe> recipeValues = recipes.Values;
+        if (string.IsNullOrEmpty(search))
+            return recipeValues;
+
+        return recipeValues.Where(recipe => recipe.Name.Contains(search,
+            StringComparison.OrdinalIgnoreCase)
+        );
+    }
+    #endregion
+
+    #region Sort
+    public enum RecipeSort
+    {
+        Name,
+        Date,
+        Station,
+        BatchSize,
+        CraftingTime,
+    }
+
+    public IEnumerable<Guid> DoRecipeIdSort(IEnumerable<Guid> toFilter, RecipeSort recipeSort, bool IsAscending = true)
+    {
+        IEnumerable<Recipe> recipes = toFilter.Select(GetRecipeById);
+        return DoRecipeIdSort(recipes, recipeSort, IsAscending);
+    }
+
+    public IEnumerable<Guid> DoRecipeIdSort(IEnumerable<Recipe> toFilter, RecipeSort recipeSort, bool IsAscending = true)
+    {
+        IEnumerable<Recipe> filteredRecipes = recipeSort switch
+        {
+            RecipeSort.Name => SortByDirection(toFilter, x => x.Name, IsAscending),
+            RecipeSort.Date => SortByDirection(toFilter, x => x.DateModified, IsAscending),
+            RecipeSort.Station => SortByDirection(toFilter, x => x.StationId, IsAscending),
+            RecipeSort.BatchSize => SortByDirection(toFilter, x => x.BatchSize, IsAscending),
+            RecipeSort.CraftingTime => SortByDirection(toFilter, x => x.CraftingTime, IsAscending),
+            _ => toFilter
+        };
+
+        return filteredRecipes.Select(x => x.Guid);
+    }
+    #endregion
     #endregion
 
     public async Task ClearDB()
@@ -353,6 +429,11 @@ public class InventoryService(IndexedDBManager db)
         items.Clear();
         OnItemListChange?.Invoke();
         OnRecipeListChange?.Invoke();
+    }
+
+    private static IOrderedEnumerable<T> SortByDirection<T, TKey>(IEnumerable<T> source, Func<T, TKey> selector, bool ascending)
+    {
+        return ascending ? source.OrderBy(selector) : source.OrderByDescending(selector);
     }
 
     public void SerialiseToJSON(object data)

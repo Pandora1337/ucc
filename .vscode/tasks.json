@@ -32,8 +32,7 @@
             "args": [
                 "watch",
                 "run",
-                "--project",
-                "${workspaceFolder}/ucc.csproj"
+                "--non-interactive",
             ],
             "problemMatcher": "$msCompile"
         },
@@ -45,7 +44,6 @@
                 "-f",
                 "dotnet"
             ],
-            "group": "build",
             "presentation": {
                 "echo": false,
                 "reveal": "silent",
