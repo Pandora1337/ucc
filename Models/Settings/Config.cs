@@ -1,4 +1,6 @@
-namespace ucc.Models;
+using ucc.Models.Crafting;
+
+namespace ucc.Models.Settings;
 
 public class Config
 {
