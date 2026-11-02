@@ -1,5 +1,6 @@
 using ucc.Data;
 using ucc.Models;
+using ucc.Models.Crafting;
 using ucc.Solver;
 
 namespace ucc.Services;

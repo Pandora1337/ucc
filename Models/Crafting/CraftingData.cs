@@ -1,4 +1,4 @@
-namespace ucc.Models;
+namespace ucc.Models.Crafting;
 
 public class CraftingData()
 {
