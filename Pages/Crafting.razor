@@ -83,7 +83,7 @@
 <TabList Class="mb-0 mb-3">
     <Tab Title="Crafting" Icon="bi-tools" IsAlwaysRendered="true">
 
-        <Accordion cClass="mb-3">
+        <Accordion>
             <AccordionItem Icon="bi-list" Title="Item List" OpenOnStart="true">
 
                 @if (cd.ItemsProd.Count > 0)
@@ -124,19 +124,17 @@
             </AccordionItem>
         </Accordion>
 
-        <div class="d-flex justify-content-between">
-            @if (cd.CraftingTime > 0)
-            {
-                <h5 class="mb-0 align-self-center">
-                    Total Crafting Time:
-                    <i class="bi bi-clock ms-2 me-1" aria-hidden="true" />
-                    @(cd.CraftingTime)s
-                </h5>
-            }
-            else
-            {
-                <div />
-            }
+        <div class="d-flex justify-content-between mt-lg-3 @(cd.CraftingTime > 0 ? "mt-3" : "")">
+            <h5 class="mb-0 align-self-center">
+                @if (cd.CraftingTime > 0)
+                {
+                    <span>
+                        Total Crafting Time:
+                        <i class="bi bi-clock ms-2 me-1" aria-hidden="true" />
+                        @(cd.CraftingTime)s
+                    </span>
+                }
+            </h5>
 
             <div class="btn-group d-none d-lg-inline-flex" role="group">
                 <input type="radio" class="btn-check" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
