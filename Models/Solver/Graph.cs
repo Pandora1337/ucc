@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace ucc.Solver;
+namespace ucc.Models.Solver;
 
 public class Graph
 {

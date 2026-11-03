@@ -1,6 +1,4 @@
-using ucc.Models;
-
-namespace ucc.Solver;
+namespace ucc.Models.Solver;
 
 public sealed class Simplex
 {

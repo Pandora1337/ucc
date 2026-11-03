@@ -1,7 +1,6 @@
-
 using System.Numerics;
 
-namespace ucc.Solver;
+namespace ucc.Models.Solver;
 
 public sealed class Fraction
 {

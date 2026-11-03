@@ -1,7 +1,7 @@
 using ucc.Data;
 using ucc.Models;
 using ucc.Models.Crafting;
-using ucc.Solver;
+using ucc.Models.Solver;
 
 namespace ucc.Services;
 
