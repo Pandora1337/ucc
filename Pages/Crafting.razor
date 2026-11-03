@@ -30,12 +30,12 @@
 
 <div class="d-grid justify-content-center g-3 gap-3 mb-3" style="grid-template-columns: repeat(auto-fit, 128px);">
     <div class="me-3">
-        <BtnAdd OnClicked="@(() => OpenItemPicker())" style="width: 128px; min-height: 200px; height: 100%;" />
+        <BtnAdd OnClicked="OpenItemPicker" style="width: 128px; min-height: 200px; height: 100%;" />
     </div>
 
     @foreach (Ingredient ing in plannedCrafts)
     {
-        <ItemCard @key="ing.ItemId" ItemId="@ing.ItemId" IconSize="128px" style="max-width: 128px;"
+        <ItemCard @key="ing.GetHashCode()" ItemId="@ing.ItemId" IconSize="128px" style="max-width: 128px;"
                   OnItemClicked="@(() => CS.OnItemDeleted(ing))" cClass="position-relative">
             <BtnDelete OnDelete="@(() => OpenAddRecipeModal(ing.ItemId))" ImgSrc="bi-journal-plus"
                        cClass="btn-outline-warning" Title="Create recipe for this item" style="top: 88px;" />
@@ -157,7 +157,7 @@
                 (Guid guid, float ops) = cd.RecipeGuideList.ElementAt(i);
                 Recipe recipe = IS.GetRecipeById(guid);
 
-                <div @key="@guid" class="mt-3 col-12 
+                <div @key="guid.ToString() + ops" class="mt-3 col-12 
                     @(IsGridView && cd.RecipeGuideList.Count > 1 ? "col-lg-6" : "")
                     @(IsGridView && cd.RecipeGuideList.Count > 2 ? "col-xxl-4" : "")">
 
@@ -194,7 +194,7 @@
         <div class="row g-2">
             @foreach ((string itemId, float cost) in cp.Costs)
             {
-                <div @key="itemId" class="col-12 
+                <div @key="itemId + cost" class="col-12 
                     @(cp.Costs.Count > 1 ? "col-lg-6" : "")
                     @(cp.Costs.Count > 2 ? "col-xxl-4" : "")">
                     <RecipeIngredient ItemId="@itemId" Quantity="@cp.Costs[itemId]" InputTitle="Cost" EnableBtn="true"
