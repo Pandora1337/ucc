@@ -31,12 +31,13 @@ public class InventoryService(IndexedDBManager db)
 
     public async void GenerateStuff()
     {
-        await TryAddItem("Crafting Table");
-        await TryAddItem("Log");
-        await TryAddItem("Plank");
+        await TryAddItem(new("Crafting Table") { Id = Item.NameToId("Crafting Table") });
+        await TryAddItem(new("Log") { Id = Item.NameToId("Log") });
+        await TryAddItem(new("Plank") { Id = Item.NameToId("Plank") });
 
         await TryAddRecipe(new Recipe
         {
+            Guid = Guid.NewGuid(),
             Products = [
               new("plank", 2),
               new("plank", 2),
@@ -49,6 +50,7 @@ public class InventoryService(IndexedDBManager db)
 
         await TryAddRecipe(new Recipe
         {
+            Guid = Guid.NewGuid(),
             Products = [
               new("crafting-table", 1),
             ],
@@ -98,17 +100,6 @@ public class InventoryService(IndexedDBManager db)
 
     public event Action? OnItemListChange;
     public event Action<string>? OnItemUpdate;
-
-    public async Task<bool> TryAddItem(string name)
-    {
-        if (name == "")
-        {
-            name = Item.DefaultName;
-        }
-
-        Item newItem = new(name);
-        return await TryAddItem(newItem);
-    }
 
     public async Task<bool> TryAddItem(Item newItem)
     {
