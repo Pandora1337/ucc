@@ -57,14 +57,27 @@
                     <button class="btn btn-sm btn-outline-primary"
                             title="Show which icons are currently cached (developer tool)"
                             @onclick="@(() => IconService.ShowCache())">
-                        Show Cache
+                        Print Cache
                     </button>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-1">
                     <div class="text-muted small">
-                        Unused icons should be automatically removed after 10 seconds of not being used.
-                        If not, you can press this button.
+                        How long do icons stay in cache without an active reference (Default: 10s)
+                    </div>
+
+                    <div>
+                        <div class="input-group">
+                            <input type="number" step="any" class="form-control" value="@IconService.GetTimeout()"
+                                   @onchange="HandleValueChanged" style="max-width: 80px; min-width: 30px;" />
+                            <span class="input-group-text">s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-1">
+                    <div class="text-muted small">
+                        Force evict all icons from cache.
                     </div>
 
                     <button class="btn btn-outline-danger" title="Remove all cached icons immediately"
@@ -208,10 +221,10 @@
         </button>
 
         <button type="button" class="btn btn-lg btn-warning w-50" @onclick="@(async () =>
-                {
-                    iconStoreSize = await IconService.RecalculateTotalIconSize();
-                    await modalIconLoad.CloseAsync();
-                })">
+                            {
+                                iconStoreSize = await IconService.RecalculateTotalIconSize();
+                                await modalIconLoad.CloseAsync();
+                            })">
             Recalculate
         </button>
     </div>
@@ -230,5 +243,13 @@
     {
         iconStoreSize = await IconService.GetTotalIconSize();
         storageEstimate = await JS.InvokeAsync<StorageEstimate>("getStorageEstimate");
+    }
+    
+    private async Task HandleValueChanged(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out double parsedValue))
+        {
+            await IconService.SetTimeout(parsedValue);
+        }
     }
 }
