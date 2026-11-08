@@ -24,15 +24,18 @@
         </span>
     }
 
-    @if (IsInvalid)
-    {
-        <span class="position-absolute d-flex justify-content-center align-items-center"
-              style="width: 16px; height: 16px; top: 8px; right: 8px;"
-              title="This recipe has been modified, and needs re-crafting to update!">
+    <div class="position-absolute end-0 top-0 d-flex justify-content-center align-items-center">
+        @if (IsInvalid)
+        {
+            <div class="mx-2 mt-1" title="This recipe has been modified, and needs re-crafting to update!">
+                <i class="bi bi-exclamation-circle text-danger" aria-hidden="true" />
+            </div>
+        }
 
-            <i class="bi bi-exclamation-circle text-danger" aria-hidden="true" />
-        </span>
-    }
+        <div class="px-2 py-1 text-bg-secondary ops-label" title="How many times this recipe is used">
+            x@(float.Round(Operations, 2))
+        </div>
+    </div>
 
     @if (!string.IsNullOrEmpty(Recipe.Name))
     {
@@ -45,7 +48,7 @@
         @for (int i = 0; i < Recipe.Ingredients.Count; i++)
         {
             (string itemId, float amount) = Recipe.Ingredients[i];
-            <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount * Operations)" style="max-width: 49%;" />
+            <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount)" style="max-width: 49%;" />
         }
     </div>
 
@@ -55,13 +58,16 @@
             {
                 @if (OrderNum > -1)
                 {
-                    int batches = (Operations / (int)Recipe.BatchSize);
-                    int mod = Operations % (int)Recipe.BatchSize;
+                    int batches = (OperationsInt / (int)Recipe.BatchSize);
+                    int mod = OperationsInt % (int)Recipe.BatchSize;
                     <span title="Number of full batches, batch size, and the size of the incomplete batch">
                         @batches x
                         <i class="bi bi-stack" aria-hidden="true" />
                         @Recipe.BatchSize
-                        @if (mod > 0) { <span> (+@(mod))</span> }
+                        @if (mod > 0)
+                        {
+                            <span> (+@(mod))</span>
+                        }
                     </span>
                 }
                 else
@@ -95,7 +101,7 @@
             {
                 <span title="Crafting Time">
                     <i class="bi bi-clock" aria-hidden="true" />
-                    @(Recipe.GetTotalCraftingTime(Operations))s
+                    @(Recipe.GetTotalCraftingTime(OperationsInt))s
                 </span>
             }
         </div>
@@ -105,7 +111,7 @@
         @for (int i = 0; i < Recipe.Products.Count; i++)
         {
             (string itemId, float amount) = Recipe.Products[i];
-            <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount * Operations)"
+            <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount)"
                        style="max-width: 100%;" />
         }
     </div>
@@ -113,9 +119,11 @@
 
 @code {
     [Parameter] public Recipe Recipe { get; set; } = default!;
-    [Parameter] public int Operations { get; set; } = 1;
+    [Parameter] public float Operations { get; set; } = 1;
     [Parameter] public string Class { get; set; } = "bg-body-tertiary";
     [Parameter] public int OrderNum { get; set; } = -1;
 
     [Parameter] public bool IsInvalid { get; set; } = false;
+
+    private int OperationsInt => (int)float.Ceiling(Operations);
 }

@@ -163,8 +163,7 @@
 
                     @if (recipe != null)
                     {
-                        int opsInt = (int)float.Ceiling(ops);
-                        <CraftingStep Recipe="recipe" Operations="opsInt" OrderNum="i + 1"
+                        <CraftingStep Recipe="recipe" Operations="ops" OrderNum="i + 1"
                                       IsInvalid="@(!recipe.IsOutdated(cd.DateCrafted))" />
                     }
                     else
