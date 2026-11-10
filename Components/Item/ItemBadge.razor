@@ -17,7 +17,7 @@
         @if (Amount != null)
         {
             <span class="text-xs fw-medium text-white" title="@Amount">
-                (x@(float.Round(Amount.Value, 2)))
+                (x@(Math.Ceiling(Amount.Value * 100) / 100))
             </span>
         }
 

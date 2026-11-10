@@ -35,7 +35,7 @@
         @if (OrderNum > 0)
         {
             <div class="px-2 py-1 text-bg-secondary ops-label" title="@Operations">
-                x@(float.Round(Operations, 2))
+                x@(Math.Ceiling(Operations * 100) / 100)
             </div>
         }
     </div>
