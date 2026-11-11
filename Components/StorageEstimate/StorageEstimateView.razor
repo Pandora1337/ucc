@@ -1,0 +1,63 @@
+@using Microsoft.JSInterop
+
+@namespace ucc.Components.StorageEstimate
+
+@inject IJSRuntime JS;
+
+@if (storageEstimate == null)
+    return;
+
+@{
+    float usagePercent = storageEstimate.GetPercent(storageEstimate.Usage);
+    float percentIcons = storageEstimate.GetPercent(IconSize);
+    float percentOther = usagePercent - percentIcons;
+}
+
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="card-title mb-0">Usage</h5>
+        <span class="badge text-bg-primary
+            @(usagePercent > 75 ? "text-bg-warning" : "")
+            @(usagePercent > 90 ? "text-bg-danger" : "")">
+            Used: @(StorageEstimate.Get2SigFig(usagePercent))%
+        </span>
+    </div>
+
+    <div class="progress-stacked">
+        <div class="progress" role="progressbar" aria-valuenow="@percentIcons" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Percentage of storage taken up by icons" title="Percentage of storage taken up by icons"
+             style="width: @(percentIcons)%">
+            <div class="progress-bar text-bg-primary">
+                @(StorageEstimate.Get2SigFig(percentIcons))%
+            </div>
+        </div>
+
+        <div class="progress" role="progressbar" aria-valuenow="@percentOther" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Percentage of storage taken up by other data"
+             title="Percentage of storage taken up by other data" style="width: @(percentOther)%">
+            <div class="progress-bar text-bg-info">
+                @(StorageEstimate.Get2SigFig(percentOther))%
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between small text-muted mt-2">
+        <span>
+            Used: <strong>@StorageEstimate.GetHumanReadable(storageEstimate.Usage)</strong>
+        </span>
+        <span>
+            Total: <strong>@StorageEstimate.GetHumanReadable(storageEstimate.Quota)</strong>
+        </span>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public int IconSize { get; set; } = 0;
+
+    private StorageEstimate? storageEstimate = null;
+    protected override async Task OnInitializedAsync()
+    {
+        storageEstimate = await JS.InvokeAsync<StorageEstimate>("getStorageEstimate");
+    }
+}

@@ -1,13 +1,12 @@
 @page "/settings"
 
-@using ucc.Models
 @using ucc.Components.Modal
 @using ucc.Components.ImportExport
+@using ucc.Components.StorageEstimate
 
 @inject ucc.Data.LocalStorage LS;
 @inject ucc.Services.InventoryService IS;
 @inject ucc.Services.IconService IconService;
-@inject Microsoft.JSInterop.IJSRuntime JS;
 
 <PageTitle>Settings</PageTitle>
 
@@ -96,49 +95,7 @@
         </div>
 
         <div class="card-body">
-            @if (storageEstimate != null)
-            {
-                float usagePercent = storageEstimate.GetPercent(storageEstimate.Usage);
-                float percentIcons = storageEstimate.GetPercent(iconStoreSize);
-                float percentOther = usagePercent - percentIcons;
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="card-title mb-0">Usage</h5>
-                        <span class="badge text-bg-primary
-                            @(usagePercent > 75 ? "text-bg-warning" : "")
-                            @(usagePercent > 90 ? "text-bg-danger" : "")">
-                            Used: @(StorageEstimate.Get2SigFig(usagePercent))%
-                        </span>
-                    </div>
-
-                    <div class="progress-stacked">
-                        <div class="progress" role="progressbar" aria-valuenow="@percentIcons" aria-valuemin="0"
-                             aria-valuemax="100" aria-label="Percentage of storage taken up by icons"
-                             title="Percentage of storage taken up by icons" style="width: @(percentIcons)%">
-                            <div class="progress-bar text-bg-primary">
-                                @(StorageEstimate.Get2SigFig(percentIcons))%
-                            </div>
-                        </div>
-
-                        <div class="progress" role="progressbar" aria-valuenow="@percentOther" aria-valuemin="0"
-                             aria-valuemax="100" aria-label="Percentage of storage taken up by other data"
-                             title="Percentage of storage taken up by other data" style="width: @(percentOther)%">
-                            <div class="progress-bar text-bg-info">
-                                @(StorageEstimate.Get2SigFig(percentOther))%
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-between small text-muted mt-2">
-                        <span>
-                            Used: <strong>@StorageEstimate.GetHumanReadable(storageEstimate.Usage)</strong>
-                        </span>
-                        <span>
-                            Total: <strong>@StorageEstimate.GetHumanReadable(storageEstimate.Quota)</strong>
-                        </span>
-                    </div>
-                </div>
-            }
+            <StorageEstimateView IconSize="iconStoreSize"/>
 
             <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-3">
                 <div>
@@ -238,11 +195,9 @@
     Modal modalIconLoad = null!;
 
     private int iconStoreSize = 0;
-    private StorageEstimate? storageEstimate = null;
     protected override async Task OnInitializedAsync()
     {
         iconStoreSize = await IconService.GetTotalIconSize();
-        storageEstimate = await JS.InvokeAsync<StorageEstimate>("getStorageEstimate");
     }
     
     private async Task HandleValueChanged(ChangeEventArgs e)

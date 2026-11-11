@@ -1,4 +1,4 @@
-namespace ucc.Models;
+namespace ucc.Components.StorageEstimate;
 
 public class StorageEstimate
 {
