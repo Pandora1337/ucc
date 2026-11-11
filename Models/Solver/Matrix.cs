@@ -54,10 +54,10 @@ public sealed class Matrix
         // Console.WriteLine("RAWS:");
         // Serialise(raws);
 
-        var itemIndex = new Dictionary<string, int>();
+        var idToIndex = new Dictionary<string, int>();
         for (int index = 0; index < _itemIndex.Count; index++)
         {
-            itemIndex[_itemIndex[index]] = index;
+            idToIndex[_itemIndex[index]] = index;
         }
 
         // Tableau:
@@ -78,13 +78,13 @@ public sealed class Matrix
             // add ingredient columns
             foreach (var ing in recipe.Ingredients)
             {
-                _matrix[r, itemIndex[ing.ItemId]] -= Fraction.FromDouble(ing.Amount / time);
+                _matrix[r, idToIndex[ing.ItemId]] -= Fraction.FromDouble(ing.Amount / time);
             }
 
             // add products columns
             foreach (var prod in recipe.Products)
             {
-                _matrix[r, itemIndex[prod.ItemId]] += Fraction.FromDouble(prod.Amount / time);
+                _matrix[r, idToIndex[prod.ItemId]] += Fraction.FromDouble(prod.Amount / time);
             }
 
             // set recipe-recipe value to 1
@@ -106,7 +106,7 @@ public sealed class Matrix
             }
 
             // set raw item input
-            _matrix[r, itemIndex[itemId]] = Fraction.One;
+            _matrix[r, idToIndex[itemId]] = Fraction.One;
 
             // set cost
             _matrix[r, Cols - 1] = Fraction.FromDouble(cost);
@@ -116,14 +116,12 @@ public sealed class Matrix
         // add Output row
         foreach ((string itemId, float amount) in targets)
         {
-            _matrix[Rows - 1, itemIndex[itemId]] = Fraction.FromDouble(-amount);
+            _matrix[Rows - 1, idToIndex[itemId]] = Fraction.FromDouble(-amount);
         }
     }
     #endregion
 
-    #region Other
-    #endregion
-
+    #region Get/Set
     public Dictionary<Guid, float> GetSolution()
     {
         Dictionary<Guid, float> recipeGuide = [];
@@ -190,6 +188,7 @@ public sealed class Matrix
         }
         return newCosts;
     }
+    #endregion
 
     public void Print(bool isMixedFractions = false)
     {
