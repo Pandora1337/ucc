@@ -14,7 +14,7 @@ public sealed class Matrix
     private List<Guid> _recipeIndex = [];
 
     #region Constructor
-    public Matrix(List<Recipe> recipes, Dictionary<string, float> targets, Dictionary<string, float> costs)
+    public Matrix(List<Recipe> recipes, Dictionary<string, float> targets, Dictionary<string, float> costs, bool normaliseTime)
     {
         var seen = new HashSet<string>();
         var raws = new HashSet<string>();
@@ -73,7 +73,7 @@ public sealed class Matrix
         int r = 0;
         foreach (Recipe recipe in recipes)
         {
-            float time = recipe.CraftingTime ?? 1;
+            float time = normaliseTime ? (recipe.CraftingTime ?? 1) : 1;
 
             // add ingredient columns
             foreach (var ing in recipe.Ingredients)

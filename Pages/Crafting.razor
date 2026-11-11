@@ -50,6 +50,28 @@
         Item Amount must be more than 0!
     </div>
 
+    <div>
+        <div class="btn-group mb-3" role="group">
+            <input type="radio" class="btn-check" name="crafting-rate" id="rateOnce" autocomplete="off"
+                   checked="@(cp.Rate == CraftingRate.Once)" @onchange="@(() => SelectRate(CraftingRate.Once))">
+            <label class="btn btn-outline-secondary" for="rateOnce" title="One Time">
+                <i class="me-2 bi bi-circle-fill" aria-label="One Time" />Once
+            </label>
+
+            <input type="radio" class="btn-check" name="crafting-rate" id="rateSec" autocomplete="off"
+                   checked="@(cp.Rate == CraftingRate.PerSec)" @onchange="@(() => SelectRate(CraftingRate.PerSec))" />
+            <label class="btn btn-outline-secondary" for="rateSec" title="Per Second">
+                <i class="me-2 bi bi-stopwatch-fill" aria-label="Per Second" />/sec
+            </label>
+
+            <input type="radio" class="btn-check" name="crafting-rate" id="rateMin" autocomplete="off"
+                   checked="@(cp.Rate == CraftingRate.PerMin)" @onchange="@(() => SelectRate(CraftingRate.PerMin))" />
+            <label class="btn btn-outline-secondary" for="rateMin" title="Per Minute">
+                <i class="me-2 bi bi-hourglass-split" aria-label="Per Minute" />/min
+            </label>
+        </div>
+    </div>
+
     <button type="button" class="btn btn-lg btn-primary" @onclick="Craft" disabled="@(IsCrafting || !IsValid)">
         @if (IsCrafting)
         {
@@ -128,7 +150,7 @@
             <h5 class="mb-0 align-self-center">
                 @if (cd.CraftingTime > 0)
                 {
-                    <span>
+                    <span title="Time, in seconds, to craft each recipe sequentially">
                         Total Crafting Time:
                         <i class="bi bi-clock ms-2 me-1" aria-hidden="true" />
                         @(cd.CraftingTime)s
@@ -163,7 +185,8 @@
 
                     @if (recipe != null)
                     {
-                        <CraftingStep Recipe="recipe" Operations="ops" OrderNum="i + 1"
+                        var timeScale = cp.Rate == CraftingRate.PerMin ? 60 : 1;
+                        <CraftingStep Recipe="recipe" Operations="ops / timeScale" OrderNum="i + 1"
                                       IsInvalid="@(!recipe.IsOutdated(cd.DateCrafted))" />
                     }
                     else
@@ -231,6 +254,12 @@
     {
         IsGridView = !IsGridView;
         await LS.Set("craftingPageIsGridView", IsGridView);
+    }
+
+    private async Task SelectRate(CraftingRate rate)
+    {
+        cp.Rate = rate;
+        await CS.UpdateCraftingParams();
     }
 
     private Modal modalAddRecipe = null!;

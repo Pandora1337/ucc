@@ -24,22 +24,16 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
     #region Craft
     public async Task Craft()
     {
+        var graph = new Graph();
+        var recipesList = new HashSet<Recipe>();
         Dictionary<string, float> targetDict = [];
         foreach ((string itemId, float amount) in PlannedCrafts)
         {
             if (amount <= 0)
                 continue;
 
-            targetDict[itemId] = targetDict.GetValueOrDefault(itemId, 0) + amount;
-        }
-
-        if (targetDict.Count == 0)
-            return;
-
-        var graph = new Graph();
-        var recipesList = new HashSet<Recipe>();
-        foreach ((string itemId, float amount) in targetDict)
-        {
+            // dedup is done in Crafting.razor
+            targetDict[itemId] = amount;
             ExploreItem(itemId);
         }
 
@@ -70,7 +64,9 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
             }
         }
 
-        (var solution, CraftingParams.Costs) = Simplex.Solve(recipesList.ToList(), targetDict, CraftingParams.Costs);
+        if (targetDict.Count == 0)
+            return;
+
         var cd = new CraftingData();
 
         // cumulative amount of ingredients used
@@ -79,23 +75,41 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         // overall change in item amounts
         var itemDeltas = new Dictionary<string, float>();
 
-        // Console.WriteLine("Solution:");
-        foreach (List<Guid> scc in graph.GetSCCs())
+        var answer = SolveRecipes(cd, recipesList.ToList(), targetDict, itemDeltas, ingCumulative);
+
+        // Branch and run again for any deficits to get integer solution
+        if (CraftingParams.Rate == CraftingRate.Once)
         {
-            foreach (Guid guid in scc)
+            var targetDict2 = new Dictionary<string, float>();
+            foreach ((string itemId, float amount) in itemDeltas)
             {
-                if (!solution.TryGetValue(guid, out float num))
+                float diff = targetDict.GetValueOrDefault(itemId, 0) - amount;
+                if (diff <= 0)
                     continue;
 
-                ApplyRecipeDeltas(guid, num, cd, itemDeltas, ingCumulative);
+                targetDict2[itemId] = diff;
+            }
+
+            // skip if no deficits
+            if (targetDict2.Count > 0)
+            {
+                var answer2 = SolveRecipes(cd, recipesList.ToList(), targetDict2, itemDeltas, ingCumulative);
+                foreach ((Guid guid, float amount) in answer2)
+                {
+                    // merge answers
+                    answer[guid] = answer.GetValueOrDefault(guid, 0) + amount;
+                }
             }
         }
 
-        // Console.WriteLine("ingCumulative:");
-        // InventoryService.SerialiseToJSON(ingCumulative);
+        // topologically sorted recipe graph for recipe order
+        foreach (Guid guid in graph.GetSCCs().SelectMany(scc => scc))
+        {
+            if (!answer.TryGetValue(guid, out float num))
+                continue;
 
-        // Console.WriteLine("deltas:");
-        // InventoryService.SerialiseToJSON(itemDeltas);
+            cd.RecipeGuideList.Add(new(guid, num));
+        }
 
         (cd.ItemsProd, cd.ItemsInt, cd.ItemsRaw) = SortItemCategories(itemDeltas, ingCumulative);
         await SetCraftingData(cd);
@@ -103,27 +117,55 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
     }
     #endregion
 
-    #region Recipe Deltas
-    private void ApplyRecipeDeltas(Guid guid, float num, CraftingData cd, Dictionary<string, float> itemDeltas, Dictionary<string, float> ingCumulative)
+    #region SolveRecipes
+    private Dictionary<Guid, float> SolveRecipes(
+        CraftingData cd,
+        List<Recipe> recipes,
+        Dictionary<string, float> targets,
+        Dictionary<string, float> itemDeltas,
+        Dictionary<string, float> ingCumulative)
     {
-        var recipe = IS.GetRecipeById(guid);
+        bool normalise = CraftingParams.Rate != CraftingRate.Once;
+        var m = new Matrix(recipes, targets, CraftingParams.Costs, normalise);
+        (var solution, CraftingParams.Costs) = Simplex.Solve(m, CraftingParams.Costs);
 
-        int ops = (int)Math.Ceiling(num);
-        cd.RecipeGuideList.Add(new(guid, num));
-        cd.CraftingTime += recipe.GetTotalCraftingTime(ops);
+        var output = new Dictionary<Guid, float>(solution.Count);
+        foreach ((Guid guid, float ops) in solution)
+        {
+            float num = ops;
+            var recipe = IS.GetRecipeById(guid);
+            if (!normalise)
+            {
+                num = float.Ceiling(num);
+                cd.CraftingTime += recipe.GetTotalCraftingTime((int)num);
+            }
 
-        // Console.WriteLine($"    {guid.ToString().Split("-")[0]}: {float.Round(num, 3)} ({ops})");
+            output[guid] = num;
+            float time = normalise ? (recipe.CraftingTime ?? 1) : 1;
+            AddRecipeDeltas(recipe, num / time, itemDeltas, ingCumulative);
+        }
 
-        float time = recipe.CraftingTime ?? 1;
+        return output;
+    }
+    #endregion
+
+    #region Recipe Deltas
+    private static void AddRecipeDeltas(
+        Recipe recipe,
+        float num,
+        Dictionary<string, float> itemDeltas,
+        Dictionary<string, float> ingCumulative
+    )
+    {
         foreach ((string prodId, float prodAmount) in recipe.Products)
         {
-            float prodMade = prodAmount * num / time;
+            float prodMade = prodAmount * num;
             itemDeltas[prodId] = itemDeltas.GetValueOrDefault(prodId, 0) + prodMade;
         }
 
         foreach ((string ingId, float ingAmount) in recipe.Ingredients)
         {
-            float ingNeed = ingAmount * num / time;
+            float ingNeed = ingAmount * num;
             ingCumulative[ingId] = ingCumulative.GetValueOrDefault(ingId, 0) + ingNeed;
             itemDeltas[ingId] = itemDeltas.GetValueOrDefault(ingId, 0) - ingNeed;
         }
@@ -188,7 +230,21 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
             return float.Abs(num) < epsilon;
         }
 
-        return (prods, inter, raws);
+        // makes sure the order of matching items in prod follows inter
+        var newprods = new Dictionary<string, float>();
+        foreach (string item in inter.Keys)
+        {
+            if (prods.TryGetValue(item, out float value))
+                newprods[item] = value;
+        }
+
+        foreach ((string item, float amount) in prods)
+        {
+            if (!newprods.ContainsKey(item))
+                newprods[item] = amount;
+        }
+
+        return (newprods, inter, raws);
     }
     #endregion
 
@@ -202,7 +258,7 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
     public async Task DeletePlannedCrafts()
     {
         PlannedCrafts.Clear();
-        await LS.Remove("plannedCrafts");
+        await UpdatePlannedCrafts();
     }
 
     public async Task UpdatePlannedCrafts()

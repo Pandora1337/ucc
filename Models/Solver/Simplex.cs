@@ -2,14 +2,20 @@ namespace ucc.Models.Solver;
 
 public sealed class Simplex
 {
-    public static (Dictionary<Guid, float>, Dictionary<string, float>) Solve(List<Recipe> recipes, Dictionary<string, float> targets, Dictionary<string, float> costs)
+    public static (
+        Dictionary<Guid, float> solution, Dictionary<string, float> costs
+    ) Solve(
+        Matrix m, Dictionary<string, float> costs
+    )
     {
-        var m = new Matrix(recipes, targets, costs);
         SolveMatrix(m);
         return (m.GetSolution(), m.FilterOutUnusedCosts(costs));
     }
 
-    private static void SolveMatrix(Matrix m)
+    /// <summary>
+    /// Solve the matrix in place
+    /// </summary>
+    public static void SolveMatrix(Matrix m)
     {
         while (true)
         {
