@@ -87,14 +87,6 @@
             </label>
         </div>
 
-        <div class="form-check form-switch user-select-none mt-2" title="Crafted item lists and recipe guide">
-            <input class="form-check-input" type="checkbox" id="checkCD" @bind-value="IsCraftingDataIncluded"
-                   checked="@IsCraftingDataIncluded" switch>
-            <label class="form-check-label" for="checkCD">
-                Include Crafting Data
-            </label>
-        </div>
-
         <div class="form-check form-switch user-select-none mt-2">
             <input class="form-check-input" type="checkbox" id="checkIndented" @bind-value="IsIndented"
                    checked="@IsIndented" switch>
@@ -172,7 +164,7 @@
         await IS.SetRecipes(config.Recipes);
         await CS.SetPlannedCrafts(config.PlannedCrafts);
         await CS.SetCraftingParams(config.CraftingParams);
-        await CS.SetCraftingData(config.CraftingData);
+        CS.ClearCraftingData();
 
         if (IsDeletingIcons)
         {
@@ -187,7 +179,6 @@
 
     private bool IsPlannedCraftsIncluded { get; set; } = true;
     private bool IsCraftingParamsIncluded { get; set; } = true;
-    private bool IsCraftingDataIncluded { get; set; } = false;
     private bool IsIndented { get; set; } = false;
 
     private async Task ExportConfig()
@@ -198,7 +189,6 @@
             Recipes = IS.GetRecipes(),
             CraftingParams = IsCraftingParamsIncluded ? CS.CraftingParams : null,
             PlannedCrafts = IsPlannedCraftsIncluded ? CS.PlannedCrafts : null,
-            CraftingData = IsCraftingDataIncluded ? CS.GetCraftingData() : null,
         };
 
         string? json = JsonSerializer.Serialize(config, new JsonSerializerOptions

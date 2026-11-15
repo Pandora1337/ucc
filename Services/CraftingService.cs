@@ -12,13 +12,13 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
 
     public List<Ingredient> PlannedCrafts { get; set; } = new();
     public CraftingParams CraftingParams { get; set; } = new();
-    private CraftingData? craftingData = null;
+    public CraftingData? CraftingData { get; private set; } = null;
 
     public async Task InitializeAsync()
     {
         PlannedCrafts = await LS.Get<List<Ingredient>>("plannedCrafts", []);
         CraftingParams = await LS.Get("craftingParams", CraftingParams);
-        craftingData = await LS.Get<CraftingData>("craftingData", null);
+        await LS.Remove("craftingData");
     }
 
     #region Craft
@@ -112,7 +112,7 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         }
 
         (cd.ItemsProd, cd.ItemsInt, cd.ItemsRaw) = SortItemCategories(itemDeltas, ingCumulative);
-        await SetCraftingData(cd);
+        CraftingData = cd;
         await UpdateCraftingParams();
     }
     #endregion
@@ -277,15 +277,9 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         await LS.Set("craftingParams", CraftingParams);
     }
 
-    public CraftingData? GetCraftingData()
+    public void ClearCraftingData()
     {
-        return craftingData;
-    }
-
-    public async Task SetCraftingData(CraftingData? newData)
-    {
-        craftingData = newData;
-        await LS.Set("craftingData", craftingData!);
+        CraftingData = null;
     }
 
     public async Task SetPlannedCrafts(List<Ingredient>? list)

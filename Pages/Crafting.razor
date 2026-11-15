@@ -239,9 +239,7 @@
 
 @code {
     private List<Ingredient> plannedCrafts => CS.PlannedCrafts;
-
-    private CraftingData? cd => CS.GetCraftingData();
-
+    private CraftingData? cd => CS.CraftingData;
     private CraftingParams cp => CS.CraftingParams;
 
     protected override async Task OnInitializedAsync()
