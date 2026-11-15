@@ -2,6 +2,7 @@
 @using System.Text.Json
 @using ucc.Models.Settings
 @using ucc.Components.Tab
+@using ucc.Components.Alert
 
 @namespace ucc.Components.ImportExport
 
@@ -38,11 +39,12 @@
             </div>
         </div>
 
-        <div class="alert alert-warning small" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-            Import will <strong>overwrite</strong> existing configuration. All
-            current <strong>Items and Recipes</strong> will be lost!
-        </div>
+        <Alert Class="alert-warning mb-3" Title="Warning!">
+            <div class="small mt-2">
+                Import will <strong>overwrite</strong> existing configuration. All
+                current <strong>Items and Recipes</strong> will be lost!
+            </div>
+        </Alert>
 
         <button class="btn btn-primary" type="button" @onclick="ImportConfig"
                 disabled="@(Import != ImportStage.FileValid)">

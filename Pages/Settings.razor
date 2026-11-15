@@ -3,6 +3,7 @@
 @using ucc.Models.Settings
 @using ucc.Components.Modal
 @using ucc.Components.ImportExport
+@using ucc.Components.Alert
 
 @inject ucc.Data.LocalStorage LS;
 @inject ucc.Services.InventoryService IS;
@@ -179,11 +180,9 @@
                 </button>
             </div>
 
-            <div class="alert alert-warning small mt-3 mb-0" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                Deleting storage cannot be undone.
-                Make sure you have backups before continuing.
-            </div>
+            <Alert Class="alert-warning small" Title="Warning!"
+                   Message="Deleting storage cannot be undone. Make sure you have backups before continuing.">
+            </Alert>
         </div>
     </div>
 </div>
@@ -196,10 +195,8 @@
 
 <Modal @ref="modalIconLoad" Title="Confirm Action">
     <div class="modal-body">
-        <div class="alert alert-warning m-0" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-            Loading all icons into memory can cause problems if you have many large images!
-        </div>
+        <Alert Class="alert-warning" Title="Warning!"
+               Message="Loading all icons into memory can cause problems if you have many large images!" />
     </div>
 
     <div class="modal-footer flex-nowrap">
