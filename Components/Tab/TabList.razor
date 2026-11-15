@@ -5,7 +5,7 @@
         @foreach (Tab tab in Tabs)
         {
             bool IsActive = tab == ActiveTab;
-            <button class="nav-link @(IsActive ? "active" : "")" aria-selected="@(IsActive)" type="button" role="tab"
+            <button @key="tab.TabId" class="nav-link @(IsActive ? "active" : "")" aria-selected="@(IsActive)" type="button" role="tab"
                     id="@tab.TabId" aria-controls="@tab.PanelId" @onclick="@(() => ActivateTab(tab))">
                 @if (!string.IsNullOrEmpty(tab.Icon))
                 {
@@ -55,6 +55,14 @@
             return;
 
         ActiveTab = tab;
+        if (tab.OnActivated.HasDelegate)
+        {
+            tab.OnActivated.InvokeAsync();
+        }
+    }
+
+    public void UpdateState()
+    {
         StateHasChanged();
     }
 }
