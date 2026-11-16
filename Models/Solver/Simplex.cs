@@ -2,23 +2,59 @@ namespace ucc.Models.Solver;
 
 public sealed class Simplex
 {
-    public static (
-        Dictionary<Guid, float> solution, Dictionary<string, float> costs
-    ) Solve(
-        Matrix m, Dictionary<string, float> costs
-    )
+    public record Result(
+        Status Status,
+        Dictionary<Guid, float> Solution,
+        string ErrorMessage = ""
+    );
+
+    public enum Status
     {
-        SolveMatrix(m);
-        return (m.GetSolution(), m.FilterOutUnusedCosts(costs));
+        FAILURE,
+        SUCCESS,
+        TIMEOUT,
+        CANCELLED,
+    }
+
+    public static async Task<Result> Solve(Matrix m, CancellationToken token)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+        cts.CancelAfter(TimeSpan.FromSeconds(3));
+
+        try
+        {
+            await SolveMatrix(m, cts.Token);
+            return new(Status.SUCCESS, m.GetSolution());
+        }
+        catch (OperationCanceledException) when (!token.IsCancellationRequested)
+        {
+            return new(Status.TIMEOUT, [], "The solver timed out.");
+        }
+        catch (OperationCanceledException)
+        {
+            return new(Status.CANCELLED, [], "The operation was canceled.");
+        }
+        catch (Exception ex)
+        {
+            return new(Status.FAILURE, [], ex.Message);
+        }
     }
 
     /// <summary>
     /// Solve the matrix in place
     /// </summary>
-    public static void SolveMatrix(Matrix m)
+    public static async Task SolveMatrix(Matrix m, CancellationToken token)
     {
+        int iterations = 0;
         while (true)
         {
+            iterations++;
+            if (iterations % 100 == 0)
+            {
+                // yields for ui and checks token
+                await Task.Delay(1, token);
+            }
+
             Fraction? min = null;
             int? minCol = null;
 
@@ -32,9 +68,6 @@ public sealed class Simplex
                 minCol = col;
             }
 
-            //WriteLine($"min: {min}");
-            //WriteLine($"col: {minCol}");
-
             // If min is not less than zero, we're done.
             if (min is not null && min >= Fraction.Zero)
             {
@@ -44,9 +77,7 @@ public sealed class Simplex
             int? bestRow = PivotCol(m, minCol!.Value);
             if (!bestRow.HasValue)
             {
-                // throw new InvalidOperationException("Failed to pivot.");
-                Console.WriteLine("Failed to pivot!");
-                return;
+                throw new InvalidOperationException("Solver failed to pivot.");
             }
         }
     }
@@ -68,21 +99,10 @@ public sealed class Simplex
             lowestRow = row;
         }
 
-        //WriteLine($"ratio: {lowestVal}");
-        //WriteLine($"row: {lowestRow}");
-
-
-        // if (lowestVal != null && lowestRow != null)
         if (lowestVal is not null && lowestRow != null)
         {
             Pivot(m, lowestRow.Value, col);
-
-            //WriteLine("");
-            //WriteLine("PIVOT COMPLETE");
-            // m.Print();
         }
-
-        //WriteLine($"Lowest Row: {lowestRow}");
 
         return lowestRow;
     }
@@ -90,38 +110,20 @@ public sealed class Simplex
     public static void Pivot(Matrix m, int row, int col)
     {
         var x = m.ValueAt(row, col);
-
-        //WriteLine($"Value at {row}, {col}: {x}");
-
         m.MultiplyRow(row, x.Reciprocate());
-        //WriteLine("");
-        //WriteLine($"After Divide by {x}");
-        // m.Print();
 
         for (int r = 0; r < m.Rows; r++)
         {
-            //WriteLine();
-            //WriteLine($"Row: {r}");
             if (r == row) continue;
 
             var v = m.ValueAt(r, col);
-            //WriteLine($"value: {v}");
-
             if (v == Fraction.Zero) continue;
 
             for (int c = 0; c < m.Cols; c++)
             {
                 var local = m.ValueAt(r, c);
                 var refValue = m.ValueAt(row, c);
-
                 var newValue = local - (refValue * v);
-
-                //WriteLine();
-                //WriteLine($"Col: {c}");
-                //WriteLine($"local: {localValue}");
-                //WriteLine($"v: {v}");
-                //WriteLine($"ref: {refValue}");
-                //WriteLine($"new: {newValue}");
                 m.SetValue(r, c, newValue);
             }
         }

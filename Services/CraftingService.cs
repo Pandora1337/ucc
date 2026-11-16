@@ -5,14 +5,17 @@ using ucc.Models.Solver;
 
 namespace ucc.Services;
 
-public class CraftingService(InventoryService inventoryService, LocalStorage localStorage)
+public sealed class CraftingService(InventoryService inventoryService, LocalStorage localStorage) : IDisposable
 {
-    protected InventoryService IS { get; set; } = inventoryService;
-    protected LocalStorage LS { get; set; } = localStorage;
+    private InventoryService IS { get; set; } = inventoryService;
+    private LocalStorage LS { get; set; } = localStorage;
 
     public List<Ingredient> PlannedCrafts { get; set; } = new();
     public CraftingParams CraftingParams { get; set; } = new();
     public CraftingData? CraftingData { get; private set; } = null;
+
+    public event Action? OnCraftingStatusChange;
+    public bool IsCrafting { get; private set; } = false;
 
     public async Task InitializeAsync()
     {
@@ -21,9 +24,20 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         await LS.Remove("craftingData");
     }
 
+    public void Dispose()
+    {
+        DisposeOfCTS();
+    }
+
     #region Craft
+    CancellationTokenSource? _cts;
     public async Task Craft()
     {
+        // Cancel already running process
+        DisposeOfCTS();
+        _cts = new();
+        ChangeCraftingStatus(true);
+
         var graph = new Graph();
         var recipesList = new HashSet<Recipe>();
         Dictionary<string, float> targetDict = [];
@@ -65,7 +79,10 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         }
 
         if (targetDict.Count == 0)
+        {
+            FinishCrafting(null);
             return;
+        }
 
         var cd = new CraftingData();
 
@@ -75,10 +92,11 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         // overall change in item amounts
         var itemDeltas = new Dictionary<string, float>();
 
-        var answer = SolveRecipes(cd, recipesList.ToList(), targetDict, itemDeltas, ingCumulative);
+        var answer = await SolveRecipes(cd, recipesList.ToList(), targetDict, itemDeltas, ingCumulative, _cts.Token);
 
         // Branch and run again for any deficits to get integer solution
-        if (CraftingParams.Rate == CraftingRate.Once)
+        // if the first run is not successful, skip to early termination
+        if (CraftingParams.Rate == CraftingRate.Once && cd.Status == Simplex.Status.SUCCESS)
         {
             var targetDict2 = new Dictionary<string, float>();
             foreach ((string itemId, float amount) in itemDeltas)
@@ -93,13 +111,28 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
             // skip if no deficits
             if (targetDict2.Count > 0)
             {
-                var answer2 = SolveRecipes(cd, recipesList.ToList(), targetDict2, itemDeltas, ingCumulative);
+                var answer2 = await SolveRecipes(cd, recipesList.ToList(), targetDict2, itemDeltas, ingCumulative, _cts.Token);
                 foreach ((Guid guid, float amount) in answer2)
                 {
                     // merge answers
                     answer[guid] = answer.GetValueOrDefault(guid, 0) + amount;
                 }
             }
+        }
+
+        // if CANCELLED: exit without update
+        if (cd.Status == Simplex.Status.CANCELLED)
+        {
+            // CANCELLED status is when a new request comes in before last one is finished
+            // no update as we just ignore the previous request
+            return;
+        }
+
+        // if FAILURE or TIMEOUT: exit + update
+        if (cd.Status != Simplex.Status.SUCCESS)
+        {
+            FinishCrafting(cd);
+            return;
         }
 
         // topologically sorted recipe graph for recipe order
@@ -112,23 +145,54 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
         }
 
         (cd.ItemsProd, cd.ItemsInt, cd.ItemsRaw) = SortItemCategories(itemDeltas, ingCumulative);
-        CraftingData = cd;
         await UpdateCraftingParams();
+        FinishCrafting(cd);
+    }
+    #endregion
+
+    #region Helpers
+    private void FinishCrafting(CraftingData? cd)
+    {
+        CraftingData = cd;
+        ChangeCraftingStatus(false);
+    }
+
+    private void ChangeCraftingStatus(bool isCrafting)
+    {
+        if (IsCrafting == isCrafting)
+            return;
+
+        IsCrafting = isCrafting;
+        OnCraftingStatusChange?.Invoke();
+    }
+
+    public void DisposeOfCTS()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
     }
     #endregion
 
     #region SolveRecipes
-    private Dictionary<Guid, float> SolveRecipes(
+    private async Task<Dictionary<Guid, float>> SolveRecipes(
         CraftingData cd,
         List<Recipe> recipes,
         Dictionary<string, float> targets,
         Dictionary<string, float> itemDeltas,
-        Dictionary<string, float> ingCumulative)
+        Dictionary<string, float> ingCumulative,
+        CancellationToken cts)
     {
         bool normalise = CraftingParams.Rate != CraftingRate.Once;
         var m = new Matrix(recipes, targets, CraftingParams.Costs, normalise);
-        (var solution, CraftingParams.Costs) = Simplex.Solve(m, CraftingParams.Costs);
+        
+        // FIXME: when run the second time, the status is overridden and may fail
+        // the entire solution, even if it is partially feasable
+        (cd.Status, var solution, cd.ErrorMessage) = await Simplex.Solve(m, cts);
 
+        if (cd.Status != Simplex.Status.SUCCESS)
+            return [];
+
+        CraftingParams.Costs = m.FilterOutUnusedCosts(CraftingParams.Costs);
         var output = new Dictionary<Guid, float>(solution.Count);
         foreach ((Guid guid, float ops) in solution)
         {
@@ -264,6 +328,7 @@ public class CraftingService(InventoryService inventoryService, LocalStorage loc
     public async Task UpdatePlannedCrafts()
     {
         await LS.Set("plannedCrafts", PlannedCrafts);
+        await Craft();
     }
 
     public async Task SetCraftingParams(CraftingParams? craftingParams)

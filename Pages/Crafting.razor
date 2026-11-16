@@ -1,6 +1,6 @@
 ﻿@page "/crafting"
 
-@using ucc.Components.Accordion
+@using ucc.Components.Alert
 @using ucc.Components.BtnAdd
 @using ucc.Components.BtnDelete
 @using ucc.Components.Crafting
@@ -12,9 +12,9 @@
 @using ucc.Models
 @using ucc.Models.Crafting
 
+@implements IDisposable
+
 @inject ucc.Services.CraftingService CS
-@inject ucc.Services.InventoryService IS
-@inject ucc.Data.LocalStorage LS;
 
 <PageTitle>Crafting Calculator</PageTitle>
 
@@ -40,50 +40,9 @@
             <BtnDelete OnDelete="@(() => OpenAddRecipeModal(ing.ItemId))" ImgSrc="bi-journal-plus"
                        cClass="btn-outline-warning" Title="Create recipe for this item" style="top: 88px;" />
             <InputMath Class="mt-3" Value="@ing.Amount"
-                       ValueChanged="@(async (v) => { ing.Amount = v; ValidateCraftAmount(v); await CS.UpdatePlannedCrafts(); })" />
+                       ValueChanged="@(async (v) => { ing.Amount = v; await CS.UpdatePlannedCrafts(); })" />
         </ItemCard>
     }
-</div>
-
-<div class="text-center mb-3">
-    <div class="invalid-feedback @(IsValid ? "" : "d-block") mb-3">
-        Item Amount must be more than 0!
-    </div>
-
-    <div>
-        <div class="btn-group mb-3" role="group">
-            <input type="radio" class="btn-check" name="crafting-rate" id="rateOnce" autocomplete="off"
-                   checked="@(cp.Rate == CraftingRate.Once)" @onchange="@(() => SelectRate(CraftingRate.Once))">
-            <label class="btn btn-outline-secondary" for="rateOnce" title="One Time">
-                <i class="me-2 bi bi-circle-fill" aria-label="One Time" />Once
-            </label>
-
-            <input type="radio" class="btn-check" name="crafting-rate" id="rateSec" autocomplete="off"
-                   checked="@(cp.Rate == CraftingRate.PerSec)" @onchange="@(() => SelectRate(CraftingRate.PerSec))" />
-            <label class="btn btn-outline-secondary" for="rateSec" title="Per Second">
-                <i class="me-2 bi bi-stopwatch-fill" aria-label="Per Second" />/sec
-            </label>
-
-            <input type="radio" class="btn-check" name="crafting-rate" id="rateMin" autocomplete="off"
-                   checked="@(cp.Rate == CraftingRate.PerMin)" @onchange="@(() => SelectRate(CraftingRate.PerMin))" />
-            <label class="btn btn-outline-secondary" for="rateMin" title="Per Minute">
-                <i class="me-2 bi bi-hourglass-split" aria-label="Per Minute" />/min
-            </label>
-        </div>
-    </div>
-
-    <button type="button" class="btn btn-lg btn-primary" @onclick="Craft" disabled="@(IsCrafting || !IsValid)">
-        @if (IsCrafting)
-        {
-            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
-            <span role="status">Crafting...</span>
-        }
-        else
-        {
-            <i class="bi bi-tools me-1" aria-hidden="true" />
-            <span role="status">Craft</span>
-        }
-    </button>
 </div>
 
 
@@ -99,103 +58,48 @@
     </div>
 </Modal>
 
-@if (cd == null)
+@* 
+Cant check for `cd == null` here: null happens when no recipes are found in the graph
+And if you hide the tabs, you hide the filter tab that exposes recipes to the search
+*@
+
+@if (plannedCrafts.Count == 0)
     return;
 
-<TabList Class="mb-0 mb-3">
-    <Tab Title="Crafting" Icon="bi-tools" IsAlwaysRendered="true">
+<div class="text-center mb-3">
+    <div class="btn-group" role="group">
+        <input type="radio" class="btn-check" name="crafting-rate" id="rateOnce" autocomplete="off"
+               checked="@(cp.Rate == CraftingRate.Once)" @onchange="@(() => SelectRate(CraftingRate.Once))">
+        <label class="btn btn-outline-secondary" for="rateOnce" title="One Time">
+            <i class="me-2 bi bi-circle-fill" aria-label="One Time" />Once
+        </label>
 
-        <Accordion>
-            <AccordionItem Icon="bi-list" Title="Item List" OpenOnStart="true">
+        <input type="radio" class="btn-check" name="crafting-rate" id="rateSec" autocomplete="off"
+               checked="@(cp.Rate == CraftingRate.PerSec)" @onchange="@(() => SelectRate(CraftingRate.PerSec))" />
+        <label class="btn btn-outline-secondary" for="rateSec" title="Per Second">
+            <i class="me-2 bi bi-stopwatch-fill" aria-label="Per Second" />/sec
+        </label>
 
-                @if (cd.ItemsProd.Count > 0)
-                {
-                    <strong>
-                        <i class="bi bi-gem me-2" aria-hidden="true" />Products:
-                    </strong>
-                    <div class="d-flex flex-wrap gap-1 my-2">
-                        @foreach ((string itemId, float amount) in cd.ItemsProd)
-                        {
-                            <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
-                        }
-                    </div>
-                }
+        <input type="radio" class="btn-check" name="crafting-rate" id="rateMin" autocomplete="off"
+               checked="@(cp.Rate == CraftingRate.PerMin)" @onchange="@(() => SelectRate(CraftingRate.PerMin))" />
+        <label class="btn btn-outline-secondary" for="rateMin" title="Per Minute">
+            <i class="me-2 bi bi-hourglass-split" aria-label="Per Minute" />/min
+        </label>
+    </div>
+</div>
 
-                @if (cd.ItemsInt.Count > 0)
-                {
-                    <strong>
-                        <i class="bi bi-layers-half me-2" aria-hidden="true" />Intermediate:
-                    </strong>
-                    <div class="d-flex flex-wrap gap-1 my-2">
-                        @foreach ((string itemId, float amount) in cd.ItemsInt)
-                        {
-                            <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
-                        }
-                    </div>
-                }
+<TabList @ref="tabList" Class="mb-3">
+    <Tab Title="Crafting" Icon="@(CS.IsCrafting ? "spinner-border spinner-border-sm" : "bi-tools")"
+         IsAlwaysRendered="true" OnActivated="CS.Craft">
 
-                <strong>
-                    <i class="bi bi-minecart-loaded me-2" aria-hidden="true" />Raw:
-                </strong>
-                <div class="d-flex flex-wrap gap-1 my-2">
-                    @foreach ((string itemId, float amount) in cd.ItemsRaw)
-                    {
-                        <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="amount" style="max-width: 49%;" />
-                    }
-                </div>
-            </AccordionItem>
-        </Accordion>
-
-        <div class="d-flex justify-content-between mt-lg-3 @(cd.CraftingTime > 0 ? "mt-3" : "")">
-            <h5 class="mb-0 align-self-center">
-                @if (cd.CraftingTime > 0)
-                {
-                    <span title="Time, in seconds, to craft each recipe sequentially">
-                        Total Crafting Time:
-                        <i class="bi bi-clock ms-2 me-1" aria-hidden="true" />
-                        @(cd.CraftingTime)s
-                    </span>
-                }
-            </h5>
-
-            <div class="btn-group d-none d-lg-inline-flex" role="group">
-                <input type="radio" class="btn-check" id="viewGrid" name="viewMode" @onchange="ToggleRecipeGrid"
-                       checked="@(IsGridView)" />
-                <label class="btn btn-outline-secondary" for="viewGrid" title="Grid View">
-                    <i class="bi bi-grid" aria-label="Grid View" />
-                </label>
-
-                <input type="radio" class="btn-check" id="viewList" name="viewMode" @onchange="ToggleRecipeGrid"
-                       checked="@(!IsGridView)" />
-                <label class="btn btn-outline-secondary" for="viewList" title="List View">
-                    <i class="bi bi-view-stacked" aria-label="List View" />
-                </label>
-            </div>
-        </div>
-
-        <div class="row">
-            @for (int i = 0; i < cd.RecipeGuideList.Count; i++)
-            {
-                (Guid guid, float ops) = cd.RecipeGuideList.ElementAt(i);
-                Recipe recipe = IS.GetRecipeById(guid);
-
-                <div @key="guid.ToString() + ops" class="mt-3 col-12 
-                    @(IsGridView && cd.RecipeGuideList.Count > 1 ? "col-lg-6" : "")
-                    @(IsGridView && cd.RecipeGuideList.Count > 2 ? "col-xxl-4" : "")">
-
-                    @if (recipe != null)
-                    {
-                        var timeScale = cp.Rate == CraftingRate.PerMin ? 60 : 1;
-                        <CraftingStep Recipe="recipe" Operations="ops / timeScale" OrderNum="i + 1"
-                                      IsInvalid="@(!recipe.IsOutdated(cd.DateCrafted))" />
-                    }
-                    else
-                    {
-                        <CraftingStep IsInvalid="true" />
-                    }
-                </div>
-            }
-        </div>
+        @if (cd != null)
+        {
+            <CraftingResult Rate="cp.Rate" CraftingData="cd" />
+        }
+        else
+        {
+            <Alert Class="alert-warning" Title="No recipes found!" Message="Adjust item selection or recipe filters" />
+        }
     </Tab>
 
     <Tab Title="Cost" Icon="bi-coin">
@@ -242,22 +146,38 @@
     private CraftingData? cd => CS.CraftingData;
     private CraftingParams cp => CS.CraftingParams;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        IsGridView = await LS.Get<bool>("craftingPageIsGridView");
+        if (firstRender && cd == null)
+            await CS.Craft();
     }
 
-    private bool IsGridView { get; set; }
-    private async Task ToggleRecipeGrid()
+    protected override void OnInitialized()
     {
-        IsGridView = !IsGridView;
-        await LS.Set("craftingPageIsGridView", IsGridView);
+        CS.OnCraftingStatusChange += CraftingStatusChanged;
+    }
+
+    public void Dispose()
+    {
+        CS.OnCraftingStatusChange -= CraftingStatusChanged;
+    }
+
+    TabList tabList = null!;
+    private void CraftingStatusChanged()
+    {
+        tabList?.UpdateState();
+        StateHasChanged();
     }
 
     private async Task SelectRate(CraftingRate rate)
     {
+        // XOR: fire if either is true, but not both
+        bool rateChanged = cp.Rate == CraftingRate.Once ^ rate == CraftingRate.Once;
         cp.Rate = rate;
         await CS.UpdateCraftingParams();
+
+        if (rateChanged)
+            await CS.Craft();
     }
 
     private Modal modalAddRecipe = null!;
@@ -289,21 +209,7 @@
             ing.Amount += 1f;
         }
 
-        await CS.UpdatePlannedCrafts();
         await modalItemPick.CloseAsync();
-    }
-
-    private bool IsValid = true;
-    private void ValidateCraftAmount(float amount)
-    {
-        IsValid = amount > 0;
-    }
-
-    private bool IsCrafting = false;
-    private async Task Craft()
-    {
-        IsCrafting = true;
-        await CS.Craft();
-        IsCrafting = false;
+        await CS.UpdatePlannedCrafts();
     }
 }
