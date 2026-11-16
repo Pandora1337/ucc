@@ -19,7 +19,7 @@
     [Parameter] public bool IsAlwaysRendered { get; set; } = false;
     [Parameter] public EventCallback OnActivated { get; set; }
 
-    private bool IsActive => Parent?.ActiveTab == this;
+    public bool IsActive => Parent?.ActiveTab == this;
     public string TabId { get; private set; } = $"tab-{Guid.NewGuid():N}";
     public string PanelId { get; private set; } = $"panel-{Guid.NewGuid():N}";
 

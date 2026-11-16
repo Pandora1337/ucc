@@ -1,5 +1,6 @@
 ﻿@page "/crafting"
 
+@using System.Threading.Tasks
 @using ucc.Components.Alert
 @using ucc.Components.BtnAdd
 @using ucc.Components.BtnDelete
@@ -23,7 +24,7 @@
 <div class="d-flex justify-content-between mb-2 border border-0 border-3 border-bottom">
     <h3 class="mb-1">Planned crafts:</h3>
 
-    <button class="btn btn-sm btn-danger h-100" @onclick="CS.DeletePlannedCrafts" title="Clear Planned Crafts">
+    <button class="btn btn-sm btn-danger h-100" @onclick="DeletePlannedCrafts" title="Clear Planned Crafts">
         <i class="bi bi-trash3" aria-label="Clear Planned Crafts" />
     </button>
 </div>
@@ -36,11 +37,11 @@
     @foreach (Ingredient ing in plannedCrafts)
     {
         <ItemCard @key="ing.GetHashCode()" ItemId="@ing.ItemId" IconSize="128px" style="max-width: 128px;"
-                  OnItemClicked="@(() => CS.OnItemDeleted(ing))" cClass="position-relative">
+                  OnItemClicked="@(() => OnItemDeleted(ing))" cClass="position-relative">
             <BtnDelete OnDelete="@(() => OpenAddRecipeModal(ing.ItemId))" ImgSrc="bi-journal-plus"
                        cClass="btn-outline-warning" Title="Create recipe for this item" style="top: 88px;" />
             <InputMath Class="mt-3" Value="@ing.Amount"
-                       ValueChanged="@(async (v) => { ing.Amount = v; await CS.UpdatePlannedCrafts(); })" />
+                       ValueChanged="@(async (v) => { ing.Amount = v; await UpdatePlannedCrafts(); })" />
         </ItemCard>
     }
 </div>
@@ -54,7 +55,7 @@
 
 <Modal @ref="modalAddRecipe" Title="Add New Recipe">
     <div class="modal-body">
-        <RecipeForm OnRecipeAdd="@modalAddRecipe.CloseAsync" recipe="modalRecipe" />
+        <RecipeForm OnRecipeAdd="OnRecipeAdded" recipe="modalRecipe" />
     </div>
 </Modal>
 
@@ -89,8 +90,8 @@ And if you hide the tabs, you hide the filter tab that exposes recipes to the se
 </div>
 
 <TabList @ref="tabList" Class="mb-3">
-    <Tab Title="Crafting" Icon="@(CS.IsCrafting ? "spinner-border spinner-border-sm" : "bi-tools")"
-         IsAlwaysRendered="true" OnActivated="CS.Craft">
+    <Tab @ref="craftTab" Title="Crafting" Icon="@(CS.IsCrafting ? "spinner-border spinner-border-sm" : "bi-tools")"
+         IsAlwaysRendered="true" OnActivated="TryCrafting">
 
         @if (cd != null)
         {
@@ -112,7 +113,7 @@ And if you hide the tabs, you hide the filter tab that exposes recipes to the se
             </div>
 
             <button class="btn btn-sm btn-danger h-100 align-self-center" title="Clear All Costs"
-                    @onclick="@(async () => { cp.Costs.Clear(); await CS.UpdateCraftingParams(); })">
+                    @onclick="ClearParamsCosts">
                 <i class="bi bi-trash3" aria-label="Clear All Costs" />
             </button>
         </div>
@@ -124,8 +125,8 @@ And if you hide the tabs, you hide the filter tab that exposes recipes to the se
                     @(cp.Costs.Count > 1 ? "col-lg-6" : "")
                     @(cp.Costs.Count > 2 ? "col-xxl-4" : "")">
                     <RecipeIngredient ItemId="@itemId" Quantity="@cp.Costs[itemId]" InputTitle="Cost" EnableBtn="true"
-                                      QuantityChanged="@(async (v) => { cp.Costs[itemId] = v; await CS.UpdateCraftingParams(); })"
-                                      OnBtnClicked="@(async () => { cp.Costs.Remove(itemId); await CS.UpdateCraftingParams(); })" />
+                                      QuantityChanged="@(async (v) => { cp.Costs[itemId] = v; await UpdateCraftingParams(); })"
+                                      OnBtnClicked="@(async () => { cp.Costs.Remove(itemId); await UpdateCraftingParams(); })" />
                 </div>
             }
         </div>
@@ -137,7 +138,7 @@ And if you hide the tabs, you hide the filter tab that exposes recipes to the se
             Select what recipes are used in the calculator.
         </p>
 
-        <RecipeFilter Blacklist="cp.Blacklist" OnBlacklistChanged="CS.UpdateCraftingParams" />
+        <RecipeFilter Blacklist="cp.Blacklist" OnBlacklistChanged="UpdateCraftingParams" />
     </Tab>
 </TabList>
 
@@ -146,10 +147,12 @@ And if you hide the tabs, you hide the filter tab that exposes recipes to the se
     private CraftingData? cd => CS.CraftingData;
     private CraftingParams cp => CS.CraftingParams;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender && cd == null)
-            await CS.Craft();
+            CS.RequestCrafting();
+
+        TryCrafting();
     }
 
     protected override void OnInitialized()
@@ -169,17 +172,32 @@ And if you hide the tabs, you hide the filter tab that exposes recipes to the se
         StateHasChanged();
     }
 
+    Tab craftTab = null!;
+    private async void TryCrafting()
+    {
+        if (craftTab?.IsActive == true)
+            await CS.Craft();
+    }
+
+    // Crafting Params
     private async Task SelectRate(CraftingRate rate)
     {
         // XOR: fire if either is true, but not both
         bool rateChanged = cp.Rate == CraftingRate.Once ^ rate == CraftingRate.Once;
         cp.Rate = rate;
-        await CS.UpdateCraftingParams();
+        await CS.SaveCraftingParams();
 
         if (rateChanged)
-            await CS.Craft();
+            await SaveAndNotify(null);
     }
 
+    private async void ClearParamsCosts()
+    {
+        cp.Costs.Clear();
+        await UpdateCraftingParams();
+    }
+
+    // Modals
     private Modal modalAddRecipe = null!;
     private Recipe modalRecipe = null!;
     private async Task OpenAddRecipeModal(string itemId)
@@ -191,12 +209,19 @@ And if you hide the tabs, you hide the filter tab that exposes recipes to the se
         await modalAddRecipe.OpenAsync();
     }
 
+    private async Task OnRecipeAdded()
+    {
+        await modalAddRecipe.CloseAsync();
+        TryCrafting();
+    }
+
     private Modal modalItemPick = null!;
     private async Task OpenItemPicker()
     {
         await modalItemPick.OpenAsync();
     }
 
+    // Planned Crafts
     private async Task OnItemPicked(string itemId)
     {
         Ingredient? ing = plannedCrafts.FirstOrDefault(i => i.ItemId == itemId);
@@ -210,6 +235,31 @@ And if you hide the tabs, you hide the filter tab that exposes recipes to the se
         }
 
         await modalItemPick.CloseAsync();
-        await CS.UpdatePlannedCrafts();
+        await UpdatePlannedCrafts();
+    }
+
+    private async Task OnItemDeleted(Ingredient ing)
+    {
+        plannedCrafts.Remove(ing);
+        await UpdatePlannedCrafts();
+    }
+
+    private async Task DeletePlannedCrafts()
+    {
+        plannedCrafts.Clear();
+        await UpdatePlannedCrafts();
+    }
+
+    private async Task UpdatePlannedCrafts() => await SaveAndNotify(CS.SavePlannedCrafts);
+
+    private async Task UpdateCraftingParams() => await SaveAndNotify(CS.SaveCraftingParams);
+
+    private async Task SaveAndNotify(Func<Task>? saveAction)
+    {
+        if (saveAction != null)
+            await saveAction();
+
+        CS.RequestCrafting();
+        TryCrafting();
     }
 }

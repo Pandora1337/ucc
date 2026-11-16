@@ -19,6 +19,10 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
 
     public async Task InitializeAsync()
     {
+        IS.OnItemListChange += RequestCrafting;
+        IS.OnRecipeListChange += RequestCrafting;
+        IS.OnRecipeUpdate += _ => RequestCrafting();
+
         PlannedCrafts = await LS.Get<List<Ingredient>>("plannedCrafts", []);
         CraftingParams = await LS.Get("craftingParams", CraftingParams);
         await LS.Remove("craftingData");
@@ -26,6 +30,10 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
 
     public void Dispose()
     {
+        IS.OnItemListChange -= RequestCrafting;
+        IS.OnRecipeListChange -= RequestCrafting;
+        IS.OnRecipeUpdate -= _ => RequestCrafting();
+
         DisposeOfCTS();
     }
 
@@ -33,6 +41,10 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
     CancellationTokenSource? _cts;
     public async Task Craft()
     {
+        if (!NeedsCrafting)
+            return;
+        NeedsCrafting = false;
+
         // Cancel already running process
         DisposeOfCTS();
         _cts = new();
@@ -145,12 +157,15 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
         }
 
         (cd.ItemsProd, cd.ItemsInt, cd.ItemsRaw) = SortItemCategories(itemDeltas, ingCumulative);
-        await UpdateCraftingParams();
+        await SaveCraftingParams();
         FinishCrafting(cd);
     }
     #endregion
 
     #region Helpers
+    private bool NeedsCrafting;
+    public void RequestCrafting() => NeedsCrafting = true;
+
     private void FinishCrafting(CraftingData? cd)
     {
         CraftingData = cd;
@@ -184,7 +199,7 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
     {
         bool normalise = CraftingParams.Rate != CraftingRate.Once;
         var m = new Matrix(recipes, targets, CraftingParams.Costs, normalise);
-        
+
         // FIXME: when run the second time, the status is overridden and may fail
         // the entire solution, even if it is partially feasable
         (cd.Status, var solution, cd.ErrorMessage) = await Simplex.Solve(m, cts);
@@ -313,31 +328,13 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
     #endregion
 
     #region Get/Set
-    public async Task OnItemDeleted(Ingredient ing)
-    {
-        PlannedCrafts.Remove(ing);
-        await UpdatePlannedCrafts();
-    }
-
-    public async Task DeletePlannedCrafts()
-    {
-        PlannedCrafts.Clear();
-        await UpdatePlannedCrafts();
-    }
-
-    public async Task UpdatePlannedCrafts()
-    {
-        await LS.Set("plannedCrafts", PlannedCrafts);
-        await Craft();
-    }
-
     public async Task SetCraftingParams(CraftingParams? craftingParams)
     {
         CraftingParams = craftingParams ?? new();
-        await UpdateCraftingParams();
+        await SaveCraftingParams();
     }
 
-    public async Task UpdateCraftingParams()
+    public async Task SaveCraftingParams()
     {
         await LS.Set("craftingParams", CraftingParams);
     }
@@ -350,7 +347,12 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
     public async Task SetPlannedCrafts(List<Ingredient>? list)
     {
         PlannedCrafts = list ?? [];
-        await UpdatePlannedCrafts();
+        await SavePlannedCrafts();
+    }
+
+    public async Task SavePlannedCrafts()
+    {
+        await LS.Set("plannedCrafts", PlannedCrafts);
     }
     #endregion
 }
