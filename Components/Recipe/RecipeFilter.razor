@@ -2,11 +2,13 @@
 @using ucc.Components.Crafting
 @using ucc.Components.Searchbar
 
+@implements IDisposable
+
 @inject Services.InventoryService IS;
 
 @namespace ucc.Components.Recipe
 
-<Searchbar OnSearch="DoSearch" />
+<Searchbar @ref="searchbar" OnSearch="DoSearch" />
 
 <div class="row">
     @foreach (Guid guid in recipes)
@@ -31,16 +33,28 @@
     private List<Guid> recipes = [];
 
     private bool IsActive(Guid guid) => !Blacklist.Contains(guid);
+    private Searchbar searchbar = null!;
 
     protected override void OnInitialized()
     {
+        IS.OnRecipeListChange += RedoSearch;
         DoSearch("");
+    }
+
+    public void Dispose()
+    {
+        IS.OnRecipeListChange -= RedoSearch;
+    }
+
+    private void RedoSearch()
+    {
+        DoSearch(searchbar.SearchString);
     }
 
     private void DoSearch(string search)
     {
-        IEnumerable<Item> filteredItems = IS.SearchItems(search);
-        recipes = GetRecipesWithItems(filteredItems).ToList();
+        IEnumerable<string> filteredItems = IS.SearchItemIds(search);
+        recipes = IS.GetRecipesWithItems(filteredItems).ToList();
     }
 
     private void ToggleEntry(Guid guid)
@@ -53,20 +67,6 @@
         if (OnBlacklistChanged.HasDelegate)
         {
             OnBlacklistChanged.InvokeAsync();
-        }
-    }
-
-    // TODO: remove when PR is merged
-    public IEnumerable<Guid> GetRecipesWithItems(IEnumerable<Item> items)
-    {
-        var guids = new HashSet<Guid>();
-        foreach (Item item in items)
-        {
-            foreach (Recipe recipe in IS.GetRecipesWithItem(item.Id))
-            {
-                if (guids.Add(recipe.Guid))
-                    yield return recipe.Guid;
-            }
         }
     }
 }
