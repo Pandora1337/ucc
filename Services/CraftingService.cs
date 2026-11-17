@@ -124,15 +124,13 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
                 targetDict2[itemId] = diff;
             }
 
-            // skip if no deficits
-            if (targetDict2.Count > 0)
+            // FIXME: can never skip due to raw always being negative
+            // if (targetDict2.Count > 0)
+            var answer2 = await SolveRecipes(cd, recipesList.ToList(), targetDict2, itemDeltas, ingCumulative, _cts.Token);
+            foreach ((Guid guid, float amount) in answer2)
             {
-                var answer2 = await SolveRecipes(cd, recipesList.ToList(), targetDict2, itemDeltas, ingCumulative, _cts.Token);
-                foreach ((Guid guid, float amount) in answer2)
-                {
-                    // merge answers
-                    answer[guid] = answer.GetValueOrDefault(guid, 0) + amount;
-                }
+                // merge answers
+                answer[guid] = answer.GetValueOrDefault(guid, 0) + amount;
             }
         }
 
@@ -204,7 +202,7 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
         bool normalise = CraftingParams.Rate != CraftingRate.Once;
         var m = new Matrix(recipes, targets, CraftingParams.Costs, normalise);
 
-        // FIXME: when run the second time, the status is overridden and may fail
+        // FIXME?: when run the second time, the status is overridden and may fail
         // the entire solution, even if it is partially feasable
         (cd.Status, var solution, cd.ErrorMessage) = await Simplex.Solve(m, cts);
 
@@ -237,8 +235,7 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
         Recipe recipe,
         float num,
         Dictionary<string, float> itemDeltas,
-        Dictionary<string, float> ingCumulative
-    )
+        Dictionary<string, float> ingCumulative)
     {
         foreach ((string prodId, float prodAmount) in recipe.Products)
         {
