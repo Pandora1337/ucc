@@ -1,0 +1,14 @@
+@using ucc.Components.Item
+
+@namespace ucc.Components.Crafting
+
+<div class="d-flex flex-wrap gap-1 my-2">
+    @foreach ((string itemId, float amount) in Items)
+    {
+        <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />
+    }
+</div>
+
+@code {
+    [Parameter] public required Dictionary<string, float> Items { get; set; }
+}

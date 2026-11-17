@@ -1,0 +1,29 @@
+@namespace ucc.Components.Alert
+
+<div class="alert mb-0 @Class" role="alert">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill fs-5 me-2" />
+        <h5 class="mb-0">
+            @Title
+        </h5>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <div>
+            <p class="card-text mt-2">
+                @Message
+            </p>
+        </div>
+    }
+
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public string Class { get; set; } = "alert-danger";
+    [Parameter] public string Icon { get; set; } = "bi-exclamation-triangle-fill";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

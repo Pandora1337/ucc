@@ -1,7 +1,8 @@
 @using System.Text
 @using System.Text.Json
-@using ucc.Models
+@using ucc.Models.Settings
 @using ucc.Components.Tab
+@using ucc.Components.Alert
 
 @namespace ucc.Components.ImportExport
 
@@ -38,11 +39,12 @@
             </div>
         </div>
 
-        <div class="alert alert-warning small" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-            Import will <strong>overwrite</strong> existing configuration. All
-            current <strong>Items and Recipes</strong> will be lost!
-        </div>
+        <Alert Class="alert-warning mb-3" Title="Warning!">
+            <div class="small mt-2">
+                Import will <strong>overwrite</strong> existing configuration. All
+                current <strong>Items and Recipes</strong> will be lost!
+            </div>
+        </Alert>
 
         <button class="btn btn-primary" type="button" @onclick="ImportConfig"
                 disabled="@(Import != ImportStage.FileValid)">
@@ -79,11 +81,11 @@
             </label>
         </div>
 
-        <div class="form-check form-switch user-select-none mt-2">
-            <input class="form-check-input" type="checkbox" id="checkCD" @bind-value="IsCraftingDataIncluded"
-                   checked="@IsCraftingDataIncluded" switch>
+        <div class="form-check form-switch user-select-none mt-2" title="Raw item costs and recipe filters">
+            <input class="form-check-input" type="checkbox" id="checkCD" @bind-value="IsCraftingParamsIncluded"
+                   checked="@IsCraftingParamsIncluded" switch>
             <label class="form-check-label" for="checkCD">
-                Include Crafting Data
+                Include Crafting Params
             </label>
         </div>
 
@@ -150,7 +152,7 @@
         Import = ImportStage.FileValid;
     }
 
-    private bool IsDeletingIcons { get; set; } = false;
+    private bool IsDeletingIcons { get; set; } = true;
     private async Task ImportConfig()
     {
         // this SHOULD HAVE been checked by ImportStage.FileValid,
@@ -162,8 +164,9 @@
 
         await IS.SetItems(config.Items);
         await IS.SetRecipes(config.Recipes);
-        await CS.SetCraftingData(config.CraftingData);
         await CS.SetPlannedCrafts(config.PlannedCrafts);
+        await CS.SetCraftingParams(config.CraftingParams);
+        CS.ClearCraftingData();
 
         if (IsDeletingIcons)
         {
@@ -176,9 +179,9 @@
     private readonly string defaultFilename = "ucc-config";
     private string FileName { get; set; } = "";
 
+    private bool IsPlannedCraftsIncluded { get; set; } = true;
+    private bool IsCraftingParamsIncluded { get; set; } = true;
     private bool IsIndented { get; set; } = false;
-    private bool IsCraftingDataIncluded { get; set; } = false;
-    private bool IsPlannedCraftsIncluded { get; set; } = false;
 
     private async Task ExportConfig()
     {
@@ -186,8 +189,8 @@
         {
             Items = IS.GetItems(),
             Recipes = IS.GetRecipes(),
+            CraftingParams = IsCraftingParamsIncluded ? CS.CraftingParams : null,
             PlannedCrafts = IsPlannedCraftsIncluded ? CS.PlannedCrafts : null,
-            CraftingData = IsCraftingDataIncluded ? CS.GetCraftingData() : null,
         };
 
         string? json = JsonSerializer.Serialize(config, new JsonSerializerOptions

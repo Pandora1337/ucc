@@ -18,4 +18,9 @@ public class Ingredient(
         itemId = this.ItemId;
         amount = this.Amount;
     }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(ItemId, Amount);
+    }
 }

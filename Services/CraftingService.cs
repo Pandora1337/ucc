@@ -1,198 +1,389 @@
 using ucc.Data;
 using ucc.Models;
+using ucc.Models.Crafting;
+using ucc.Models.Solver;
 
 namespace ucc.Services;
 
-public class CraftingService(InventoryService inventoryService, LocalStorage localStorage)
+public sealed class CraftingService(InventoryService inventoryService, LocalStorage localStorage) : IDisposable
 {
-    protected InventoryService IS { get; set; } = inventoryService;
-    protected LocalStorage LS { get; set; } = localStorage;
+    private InventoryService IS { get; set; } = inventoryService;
+    private LocalStorage LS { get; set; } = localStorage;
+
+    public List<Ingredient> PlannedCrafts { get; set; } = new();
+    public CraftingParams CraftingParams { get; set; } = new();
+    public CraftingData? CraftingData { get; private set; } = null;
+
+    public event Action? OnCraftingStatusChange;
+    public bool IsCrafting { get; private set; } = false;
 
     public async Task InitializeAsync()
     {
+        IS.OnItemListChange += VerifyCosts;
+        IS.OnItemListChange += RequestCrafting;
+        IS.OnRecipeListChange += VerifyBlacklist;
+        IS.OnRecipeListChange += RequestCrafting;
+        IS.OnRecipeUpdate += _ => RequestCrafting();
+
         PlannedCrafts = await LS.Get<List<Ingredient>>("plannedCrafts", []);
-        craftingData = await LS.Get<CraftingData>("craftingData", null);
+        CraftingParams = await LS.Get("craftingParams", CraftingParams);
+        await LS.Remove("craftingData");
     }
 
-    public List<Ingredient> PlannedCrafts { get; set; } = new();
-
-    public async Task OnItemDeleted(Ingredient ing)
+    public void Dispose()
     {
-        PlannedCrafts.Remove(ing);
-        await UpdatePlannedCrafts();
+        IS.OnItemListChange -= VerifyCosts;
+        IS.OnItemListChange -= RequestCrafting;
+        IS.OnRecipeListChange -= VerifyBlacklist;
+        IS.OnRecipeListChange -= RequestCrafting;
+        IS.OnRecipeUpdate -= _ => RequestCrafting();
+
+        DisposeOfCTS();
     }
 
-    public async Task DeletePlannedCrafts()
+    #region Craft
+    CancellationTokenSource? _cts;
+    public async Task Craft()
     {
-        PlannedCrafts.Clear();
-        await LS.Remove("plannedCrafts");
+        if (!NeedsCrafting)
+            return;
+        NeedsCrafting = false;
+
+        // Cancel already running process
+        DisposeOfCTS();
+        _cts = new();
+        ChangeCraftingStatus(true);
+
+        var graph = new Graph();
+        var recipesList = new HashSet<Recipe>();
+        Dictionary<string, float> targetDict = [];
+        foreach ((string itemId, float amount) in PlannedCrafts)
+        {
+            if (amount <= 0)
+                continue;
+
+            // dedup is done in Crafting.razor
+            targetDict[itemId] = amount;
+            ExploreItem(itemId);
+        }
+
+        void ExploreItem(string itemId, Guid? parentRecipe = null)
+        {
+            bool hasRecipe = false;
+            var recipes = IS.GetRecipesByResultId(itemId);
+            foreach (Recipe recipe in recipes)
+            {
+                if (CraftingParams.Blacklist.Contains(recipe.Guid))
+                    continue;
+
+                hasRecipe = true;
+                // skip if already in the graph
+                if (graph.AddNode(recipe.Guid, parentRecipe))
+                    continue;
+
+                recipesList.Add(recipe);
+                foreach ((string ingId, float ingAmount) in recipe.Ingredients.DistinctBy(x => x.ItemId))
+                {
+                    ExploreItem(ingId, recipe.Guid);
+                }
+            }
+
+            if (!hasRecipe)
+            {
+                targetDict.Remove(itemId);
+            }
+        }
+
+        if (targetDict.Count == 0)
+        {
+            FinishCrafting(null);
+            return;
+        }
+
+        var cd = new CraftingData();
+
+        // cumulative amount of ingredients used
+        var ingCumulative = new Dictionary<string, float>();
+
+        // overall change in item amounts
+        var itemDeltas = new Dictionary<string, float>();
+
+        var answer = await SolveRecipes(cd, recipesList.ToList(), targetDict, itemDeltas, ingCumulative, _cts.Token);
+
+        // Branch and run again for any deficits to get integer solution
+        // if the first run is not successful, skip to early termination
+        if (CraftingParams.Rate == CraftingRate.Once && cd.Status == Simplex.Status.SUCCESS)
+        {
+            var targetDict2 = new Dictionary<string, float>();
+            foreach ((string itemId, float amount) in itemDeltas)
+            {
+                float diff = targetDict.GetValueOrDefault(itemId, 0) - amount;
+                if (diff <= 0)
+                    continue;
+
+                targetDict2[itemId] = diff;
+            }
+
+            // FIXME: can never skip due to raw always being negative
+            // if (targetDict2.Count > 0)
+            var answer2 = await SolveRecipes(cd, recipesList.ToList(), targetDict2, itemDeltas, ingCumulative, _cts.Token);
+            foreach ((Guid guid, float amount) in answer2)
+            {
+                // merge answers
+                answer[guid] = answer.GetValueOrDefault(guid, 0) + amount;
+            }
+        }
+
+        // if CANCELLED: exit without update
+        if (cd.Status == Simplex.Status.CANCELLED)
+        {
+            // CANCELLED status is when a new request comes in before last one is finished
+            // no update as we just ignore the previous request
+            return;
+        }
+
+        // if FAILURE or TIMEOUT: exit + update
+        if (cd.Status != Simplex.Status.SUCCESS)
+        {
+            FinishCrafting(cd);
+            return;
+        }
+
+        // topologically sorted recipe graph for recipe order
+        foreach (Guid guid in graph.GetSCCs().SelectMany(scc => scc))
+        {
+            if (!answer.TryGetValue(guid, out float num))
+                continue;
+
+            cd.RecipeGuideList.Add(new(guid, num));
+        }
+
+        (cd.ItemsProd, cd.ItemsInt, cd.ItemsRaw) = SortItemCategories(itemDeltas, ingCumulative);
+        await SaveCraftingParams();
+        FinishCrafting(cd);
+    }
+    #endregion
+
+    #region Helpers
+    private bool NeedsCrafting;
+    public void RequestCrafting() => NeedsCrafting = true;
+
+    private void FinishCrafting(CraftingData? cd)
+    {
+        CraftingData = cd;
+        ChangeCraftingStatus(false);
     }
 
-    public async Task UpdatePlannedCrafts()
+    private void ChangeCraftingStatus(bool isCrafting)
     {
-        await LS.Set("plannedCrafts", PlannedCrafts);
+        if (IsCrafting == isCrafting)
+            return;
+
+        IsCrafting = isCrafting;
+        OnCraftingStatusChange?.Invoke();
     }
 
-    private CraftingData? craftingData = null;
-
-    public CraftingData? GetCraftingData()
+    public void DisposeOfCTS()
     {
-        return craftingData;
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+    #endregion
+
+    #region SolveRecipes
+    private async Task<Dictionary<Guid, float>> SolveRecipes(
+        CraftingData cd,
+        List<Recipe> recipes,
+        Dictionary<string, float> targets,
+        Dictionary<string, float> itemDeltas,
+        Dictionary<string, float> ingCumulative,
+        CancellationToken cts)
+    {
+        bool normalise = CraftingParams.Rate != CraftingRate.Once;
+        var m = new Matrix(recipes, targets, CraftingParams.Costs, normalise);
+
+        // FIXME?: when run the second time, the status is overridden and may fail
+        // the entire solution, even if it is partially feasable
+        (cd.Status, var solution, cd.ErrorMessage) = await Simplex.Solve(m, cts);
+
+        if (cd.Status != Simplex.Status.SUCCESS)
+            return [];
+
+        CraftingParams.Costs = m.FilterOutUnusedCosts(CraftingParams.Costs);
+        var output = new Dictionary<Guid, float>(solution.Count);
+        foreach ((Guid guid, float ops) in solution)
+        {
+            float num = ops;
+            var recipe = IS.GetRecipeById(guid);
+            if (!normalise)
+            {
+                num = float.Ceiling(num);
+                cd.CraftingTime += recipe.GetTotalCraftingTime((int)num);
+            }
+
+            output[guid] = num;
+            float time = normalise ? (recipe.CraftingTime ?? 1) : 1;
+            AddRecipeDeltas(recipe, num / time, itemDeltas, ingCumulative);
+        }
+
+        return output;
+    }
+    #endregion
+
+    #region Recipe Deltas
+    private static void AddRecipeDeltas(
+        Recipe recipe,
+        float num,
+        Dictionary<string, float> itemDeltas,
+        Dictionary<string, float> ingCumulative)
+    {
+        foreach ((string prodId, float prodAmount) in recipe.Products)
+        {
+            float prodMade = prodAmount * num;
+            itemDeltas[prodId] = itemDeltas.GetValueOrDefault(prodId, 0) + prodMade;
+        }
+
+        foreach ((string ingId, float ingAmount) in recipe.Ingredients)
+        {
+            float ingNeed = ingAmount * num;
+            ingCumulative[ingId] = ingCumulative.GetValueOrDefault(ingId, 0) + ingNeed;
+            itemDeltas[ingId] = itemDeltas.GetValueOrDefault(ingId, 0) - ingNeed;
+        }
+    }
+    #endregion
+
+    #region Sort
+    static (Dictionary<string, float>,
+            Dictionary<string, float>,
+            Dictionary<string, float>) SortItemCategories(Dictionary<string, float> itemDeltas, Dictionary<string, float> ingCumulative)
+    {
+        var prods = new Dictionary<string, float>();
+        var inter = new Dictionary<string, float>();
+        var raws = new Dictionary<string, float>();
+
+        foreach ((string itemId, float amount) in itemDeltas)
+        {
+            switch (amount)
+            {
+                // Made more than needed - product
+                case > 0:
+                    // some part of product that is used as intermediate resource
+                    if (ingCumulative.TryGetValue(itemId, out float need))
+                    {
+                        inter.Add(itemId, need);
+                    }
+
+                    if (WithinError(amount))
+                        continue;
+
+                    prods.Add(itemId, amount);
+                    continue;
+
+                // Made just enough - intermediate resource
+                case 0:
+                    inter.Add(itemId, ingCumulative[itemId]);
+                    continue;
+
+                // Didnt make enough - raw resource
+                case < 0:
+                    // some part of raw that is used as intermediate resource
+                    // this really shouldnt be happening as all inters should've 
+                    // been satisfied
+                    // FIXME
+                    if (ingCumulative.TryGetValue(itemId, out float has))
+                    {
+                        if (has != -amount)
+                            inter.Add(itemId, has);
+                    }
+
+                    if (WithinError(amount))
+                        continue;
+
+                    raws.Add(itemId, -amount);
+                    continue;
+            }
+        }
+
+        static bool WithinError(float num)
+        {
+            float epsilon = 1e-5f;
+            return float.Abs(num) < epsilon;
+        }
+
+        // makes sure the order of matching items in prod follows inter
+        var newprods = new Dictionary<string, float>();
+        foreach (string item in inter.Keys)
+        {
+            if (prods.TryGetValue(item, out float value))
+                newprods[item] = value;
+        }
+
+        foreach ((string item, float amount) in prods)
+        {
+            if (!newprods.ContainsKey(item))
+                newprods[item] = amount;
+        }
+
+        return (newprods, inter, raws);
+    }
+    #endregion
+
+    #region Get/Set
+    public async Task SetCraftingParams(CraftingParams? craftingParams)
+    {
+        CraftingParams = craftingParams ?? new();
+        await SaveCraftingParams();
     }
 
-    public async Task SetCraftingData(CraftingData? newData)
+    public async Task SaveCraftingParams()
     {
-        craftingData = newData;
-        await LS.Set("craftingData", craftingData!);
+        await LS.Set("craftingParams", CraftingParams);
+    }
+
+    public void ClearCraftingData()
+    {
+        CraftingData = null;
     }
 
     public async Task SetPlannedCrafts(List<Ingredient>? list)
     {
         PlannedCrafts = list ?? [];
-        await UpdatePlannedCrafts();
+        await SavePlannedCrafts();
     }
 
-    public async Task DoListCrafting()
+    public async Task SavePlannedCrafts()
     {
-        Dictionary<Recipe, int> recipeGuide = [];
-        Dictionary<string, Recipe> selectedRecipes = [];
-
-        Dictionary<string, float> totalIngs = [];
-        Dictionary<string, float> itemDeltas = [];
-        HashSet<string> deadEndItems = [];
-
-        Dictionary<string, float> targetDict = CollapseList(PlannedCrafts);
-        foreach (KeyValuePair<string, float> item in targetDict)
-        {
-            await Recurse(item.Key, item.Value, []);
-        }
-
-        CraftingData craftingData = new();
-        foreach ((Recipe recipe, int ops) in recipeGuide)
-        {
-            craftingData.CraftingTime += recipe.GetTotalCraftingTime(ops);
-            craftingData.RecipeGuide.Add(recipe.Guid, ops);
-        }
-
-        // Console.WriteLine("totalIngs:");
-        // IS.SerialiseToJSON(totalIngs);
-
-        // Console.WriteLine("deltas:");
-        // IS.SerialiseToJSON(itemDeltas);
-
-        SortItemCategories();
-        await SetCraftingData(craftingData);
-
-        async Task Recurse(string itemId, float amount, HashSet<string> visited)
-        {
-            if (deadEndItems.Contains(itemId))
-                return;
-
-            if (!visited.Add(itemId))
-            {
-                deadEndItems.Add(itemId);
-                return;
-            }
-
-            if (!selectedRecipes.TryGetValue(itemId, out Recipe? recipe))
-            {
-                List<Recipe> recipes = IS.GetRecipesByResultId(itemId).ToList();
-                if (recipes.Count == 0)
-                {
-                    deadEndItems.Add(itemId);
-                    return;
-                }
-
-                if (recipes.Count == 1)
-                {
-                    recipe = recipes[0];
-                }
-                else
-                {
-                    recipe = await RequestUserResolve(itemId, recipes);
-                    // TODO optional add to selectedRecipes?
-                }
-
-                selectedRecipes.Add(itemId, recipe);
-            }
-
-            Dictionary<string, float> totalProd = CollapseList(recipe.Products);
-
-            int ops = (int)Math.Ceiling(amount / totalProd[itemId]);
-            recipeGuide[recipe] = recipeGuide.GetValueOrDefault(recipe, 0) + ops;
-            itemDeltas[itemId] = itemDeltas.GetValueOrDefault(itemId, 0) + (ops * totalProd[itemId]);
-
-            Dictionary<string, float> totalIng = CollapseList(recipe.Ingredients);
-            foreach ((string ingId, float ingAmount) in totalIng)
-            {
-                float ingNeed = ingAmount * ops;
-                totalIngs[ingId] = totalIngs.GetValueOrDefault(ingId, 0) + ingNeed;
-
-                float ingDelta = itemDeltas.GetValueOrDefault(ingId, 0) - ingNeed;
-                itemDeltas[ingId] = ingDelta;
-                if (ingDelta < 0)
-                {
-                    await Recurse(ingId, ingNeed, visited);
-                }
-            }
-
-            visited.Remove(itemId);
-        }
-
-        void SortItemCategories()
-        {
-            foreach ((string itemId, float amount) in itemDeltas)
-            {
-                switch (amount)
-                {
-                    case > 0:
-                        if (!targetDict.ContainsKey(itemId))
-                        {
-                            craftingData.ItemsInt.Add(itemId, totalIngs[itemId]);
-                        }
-
-                        craftingData.ItemsProd.Add(itemId, amount);
-                        continue;
-
-                    case 0:
-                        craftingData.ItemsInt.Add(itemId, totalIngs[itemId]);
-                        continue;
-
-                    case < 0:
-                        craftingData.ItemsRaw.Add(itemId, amount * -1);
-                        continue;
-
-                }
-            }
-        }
+        await LS.Set("plannedCrafts", PlannedCrafts);
     }
 
-    public static Dictionary<string, float> CollapseList(List<Ingredient> ingredients)
+    /// <summary>
+    /// On recipe list change, verify blacklist guids still exist in inventory
+    /// </summary>
+    private async void VerifyBlacklist()
     {
-        Dictionary<string, float> collapsed = [];
-        foreach (Ingredient ing in ingredients)
+        int invalids = CraftingParams.Blacklist.RemoveWhere(id => !IS.ContainsRecipeGuid(id));
+        if (invalids > 0)
+            await SaveCraftingParams();
+    }
+
+    /// <summary>
+    /// On item list change, verify cost ids still exist in inventory
+    /// </summary>
+    private async void VerifyCosts()
+    {
+        var idsToRemove = CraftingParams.Costs.Keys
+            .Where(itemId => !IS.ContainsItemId(itemId))
+            .ToList();
+
+        if (idsToRemove.Count == 0)
+            return;
+
+        foreach (var id in idsToRemove)
         {
-            collapsed[ing.ItemId] = collapsed.GetValueOrDefault(ing.ItemId, 0) + ing.Amount;
+            CraftingParams.Costs.Remove(id);
         }
-        return collapsed;
-    }
 
-    public event Action<string>? OnChoiceRequest;
-    public event Action? OnChoiceSelect;
-    public IEnumerable<Recipe>? RecipeOptions { get; private set; }
-    private async Task<Recipe> RequestUserResolve(string itemId, IEnumerable<Recipe> options)
-    {
-        RecipeOptions = options;
-        _choiceTask = new();
-        OnChoiceRequest?.Invoke(itemId);
-        return await _choiceTask.Task;
+        await SaveCraftingParams();
     }
-
-    private TaskCompletionSource<Recipe> _choiceTask = new();
-    public void SelectRecipe(Recipe recipe)
-    {
-        RecipeOptions = null;
-        OnChoiceSelect?.Invoke();
-        _choiceTask.TrySetResult(recipe);
-    }
+    #endregion
 }

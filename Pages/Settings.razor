@@ -1,8 +1,10 @@
 @page "/settings"
 
+@using ucc.Models.Settings
 @using ucc.Components.Modal
 @using ucc.Components.ImportExport
 @using ucc.Components.StorageEstimate
+@using ucc.Components.Alert
 
 @inject ucc.Data.LocalStorage LS;
 @inject ucc.Services.InventoryService IS;
@@ -100,7 +102,7 @@
             <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-3">
                 <div>
                     <h2 class="h6 mb-1">Local storage</h2>
-                    <div class="text-muted small">User preferences, Planned Crafts list, and Crafting Data.
+                    <div class="text-muted small">User preferences, Planned Crafts list, Crafting Params, and Crafting Data.
                     </div>
                 </div>
                 <button class="btn btn-outline-danger" title="Delete LocalStorage"
@@ -149,11 +151,9 @@
                 </button>
             </div>
 
-            <div class="alert alert-warning small mt-3 mb-0" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                Deleting storage cannot be undone.
-                Make sure you have backups before continuing.
-            </div>
+            <Alert Class="alert-warning small" Title="Warning!"
+                   Message="Deleting storage cannot be undone. Make sure you have backups before continuing.">
+            </Alert>
         </div>
     </div>
 </div>
@@ -166,10 +166,8 @@
 
 <Modal @ref="modalIconLoad" Title="Confirm Action">
     <div class="modal-body">
-        <div class="alert alert-warning m-0" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-            Loading all icons into memory can cause problems if you have many large images!
-        </div>
+        <Alert Class="alert-warning" Title="Warning!"
+               Message="Loading all icons into memory can cause problems if you have many large images!" />
     </div>
 
     <div class="modal-footer flex-nowrap">

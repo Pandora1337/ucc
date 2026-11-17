@@ -1,0 +1,4 @@
+.ops-label {
+    border-bottom-left-radius: var(--bs-card-border-radius);
+    border-top-right-radius: var(--bs-card-border-radius);
+}
