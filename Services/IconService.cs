@@ -21,7 +21,7 @@ public class IconService(IndexedDBManager db, IJSRuntime jsRuntime, LocalStorage
         public int Count;
     }
 
-    private readonly double TimerInterval = 10000;
+    private double TimerInterval = 10000;
     private System.Timers.Timer timer = null!;
 
     public bool IsIconsEnabled { get; private set; } = true;
@@ -31,6 +31,7 @@ public class IconService(IndexedDBManager db, IJSRuntime jsRuntime, LocalStorage
     public async Task InitializeAsync()
     {
         IsIconsEnabled = await LS.Get<bool>("iconIsEnabled", IsIconsEnabled);
+        TimerInterval = await LS.Get<double>("iconTimeout", TimerInterval);
     }
 
     public async ValueTask DisposeAsync()
@@ -39,6 +40,18 @@ public class IconService(IndexedDBManager db, IJSRuntime jsRuntime, LocalStorage
     }
 
     #region Eviction Timer
+    public async Task SetTimeout(double time)
+    {
+        Console.WriteLine(time);
+
+        TimerInterval = time * 1000;
+        await LS.Set("iconTimeout", TimerInterval);
+    }
+
+    public double GetTimeout()
+    {
+        return TimerInterval / 1000;
+    }
 
     private void StartEvictionCountdown()
     {

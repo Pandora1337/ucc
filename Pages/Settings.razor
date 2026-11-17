@@ -3,12 +3,12 @@
 @using ucc.Models.Settings
 @using ucc.Components.Modal
 @using ucc.Components.ImportExport
+@using ucc.Components.StorageEstimate
 @using ucc.Components.Alert
 
 @inject ucc.Data.LocalStorage LS;
 @inject ucc.Services.InventoryService IS;
 @inject ucc.Services.IconService IconService;
-@inject Microsoft.JSInterop.IJSRuntime JS;
 
 <PageTitle>Settings</PageTitle>
 
@@ -58,14 +58,27 @@
                     <button class="btn btn-sm btn-outline-primary"
                             title="Show which icons are currently cached (developer tool)"
                             @onclick="@(() => IconService.ShowCache())">
-                        Show Cache
+                        Print Cache
                     </button>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-1">
                     <div class="text-muted small">
-                        Unused icons should be automatically removed after 10 seconds of not being used.
-                        If not, you can press this button.
+                        How long do icons stay in cache without an active reference (Default: 10s)
+                    </div>
+
+                    <div>
+                        <div class="input-group flex-nowrap">
+                            <input type="number" step="any" class="form-control" value="@IconService.GetTimeout()"
+                                   @onchange="HandleValueChanged" style="max-width: 80px; min-width: 64px;" />
+                            <span class="input-group-text">s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-1">
+                    <div class="text-muted small">
+                        Force evict all icons from cache.
                     </div>
 
                     <button class="btn btn-outline-danger" title="Remove all cached icons immediately"
@@ -84,49 +97,7 @@
         </div>
 
         <div class="card-body">
-            @if (storageEstimate != null)
-            {
-                float usagePercent = storageEstimate.GetPercent(storageEstimate.Usage);
-                float percentIcons = storageEstimate.GetPercent(iconStoreSize);
-                float percentOther = usagePercent - percentIcons;
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="card-title mb-0">Usage</h5>
-                        <span class="badge text-bg-primary
-                            @(usagePercent > 75 ? "text-bg-warning" : "")
-                            @(usagePercent > 90 ? "text-bg-danger" : "")">
-                            Used: @(StorageEstimate.Get2SigFig(usagePercent))%
-                        </span>
-                    </div>
-
-                    <div class="progress-stacked">
-                        <div class="progress" role="progressbar" aria-valuenow="@percentIcons" aria-valuemin="0"
-                             aria-valuemax="100" aria-label="Percentage of storage taken up by icons"
-                             title="Percentage of storage taken up by icons" style="width: @(percentIcons)%">
-                            <div class="progress-bar text-bg-primary">
-                                @(StorageEstimate.Get2SigFig(percentIcons))%
-                            </div>
-                        </div>
-
-                        <div class="progress" role="progressbar" aria-valuenow="@percentOther" aria-valuemin="0"
-                             aria-valuemax="100" aria-label="Percentage of storage taken up by other data"
-                             title="Percentage of storage taken up by other data" style="width: @(percentOther)%">
-                            <div class="progress-bar text-bg-info">
-                                @(StorageEstimate.Get2SigFig(percentOther))%
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-between small text-muted mt-2">
-                        <span>
-                            Used: <strong>@StorageEstimate.GetHumanReadable(storageEstimate.Usage)</strong>
-                        </span>
-                        <span>
-                            Total: <strong>@StorageEstimate.GetHumanReadable(storageEstimate.Quota)</strong>
-                        </span>
-                    </div>
-                </div>
-            }
+            <StorageEstimateView IconSize="iconStoreSize"/>
 
             <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-3">
                 <div>
@@ -205,10 +176,10 @@
         </button>
 
         <button type="button" class="btn btn-lg btn-warning w-50" @onclick="@(async () =>
-                {
-                    iconStoreSize = await IconService.RecalculateTotalIconSize();
-                    await modalIconLoad.CloseAsync();
-                })">
+            {
+                iconStoreSize = await IconService.RecalculateTotalIconSize();
+                await modalIconLoad.CloseAsync();
+            })">
             Recalculate
         </button>
     </div>
@@ -222,10 +193,16 @@
     Modal modalIconLoad = null!;
 
     private int iconStoreSize = 0;
-    private StorageEstimate? storageEstimate = null;
     protected override async Task OnInitializedAsync()
     {
         iconStoreSize = await IconService.GetTotalIconSize();
-        storageEstimate = await JS.InvokeAsync<StorageEstimate>("getStorageEstimate");
+    }
+    
+    private async Task HandleValueChanged(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out double parsedValue))
+        {
+            await IconService.SetTimeout(parsedValue);
+        }
     }
 }
