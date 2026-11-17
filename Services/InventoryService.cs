@@ -312,6 +312,11 @@ public class InventoryService(IndexedDBManager db)
         return recipes.GetValueOrDefault(guid)!;
     }
 
+    public bool ContainsRecipeGuid(Guid guid)
+    {
+        return recipes.ContainsKey(guid);
+    }
+
     #region Get/Set
     public IEnumerable<Guid> GetRecipesWithItems(IEnumerable<string> items)
     {

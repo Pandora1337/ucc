@@ -19,7 +19,9 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
 
     public async Task InitializeAsync()
     {
+        IS.OnItemListChange += VerifyCosts;
         IS.OnItemListChange += RequestCrafting;
+        IS.OnRecipeListChange += VerifyBlacklist;
         IS.OnRecipeListChange += RequestCrafting;
         IS.OnRecipeUpdate += _ => RequestCrafting();
 
@@ -30,7 +32,9 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
 
     public void Dispose()
     {
+        IS.OnItemListChange -= VerifyCosts;
         IS.OnItemListChange -= RequestCrafting;
+        IS.OnRecipeListChange -= VerifyBlacklist;
         IS.OnRecipeListChange -= RequestCrafting;
         IS.OnRecipeUpdate -= _ => RequestCrafting();
 
@@ -353,6 +357,36 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
     public async Task SavePlannedCrafts()
     {
         await LS.Set("plannedCrafts", PlannedCrafts);
+    }
+
+    /// <summary>
+    /// On recipe list change, verify blacklist guids still exist in inventory
+    /// </summary>
+    private async void VerifyBlacklist()
+    {
+        int invalids = CraftingParams.Blacklist.RemoveWhere(id => !IS.ContainsRecipeGuid(id));
+        if (invalids > 0)
+            await SaveCraftingParams();
+    }
+
+    /// <summary>
+    /// On item list change, verify cost ids still exist in inventory
+    /// </summary>
+    private async void VerifyCosts()
+    {
+        var idsToRemove = CraftingParams.Costs.Keys
+            .Where(itemId => !IS.ContainsItemId(itemId))
+            .ToList();
+
+        if (idsToRemove.Count == 0)
+            return;
+
+        foreach (var id in idsToRemove)
+        {
+            CraftingParams.Costs.Remove(id);
+        }
+
+        await SaveCraftingParams();
     }
     #endregion
 }
