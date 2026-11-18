@@ -20,7 +20,11 @@
 
 <h1 class="text-center">Inventory</h1>
 <div class="w-100 text-center">
-    <button class="btn btn-outline-secondary" type="button" @onclick="IS.GenerateStuff">Quickstart recipes</button>
+    <button class="btn btn-outline-secondary" type="button" @onclick="IS.GenerateStuff"
+            title="Creates a few recipes and items as a demo">
+        <i class="bi bi-journal-plus me-2" />Quickstart recipes
+    </button>
+
     <a class="btn btn-outline-secondary" href="settings#config" title="Go to config Import/Export"
        aria-label="Go to config Import/Export">
         <span class="bi bi-box-arrow-in-down me-2" aria-hidden="true" />/<span class="bi bi-box-arrow-up ms-2" aria-hidden="true" />
@@ -57,7 +61,7 @@
                 @foreach (Guid recipe in filteredRecipes)
                 {
                     <div @key="recipe" class="col-12 col-md-6 col-xxl-4">
-                        <RecipeCard RecipeId="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))">
+                        <RecipeCard RecipeId="@recipe" OnRecipeClick="@(async () => await OpenRecipeAddModal(recipe))" >
                             <BtnDelete OnDelete="@(async () => await OpenRecipeAddModal(recipe))" style="right: 48px;"
                                        cClass="btn-primary" ImgSrc="bi-pencil-square" Title="Edit" />
 
@@ -92,7 +96,7 @@
                 @foreach (string itemId in filteredItems)
                 {
                     <ItemCard @key="itemId" ItemId="@itemId" IconSize="128px" cClass="position-relative"
-                                EnableDate="true" OnItemClicked="@(async () => await OpenItemAddModal(itemId))">
+                              EnableDate="true" OnItemClicked="@(async () => await OpenItemAddModal(itemId))">
                         <BtnDelete OnDelete="@(async () => await OpenItemDeleteModal(itemId))" ImgSrc="bi-trash3" />
                     </ItemCard>
                 }
@@ -140,7 +144,7 @@
 </ModalDelete>
 
 <ModalDelete @ref="modalDeleteRecipe" Subject="this recipe" OnDelete="RecipeRemove">
-    <CraftingStep Recipe="modalRecipe"/>
+    <CraftingStep Recipe="modalRecipe" />
 </ModalDelete>
 
 <ModalDelete @ref="modalDeleteItemList" Subject="all items" OnDelete="@(async () => { await IS.ClearAllItems(); await IconService.ClearIcons(); })" />
