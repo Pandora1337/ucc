@@ -78,6 +78,8 @@
 
 - **Ease of use** - All editing happens inside the browser, no more editing files to add a new item or recipe!
 - **Item Icons** - Supports user-added images for items
+- **Crafting Rate** - Switch between one-off and continuous crafting
+- **Rich Crafting Tweaks** - Find the most optimal craft by adjusting ingredient costs and recipe filters
 - **Offline-first** - No active internet connection required
 - **Config Import / Export** - Save and share configs
 - **Custom recipes** - Users define items and recipes themselves for any game of any version
