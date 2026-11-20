@@ -1,8 +1,8 @@
 @using System.Threading.Tasks
 @using ucc.Components.Accordion
-@using ucc.Models
 @using ucc.Components.Modal
 @using ucc.Components.Item
+@using ucc.Models
 
 @namespace ucc.Components.Recipe
 
@@ -53,38 +53,12 @@
                         <ValidationMessage For="@(() => recipe.Name)" />
                     </div>
 
-                    <div class="col-sm-6 col-lg-4" title="Where the product is made in">
-                        <label class="form-label">
-                            <i class="bi bi-tools me-2" aria-hidden="true" />Crafting Station:
-                        </label>
-
-                        @if (recipe.StationId == "")
-                        {
-                            <div class="d-flex justify-content-left">
-                                <button type="button"
-                                        @onclick="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
-                                        class="btn btn-primary">
-                                    <i class="bi bi-plus-lg me-1" aria-hidden="true" />Add Station
-                                </button>
-                            </div>
-                        }
-                        else
-                        {
-                            <RecipeIngredient ItemId="@recipe.StationId" EnableInput="false" IconSize="32px"
-                                              @key="@recipe.StationId"
-                                              OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
-                                              OnBtnClicked="@(() => { recipe.StationId = ""; })" EnableBtn="true" />
-                        }
-
-                        <ValidationMessage For="@(() => recipe.StationId)" />
-                    </div>
-
                     <div class="col-sm-6 col-lg-4" title="Time it takes to complete this recipe, in seconds">
                         <label class="form-label">
                             <i class="bi bi-clock me-2" aria-hidden="true" />Crafting time (seconds):
                         </label>
 
-                        <div class="input-group mb-3">
+                        <div class="input-group">
                             <InputNumber TValue="float?" class="form-control" min="0" max="@float.MaxValue"
                                          placeholder="Crafting Time" @bind-Value="recipe.CraftingTime" />
                             <span class="input-group-text">s</span>
@@ -101,6 +75,29 @@
                                      placeholder="Batch Size" type="range" @bind-Value="recipe.BatchSize" />
 
                         <ValidationMessage For="@(() => recipe.BatchSize)" />
+                    </div>
+
+                    <div class="col-sm-6 col-lg-4" title="Where the product is made in">
+                        <label class="form-label">
+                            <i class="bi bi-tools me-2" aria-hidden="true" />Crafting Station:
+                        </label>
+
+                        @if (recipe.StationId == "")
+                        {
+                            <button type="button" class="btn btn-primary w-100"
+                                    @onclick="@(async () => await ModalItemPickerOpen(PickerContext.STATION))">
+                                <i class="bi bi-plus-lg me-1" aria-hidden="true" />Add Station
+                            </button>
+                        }
+                        else
+                        {
+                            <RecipeIngredient ItemId="@recipe.StationId" EnableInput="false" IconSize="32px"
+                                              @key="@recipe.StationId" style="padding: 0.125rem !important;"
+                                              OnIconClicked="@(async () => await ModalItemPickerOpen(PickerContext.STATION))"
+                                              OnBtnClicked="@(() => { recipe.StationId = ""; })" EnableBtn="true" />
+                        }
+
+                        <ValidationMessage For="@(() => recipe.StationId)" />
                     </div>
                 </div>
             </AccordionItem>
