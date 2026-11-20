@@ -6,13 +6,13 @@
 
 @namespace ucc.Components.Recipe
 
-<div class="d-flex p-3 border rounded bg-body-secondary @cClass" style="@style">
-    <button type="button" class="btn-custom flex-shrink-0 pe-2 icon" @onclick="IconClick">
+<div class="d-flex gap-2 p-3 border rounded bg-body-secondary @cClass" style="@style">
+    <button type="button" class="btn-custom flex-shrink-0 icon" @onclick="IconClick">
         <ItemIcon Size="@IconSize" Item="@Item" />
     </button>
 
-    <div class="d-flex flex-grow-1 flex-column justify-content-center w-50">
-        <h4 class="mb-1 text-truncate" title="@Item.Name">
+    <div class="d-flex flex-grow-1 flex-column justify-content-center gap-1 w-50">
+        <h4 class="mb-0 text-truncate" title="@Item.Name">
             @if (Item.IsUnknown == true)
             {
                 <span class="text-xs fw-medium bi bi-exclamation-circle text-danger me-2" aria-label="This item is invalid!"
@@ -33,7 +33,7 @@
 
     @if (EnableBtn)
     {
-        <BtnDelete OnDelete="BtnClick" ImgSrc="bi-x-lg" cClass="btn-danger p-0 ms-2 border-0 flex-shrink-0 h-100"
+        <BtnDelete OnDelete="BtnClick" ImgSrc="bi-x-lg" cClass="btn-danger p-0 border-0 flex-shrink-0 h-100"
                    style="position: relative; right: 0; top: 0; z-index: 10;" Size="32px" />
     }
 </div>
