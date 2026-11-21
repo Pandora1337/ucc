@@ -39,7 +39,7 @@
             </button>
         </div>
 
-        <Accordion cClass="mt-3" style="min-width: 330px;">
+        <Accordion cClass="mt-3 w-100">
             <AccordionItem Icon="bi-gear-fill" Title="Options">
                 <div class="row g-3">
                     <div class="col-sm-6 col-lg-4" title="Name of the recipe (Optional)">
@@ -60,7 +60,7 @@
 
                         <div class="input-group">
                             <InputNumber TValue="float?" class="form-control" min="0" max="@float.MaxValue"
-                                         placeholder="Crafting Time" @bind-Value="recipe.CraftingTime" />
+                                         placeholder="1" @bind-Value="recipe.CraftingTime" />
                             <span class="input-group-text">s</span>
                         </div>
                         <ValidationMessage For="@(() => recipe.CraftingTime)" />
@@ -72,7 +72,7 @@
                         </label>
 
                         <InputNumber TValue="int?" class="form-control" min="0" max="@int.MaxValue"
-                                     placeholder="Batch Size" type="range" @bind-Value="recipe.BatchSize" />
+                                     placeholder="1" type="range" @bind-Value="recipe.BatchSize" />
 
                         <ValidationMessage For="@(() => recipe.BatchSize)" />
                     </div>
