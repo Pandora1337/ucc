@@ -2,7 +2,7 @@
 
 @namespace ucc.Components.Crafting
 
-<div class="d-flex flex-wrap gap-1 my-2">
+<div class="d-flex flex-wrap gap-1">
     @foreach ((string itemId, float amount) in Items)
     {
         <ItemBadge @key="itemId + amount" ItemId="@itemId" Amount="@amount" style="max-width: 49%;" />

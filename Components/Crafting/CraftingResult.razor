@@ -19,23 +19,23 @@
     <AccordionItem Icon="bi-list" Title="Item List" OpenOnStart="true">
         @if (CraftingData.ItemsProd.Count > 0)
         {
-            <strong>
+            <div class="mb-2 fw-bold">
                 <i class="bi bi-gem me-2" aria-hidden="true" />Products:
-            </strong>
+            </div>
             <ItemBadgeList Items="CraftingData.ItemsProd" />
         }
 
         @if (CraftingData.ItemsInt.Count > 0)
         {
-            <strong>
+            <div class="my-2 fw-bold">
                 <i class="bi bi-layers-half me-2" aria-hidden="true" />Intermediate:
-            </strong>
+            </div>
             <ItemBadgeList Items="CraftingData.ItemsInt" />
         }
 
-        <strong>
+        <div class="my-2 fw-bold">
             <i class="bi bi-minecart-loaded me-2" aria-hidden="true" />Raw:
-        </strong>
+        </div>
         <ItemBadgeList Items="CraftingData.ItemsRaw" />
     </AccordionItem>
 </Accordion>
