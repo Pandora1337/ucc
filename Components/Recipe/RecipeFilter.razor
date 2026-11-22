@@ -20,7 +20,7 @@
             <button type="button" class="w-100 btn p-0
                 @(IsActive(guid) ? "btn-success" : "btn-outline-secondary")" @onclick="@(() => ToggleEntry(guid))">
 
-                <CraftingStep Recipe="recipe" Class="bg-transparent border-0" />
+                <CraftingStep Recipe="recipe" Class="bg-transparent border-0" HeaderClass="text-bg-secondar" />
             </button>
         </div>
     }
