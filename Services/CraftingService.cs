@@ -239,7 +239,7 @@ public sealed class CraftingService(InventoryService inventoryService, LocalStor
     {
         foreach ((string prodId, float prodAmount) in recipe.Products)
         {
-            float prodMade = prodAmount * num;
+            float prodMade = prodAmount * num * recipe.ChanceNormalised;
             itemDeltas[prodId] = itemDeltas.GetValueOrDefault(prodId, 0) + prodMade;
         }
 

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 using ucc.Services;
 
@@ -20,6 +21,10 @@ public partial class Recipe : IValidatableObject
     [Range(0, float.MaxValue)]
     public float? CraftingTime { get; set; }
 
+    [Range(0, 100)]
+    public float? Chance { get; set; }
+    [JsonIgnore] public float ChanceNormalised => (Chance ?? 100f) / 100f;
+
     public DateTime DateModified { get; set; } = DateTime.Now;
 
     public Guid Guid { get; set; }
@@ -39,6 +44,7 @@ public partial class Recipe : IValidatableObject
             StationId = this.StationId,
             BatchSize = this.BatchSize,
             CraftingTime = this.CraftingTime,
+            Chance = this.Chance,
             DateModified = this.DateModified,
             Guid = this.Guid,
         };

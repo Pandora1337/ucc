@@ -66,6 +66,19 @@
                         <ValidationMessage For="@(() => recipe.CraftingTime)" />
                     </div>
 
+                    <div class="col-sm-6 col-lg-4" title="Chance of the recipe crafting successfully (0-100)">
+                        <label class="form-label">
+                            <i class="bi bi-percent me-2" aria-hidden="true" />Crafting Chance:
+                        </label>
+
+                        <div class="input-group">
+                            <InputNumber TValue="float?" class="form-control" min="0" max="100" placeholder="100"
+                                         @bind-Value="recipe.Chance" />
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <ValidationMessage For="@(() => recipe.Chance)" />
+                    </div>
+
                     <div class="col-sm-6 col-lg-4" title="How many recipes can you make at the same time?">
                         <label class="form-label">
                             <i class="bi bi-stack me-2" aria-hidden="true" />Batch size:
@@ -105,6 +118,7 @@
 
         <ValidationMessage For="@(() => recipe.StationId)" />
         <ValidationMessage For="@(() => recipe.CraftingTime)" />
+        <ValidationMessage For="@(() => recipe.Chance)" />
         <ValidationMessage For="@(() => recipe.BatchSize)" />
 
         <div class="mt-3">

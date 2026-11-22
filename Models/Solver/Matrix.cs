@@ -78,13 +78,15 @@ public sealed class Matrix
             // add ingredient columns
             foreach (var ing in recipe.Ingredients)
             {
-                _matrix[r, idToIndex[ing.ItemId]] -= Fraction.FromDouble(ing.Amount / time);
+                var amount = ing.Amount / time;
+                _matrix[r, idToIndex[ing.ItemId]] -= Fraction.FromDouble(amount);
             }
 
             // add products columns
             foreach (var prod in recipe.Products)
             {
-                _matrix[r, idToIndex[prod.ItemId]] += Fraction.FromDouble(prod.Amount / time);
+                var amount = prod.Amount / time * recipe.ChanceNormalised;
+                _matrix[r, idToIndex[prod.ItemId]] += Fraction.FromDouble(amount);
             }
 
             // set recipe-recipe value to 1
