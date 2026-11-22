@@ -14,17 +14,16 @@
     return;
 }
 
-<div class="card p-3 position-relative @(IsInvalid ? "border-danger" : "") @Class">
+<div class="card position-relative @(IsInvalid ? "border-danger" : "") @Class">
     @if (OrderNum > -1)
     {
-        <span
-            class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary d-flex justify-content-center align-items-center"
-            style="width: 24px; height: 24px;" title="Crafting Order">
+        <span style="width: 24px; height: 24px;" title="Crafting Order"
+              class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary d-flex justify-content-center align-items-center">
             @OrderNum
         </span>
     }
 
-    <div class="position-absolute end-0 top-0 d-flex justify-content-center align-items-center">
+    <div class="d-flex justify-content-between align-items-center rounded-top-2 @HeaderClass">
         @if (IsInvalid)
         {
             <div class="mx-2 mt-1" title="This recipe has been modified, and needs re-crafting to update!">
@@ -32,90 +31,107 @@
             </div>
         }
 
-        @if (OrderNum > 0)
-        {
-            <div class="px-2 py-1 text-bg-secondary ops-label" title="@Operations">
-                x@(Math.Ceiling(Operations * 100) / 100)
-            </div>
-        }
-    </div>
-
-    @if (!string.IsNullOrEmpty(Recipe.Name))
-    {
-        <span class="text-center text-truncate fw-bold card-title" title="@Recipe.Name">
-            @Recipe.Name
-        </span>
-    }
-
-    <div class="d-flex flex-wrap gap-1 justify-content-center">
-        @for (int i = 0; i < Recipe.Ingredients.Count; i++)
-        {
-            (string itemId, float amount) = Recipe.Ingredients[i];
-            <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount)" style="max-width: 49%;" />
-        }
-    </div>
-
-    <div class="row g-0 py-2">
-        <div class="col-5 d-flex justify-content-end align-items-center">
-            @if (Recipe.BatchSize > 0)
+        <div class="flex-grow-1 text-center">
+            @if (!string.IsNullOrEmpty(Recipe.Name))
             {
-                @if (OrderNum > -1)
-                {
-                    int batches = (OperationsInt / (int)Recipe.BatchSize);
-                    int mod = OperationsInt % (int)Recipe.BatchSize;
-                    <span title="Number of full batches, batch size, and the size of the incomplete batch">
-                        @batches x
-                        <i class="bi bi-stack" aria-hidden="true" />
-                        @Recipe.BatchSize
-                        @if (mod > 0)
-                        {
-                            <span> (+@(mod))</span>
-                        }
-                    </span>
-                }
-                else
-                {
-                    <span title="Batch size">
-                        <i class="bi bi-stack mx-1" aria-hidden="true" />
-                        @Recipe.BatchSize
-                    </span>
-                }
+                <span class="text-truncate fw-bold card-title mb-0" title="@Recipe.Name">
+                    @Recipe.Name
+                </span>
             }
         </div>
 
-        <div class="col-2">
-            @if (!string.IsNullOrEmpty(Recipe.StationId))
+        <div class="px-2 py-1 text-bg-secondary ops-label">
+            @if (OrderNum > 0)
             {
-                <i class="bi bi-caret-down-fill d-block text-center" aria-hidden="true" />
-                <div class="text-center position-relative d-block mx-auto" style="width: 32px;">
-                    <ItemIcon @key="Recipe.StationId" ItemId="@Recipe.StationId" Size="32px" />
-                </div>
-                <i class="bi bi-caret-down-fill d-block text-center" aria-hidden="true" />
-            }
-            else
-            {
-                <i class="bi bi-caret-down-fill d-block text-center" title="Crafts into" style="font-size: 32px;" />
+                <span title="@Operations">
+                    x@(Math.Ceiling(Operations * 100) / 100)
+                </span>
             }
 
-        </div>
-
-        <div class="col-5 d-flex justify-content-start align-items-center">
-            @if (Recipe.CraftingTime > 0)
+            @if (OrderNum > 0 && Recipe.Chance.HasValue)
             {
-                <span title="Crafting Time">
-                    <i class="bi bi-clock" aria-hidden="true" />
-                    @(Recipe.GetTotalCraftingTime(OperationsInt))s
+                <span> with </span>
+            }
+
+            @if (Recipe.Chance.HasValue)
+            {
+                <span title="Success chance">
+                    @Recipe.Chance%
                 </span>
             }
         </div>
     </div>
 
-    <div class="d-flex flex-wrap gap-1 justify-content-center">
-        @for (int i = 0; i < Recipe.Products.Count; i++)
-        {
-            (string itemId, float amount) = Recipe.Products[i];
-            <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount)" style="max-width: 100%;" />
-        }
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-1 justify-content-center">
+            @for (int i = 0; i < Recipe.Ingredients.Count; i++)
+            {
+                (string itemId, float amount) = Recipe.Ingredients[i];
+                <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount)" style="max-width: 49%;" />
+            }
+        </div>
+
+        <div class="row g-0 py-2">
+            <div class="col-5 d-flex justify-content-end align-items-center">
+                @if (Recipe.BatchSize > 0)
+                {
+                    @if (OrderNum > -1)
+                    {
+                        int batches = (OperationsInt / (int)Recipe.BatchSize);
+                        int mod = OperationsInt % (int)Recipe.BatchSize;
+                        <span title="Number of full batches, batch size, and the size of the incomplete batch">
+                            @batches x
+                            <i class="bi bi-stack" aria-hidden="true" />
+                            @Recipe.BatchSize
+                            @if (mod > 0)
+                            {
+                                <span> (+@(mod))</span>
+                            }
+                        </span>
+                    }
+                    else
+                    {
+                        <span title="Batch size">
+                            <i class="bi bi-stack mx-1" aria-hidden="true" />
+                            @Recipe.BatchSize
+                        </span>
+                    }
+                }
+            </div>
+
+            <div class="col-2">
+                @if (!string.IsNullOrEmpty(Recipe.StationId))
+                {
+                    <i class="bi bi-caret-down-fill d-block text-center" aria-hidden="true" />
+                    <div class="text-center position-relative d-block mx-auto" style="width: 32px;">
+                        <ItemIcon @key="Recipe.StationId" ItemId="@Recipe.StationId" Size="32px" />
+                    </div>
+                    <i class="bi bi-caret-down-fill d-block text-center" aria-hidden="true" />
+                }
+                else
+                {
+                    <i class="bi bi-caret-down-fill d-block text-center" title="Crafts into" style="font-size: 32px;" />
+                }
+            </div>
+
+            <div class="col-5 d-flex justify-content-start align-items-center">
+                @if (Recipe.CraftingTime > 0)
+                {
+                    <span title="Crafting Time">
+                        <i class="bi bi-clock" aria-hidden="true" />
+                        @(Recipe.GetTotalCraftingTime(OperationsInt))s
+                    </span>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-1 justify-content-center">
+            @for (int i = 0; i < Recipe.Products.Count; i++)
+            {
+                (string itemId, float amount) = Recipe.Products[i];
+                <ItemBadge @key="itemId + amount + i" ItemId="@itemId" Amount="@(amount)" style="max-width: 100%;" />
+            }
+        </div>
     </div>
 </div>
 
@@ -123,6 +139,7 @@
     [Parameter] public Recipe Recipe { get; set; } = default!;
     [Parameter] public float Operations { get; set; } = 1;
     [Parameter] public string Class { get; set; } = "bg-body-tertiary";
+    [Parameter] public string HeaderClass { get; set; } = "bg-body-secondary";
     [Parameter] public int OrderNum { get; set; } = -1;
 
     [Parameter] public bool IsInvalid { get; set; } = false;

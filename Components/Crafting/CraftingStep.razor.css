@@ -2,3 +2,7 @@
     border-bottom-left-radius: var(--bs-card-border-radius);
     border-top-right-radius: var(--bs-card-border-radius);
 }
+
+.ops-label:empty {
+    padding: 0 !important;
+}
